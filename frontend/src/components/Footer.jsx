@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom';
 export default function Footer() {
   // Aapke social media links
   const socialLinks = {
-    linkedin: 'www.linkedin.com/in/jainish-dabgar-87474a320', // Placeholder: Kripya isse badlein
-    github: 'https://github.com/Jainish-2901',       // Placeholder: Kripya isse badlein
+    linkedin: 'jainish-dabgar-87474a320', // Placeholder: Kripya isse badlein
+    github: 'Jainish-2901',       // Placeholder: Kripya isse badlein
     whatsapp: '+919773272749' // Placeholder: Kripya isse badlein (e.g., +919876543210)
   };
   
