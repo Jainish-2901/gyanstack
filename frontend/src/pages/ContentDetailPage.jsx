@@ -150,15 +150,19 @@ const DetailPreview = ({ item }) => {
     );
   }
 
-  // 5. PDF Type (Special handling for PDF embed)
+  // 5. PDF Type (Icon Box Fix)
   if (item.type.includes('pdf')) {
+    const fileName = `${item.title}.pdf`;
     return (
-      <div>
-        <div className="ratio ratio-4x3 shadow-lg rounded">
-          {/* PDF ko embed karein */}
-          <iframe src={item.url} title={item.title} allow="fullscreen"></iframe>
-        </div>
-        {/* --- BUTTON YAHAN SE HATA DIYA GAYA HAI --- */}
+      <div className="text-center p-5 bg-light rounded shadow-sm">
+        <i className="bi bi-file-earmark-pdf-fill display-1 text-danger"></i>
+        <h3 className='mt-3 fw-bold'>{fileName}</h3>
+        <p className="lead text-muted">This PDF must be opened in a new tab to view.</p>
+        
+        {/* NAYA BUTTON: Open PDF */}
+        <a href={item.url} target="_blank" rel="noopener noreferrer" className="btn btn-outline-danger mt-3 me-2">
+            <i className="bi bi-box-arrow-up-right me-2"></i> Open PDF
+        </a>
       </div>
     );
   }
