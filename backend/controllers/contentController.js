@@ -1,6 +1,8 @@
 // Cloudinary ko import karein (file delete karne ke liye)
 const cloudinary = require('cloudinary').v2;
 const Content = require('../models/contentModel');
+const Category = require('../models/categoryModel');
+const User = require('../models/userModel'); 
 
 // --- HELPER FUNCTION ---
 // Ye function Cloudinary URL se Public ID nikalta hai (delete karne ke liye)
