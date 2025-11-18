@@ -1,0 +1,473 @@
+/* src/index.css */
+
+/* --- FIX: Layout aur Height Issue --- */
+html, body, #root {
+  min-height: 100vh; /* Viewport height poora karein */
+  width: 100%; /* Width poora karein */
+}
+/* --- END FIX --- */
+
+
+/* --- Global Body/Page Background --- */
+body {
+    background-color: #f7f9fc !important; /* Default Light Gray */
+    /* Subtle light gradient for modern feel */
+    background-image: linear-gradient(180deg, #f7f9fc 0%, #f0f3f6 100%);
+    color: #343a40; /* Ensure text is dark for maximum visibility */
+    min-height: 100vh;
+}
+.App {
+    background-color: transparent !important; /* Background ko body par chhod dein */
+}
+
+/* Page fade-in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* --- Dark Mode (Bootstrap 5.3+ overrides) --- */
+
+/* [data-bs-theme="dark"] se hum dark mode ko target karte hain */
+
+[data-bs-theme="dark"] body {
+  background-color: #1a1a1a;
+  color: #f8f9fa;
+}
+
+[data-bs-theme="dark"] .bg-light-subtle {
+  background-color: #2c2c2c !important; /* Home page hero */
+}
+
+[data-bs-theme="dark"] .card {
+  background-color: #242424;
+  border-color: #444;
+}
+
+[data-bs-theme="dark"] .navbar {
+  background-color: #242424 !important;
+}
+
+[data-bs-theme="dark"] .list-group-item {
+  background-color: #242424;
+  border-color: #444;
+}
+
+[data-bs-theme="dark"] .list-group-item-action:hover {
+  background-color: #333;
+}
+
+/* --- Content Card Preview Styles --- */
+
+/* Basic container for all previews */
+.preview-box {
+  width: 100%;
+  max-height: 250px;
+  overflow: hidden;
+  background-color: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid #dee2e6;
+}
+
+/* For Image and Video */
+.preview-box img,
+.preview-box video {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+/* For YouTube embeds */
+.youtube-embed {
+  max-height: 250px;
+}
+
+/* For Text/Note previews */
+.text-preview {
+  max-height: 200px; /* Expandable height */
+  overflow-y: auto; /* Scrollbar agar text lamba hai */
+  padding: 1rem;
+  align-items: flex-start;
+  flex-direction: column;
+  font-family: monospace;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+/* For Downloadable files (PDF, ZIP, etc.) */
+.download-box {
+  height: 150px; /* Fixed height for icon box */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background-color: #f1f3f5;
+  color: #6c757d;
+}
+
+.download-box i {
+  line-height: 1; /* Icon ko center rakhega */
+}
+
+/* Card title ke liye thoda margin */
+.card-body .card-title {
+  margin-top: 0.5rem;
+}
+
+/* --- Category Manager Styles --- */
+.category-tree .list-group-item .category-actions {
+  /* Buttons ko default mein chupayein */
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.category-tree .list-group-item:hover .category-actions {
+  /* Jab item par hover ho, tab buttons dikhayein */
+  opacity: 1;
+}
+
+.category-tree .list-group-item {
+  /* Smooth transition */
+  transition: background-color 0.15s ease-in-out;
+}
+
+/* ---------------------------------------------------- */
+/* --- HEADER AND DASHBOARD LAYOUT FIX (CRITICAL) --- */
+/* ---------------------------------------------------- */
+
+/* 1. Ensure Header is always on top */
+.navbar.sticky-top {
+    z-index: 1040; /* Header ko sabse upar rakhein */
+}
+
+/* 2. Mobile/Tablet Specific Adjustments */
+@media (max-width: 991.98px) {
+    
+    /* Main content area ka default top padding hatayein */
+    .App main {
+        padding-top: 10px !important; 
+        /* Mobile par default Bootstrap container-fluid margin/padding ko bhi handle karein */
+    }
+
+    /* Dashboard Layout: Sidebar ko mobile par static karein */
+    /* Sidebar (जो card shadow-lg sticky-top है) ab fixed nahi rahega, woh scroll hoga */
+    .dashboard-layout .sticky-top {
+        position: static !important;
+        top: auto !important;
+        /* Mobile par pura sidebar normal flow mein scroll hoga */
+        box-shadow: none !important;
+        border: none !important;
+    }
+    
+    /* Cards ko mobile par stretch karein */
+    .dashboard-layout .col-lg-3,
+    .dashboard-layout .col-md-4,
+    .dashboard-layout .col-lg-9,
+    .dashboard-layout .col-md-8 {
+        /* Mobile par koi column width fix nahi hogi, pura 100% width lega */
+        width: 100%;
+        padding-left: var(--bs-gutter-x, 0.75rem);
+        padding-right: var(--bs-gutter-x, 0.75rem);
+    }
+}
+
+/* --- FIX: Desktop par Main Nav aur User Actions ke beech Gap --- */
+@media (min-width: 992px) {
+    /* Large screens par left navigation UL ko extra space den */
+    .navbar-nav.me-auto {
+        /* M-E-Auto (Margin-End: Auto) ko override karte hue extra space den */
+        margin-left: 4rem !important; 
+    }
+}
+/* --- Home Page Specific Styles (Existing) --- */
+.navbar-nav > .nav-item{
+    gap: 1.5rem; /* Nav items ke beech thoda aur gap */
+    margin-right: 30px;
+    font-weight: 500;
+}
+.navbar-nav > .page-link{
+    width: 120px;
+    text-align: center;
+}
+/* 1. Hero Section Gradient (Keep this bold) */
+.hero-section {
+    background: linear-gradient(135deg, #7F00FF 0%, #E100FF 100%); /* Purple/Pink Gradient */
+    padding-top: 80px !important;
+    padding-bottom: 80px !important;
+    border-radius: 1.5rem !important;
+}
+
+/* CTA Gradient Button */
+.cta-gradient {
+    background: linear-gradient(90deg, #ff6b6b 0%, #ff4757 100%); /* Red/Orange Gradient */
+    border: none;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
+}
+.cta-gradient:hover {
+    background: linear-gradient(90deg, #ff4757 0%, #ff6b6b 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 71, 87, 0.6);
+}
+
+/* 2. Feature Cards */
+.feature-card {
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    border-radius: 1rem; /* Rounded corners */
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.08); /* Darker shadow for lift */
+}
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2); /* Lifted shadow on hover */
+}
+
+/* Feature Icon Circles */
+.icon-circle {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+.bg-primary-gradient { background: linear-gradient(45deg, #007bff, #00c0ff); }
+.bg-success-gradient { background: linear-gradient(45deg, #28a745, #5af77b); }
+.bg-warning-gradient { background: linear-gradient(45deg, #ffc107, #ff9800); }
+.bg-danger-gradient { background: linear-gradient(45deg, #dc3545, #ff5e69); }
+
+/* 3. Process Flow */
+.process-step {
+    border: 1px solid #e0e0e0;
+    transition: box-shadow 0.3s;
+}
+.process-step:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* 4. Trust Stats Section */
+.trust-stats-section {
+    background-color: #343a40; /* Dark background */
+    box-shadow: 0 0 20px rgba(0,0,0,0.5) inset;
+}
+.stat-box {
+    background-color: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: transform 0.3s ease-in-out;
+}
+.stat-box:hover {
+    transform: scale(1.03);
+}
+
+/* --- Dashboard Specific Animations (Existing) --- */
+.hover-scale:hover {
+    transform: scale(1.02);
+    transition: transform 0.3s ease;
+}
+
+/* Smooth card shadow on hover */
+.card-hover:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    transition: box-shadow 0.3s ease;
+}
+.card-hover {
+    transition: box-shadow 0.3s ease;
+} 
+
+/* --- FOOTER SPECIFIC STYLES (NEW) --- */
+footer.bg-dark {
+    /* Thoda sa lift dene ke liye shadow */
+    box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.3);
+    /* Logo colour ko highlight karein */
+    border-top: 5px solid #00c0ff; 
+}
+footer{
+    padding-top: 40px;
+    padding-bottom: 20px;
+    color: #adb5bd; /* Muted light grey text */
+    font-size: 20px;
+}
+/* Quick Links aur Features ke links */
+footer .hover-link {
+    transition: color 0.2s ease-in-out, transform 0.2s ease-in-out;
+    display: inline-block;
+    padding-bottom: 2px;
+}
+footer .hover-link:hover {
+    color: #ffffff !important; /* White on hover */
+    transform: translateX(3px); /* Slight movement */
+}
+
+/* Social Icons (LinkedIn, GitHub, WhatsApp) */
+footer .social-icons .social-link {
+    transition: color 0.3s ease-in-out, transform 0.3s ease-in-out;
+    color: #00c0ff !important; /* Primary light blue */
+}
+footer .social-icons .social-link:hover {
+    color: #ffffff !important; /* White on hover */
+    transform: translateY(-3px) scale(1.1);
+}
+
+/* Branding Text (Designed & Developed) */
+footer span.d-block {
+    opacity: 0.9;
+}
+
+/* --- DARK MODE BASE STYLES (NEW) --- */
+[data-bs-theme='dark'] {
+    /* Main Background: Dark Grey */
+    background-color: #121212 !important;
+    color: #f0f0f0;
+}
+
+[data-bs-theme='dark'] .text-dark {
+    color: #f0f0f0 !important;
+}
+[data-bs-theme='dark'] .text-muted {
+    color: #b0b0b0 !important;
+}
+
+/* ---------------------------------------------------- */
+/* --- HEADER STYLES --- */
+.navbar.sticky-top {
+    z-index: 1040;
+}
+
+/* FIX: Desktop par Main Nav aur User Actions ke beech Gap (Existing) */
+@media (min-width: 992px) {
+    .navbar-nav.me-auto {
+        margin-right: 4rem !important; 
+    }
+}
+
+/* --- DARK MODE HEADER/FOOTER OVERRIDES --- */
+[data-bs-theme='dark'] .navbar {
+    background-color: #1f1f1f !important;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Footer (bg-dark hai, lekin text ko saaf rakhein) */
+[data-bs-theme='dark'] footer {
+    background-color: #121212 !important;
+}
+
+/* Dropdown/List Item styles ko bhi invert karein */
+[data-bs-theme='dark'] .dropdown-menu {
+    background-color: #2c2c2c !important;
+    border-color: #444 !important;
+}
+[data-bs-theme='dark'] .dropdown-item {
+    color: #f0f0f0 !important;
+}
+[data-bs-theme='dark'] .dropdown-item:hover {
+    background-color: #444 !important;
+}
+[data-bs-theme='dark'] .dropdown-divider {
+    border-top-color: #444;
+}
+
+/* ---------------------------------------------------- */
+/* --- HOME PAGE STYLES --- */
+.hero-section {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); /* Blue Gradient */
+    padding-top: 80px !important;
+    padding-bottom: 80px !important;
+    border-radius: 1.5rem !important;
+}
+/* Trust Stats Section ka background */
+.trust-stats-section {
+    background: linear-gradient(90deg, #343a40 0%, #495057 100%);
+}
+
+/* DARK MODE OVERRIDE FOR CARDS/SECTIONS */
+
+/* Light background jo dark mode me dark ho jayega */
+[data-bs-theme='dark'] .bg-light {
+    background-color: #1f1f1f !important;
+}
+[data-bs-theme='dark'] .feature-card {
+    background-color: #1f1f1f !important;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1) !important;
+}
+[data-bs-theme='dark'] .process-step {
+    background-color: #2c2c2c !important;
+}
+
+/* Dark mode me Trust Stats background wahi rakhein (ya thoda change karein) */
+[data-bs-theme='dark'] .trust-stats-section {
+    background: linear-gradient(90deg, #121212 0%, #2c2c2c 100%);
+}
+
+/* ---------------------------------------------------- */
+/* --- RESPONSIVE CARD VIEW (MOBILE TABLES) --- */
+/* ---------------------------------------------------- */
+@media (max-width: 991.98px) {
+    /* Main table elements ko chhipa dein */
+    .table-responsive table, 
+    .table-responsive thead, 
+    .table-responsive th {
+        display: none !important;
+    }
+
+    /* Mobile Card View (Rows ko card me badlein) */
+    .responsive-card-view .card {
+        border: 1px solid var(--bs-border-color);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s;
+    }
+    .responsive-card-view .card:hover {
+        transform: translateY(-2px);
+    }
+    
+    /* Card body ke data ko block-level par layout karein */
+    .responsive-card-view .card-body {
+        display: block;
+    }
+
+    /* Data labels/titles ke liye styles */
+    .responsive-card-view .data-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 5px 0;
+        border-bottom: 1px dashed #eee;
+    }
+
+    .responsive-card-view .data-item::before {
+        /* Data Label ko dikhayein */
+        content: attr(data-label);
+        font-weight: bold;
+        color: #6c757d;
+        flex-shrink: 0;
+        margin-right: 15px;
+        font-size: 0.9rem;
+    }
+
+    /* Actions button ko niche layein */
+    .responsive-card-view .card-actions {
+        display: flex;
+        justify-content: flex-end;
+        border-top: 1px solid var(--bs-border-color);
+        padding-top: 10px;
+        margin-top: 10px;
+    }
+}
+[data-bs-theme='dark'] .responsive-card-view .data-item {
+    border-bottom: 1px dashed #444;
+}
+[data-bs-theme='dark'] .responsive-card-view .data-item::before {
+    color: #b0b0b0;
+}
