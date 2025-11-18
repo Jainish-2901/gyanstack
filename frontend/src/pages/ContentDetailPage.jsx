@@ -406,7 +406,7 @@ export default function ContentDetailPage() {
             {/* --- CHANGE: Check karne ka tareeka update kiya gaya hai --- */}
             {(item.fileResourceType === 'image' || item.type.includes('image') ||
               item.fileResourceType === 'video' || item.type.includes('video') ||
-              item.fileResourceType === 'raw' || item.Dype.includes('pdf')) && (
+              item.fileResourceType === 'raw' || item.type.includes('pdf')) && (
                 
                 <a 
                   href={getDownloadUrl(item.url, item.title)} // 'getDownloadUrl' function ka use karein
