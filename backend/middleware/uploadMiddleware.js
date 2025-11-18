@@ -14,7 +14,7 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'gyanstack_uploads', // Cloudinary mein folder ka naam
-    allowed_formats: ['jpg', 'png', 'pdf', 'ppt', 'pptx', 'doc', 'docx', 'xls', 'xlsx', 'mp4', 'mkv'],
+    allowed_formats: ['jpg', 'png', 'pdf', 'ppt', 'pptx', 'doc', 'docx', 'xls', 'xlsx', 'mp4', 'mkv', 'm4a' , 'avi', 'sifz' , 'zip', 'rar'],
     
     // FIX 1: 'auto' zaroori hai taaki ye videos, images, aur raw files (PDF/PPT) ko handle kar sake
     resource_type: 'auto', 
