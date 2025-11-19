@@ -2,37 +2,54 @@ const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
 
-// Cloudinary ko config karein (API keys se)
 cloudinary.config({ 
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
   api_key: process.env.CLOUDINARY_API_KEY, 
   api_secret: process.env.CLOUDINARY_API_SECRET 
 });
 
-// Cloudinary Storage engine banayein
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    folder: 'gyanstack_uploads', // Cloudinary mein folder ka naam
-    allowed_formats: ['jpg', 'png', 'pdf', 'ppt', 'pptx', 'doc', 'docx', 'xls', 'xlsx', 'mp4', 'mkv', 'm4a' , 'avi', 'sifz' , 'zip', 'rar'],
+  // FIX: 'params' ko object ki jagah FUNCTION banayein
+  params: async (req, file) => {
     
-    // FIX 1: 'auto' zaroori hai taaki ye videos, images, aur raw files (PDF/PPT) ko handle kar sake
-    resource_type: 'auto', 
+    // 1. Determine Resource Type
+    let resource_type = 'raw'; // Default for docx, zip, rar, sifz, etc.
     
-    // OPTIMIZATION: Cloudinary me upload hote hi quality optimize ho jayegi
-    // Isse images aur videos compress ho jayenge
-    quality: 'auto:good',
-    width: 1920,
-    crop: 'limit'
-  }
+    if (file.mimetype.startsWith('image')) {
+        resource_type = 'image';
+    } else if (file.mimetype.startsWith('video') || file.originalname.endsWith('.avi') || file.originalname.endsWith('.mkv')) {
+        resource_type = 'video';
+    } else if (file.mimetype.includes('audio')) {
+        resource_type = 'video'; // Cloudinary treats audio as video type often
+    }
+
+    // 2. Apply Transformations ONLY for Images/Videos
+    // Raw files par quality/width lagane se upload fail ho jata hai
+    const transformation = (resource_type === 'image' || resource_type === 'video') 
+      ? [
+          { quality: 'auto:good', fetch_format: 'auto' }, // Compress
+          { width: 1920, crop: 'limit' } // Resize if too big
+        ] 
+      : []; // Raw files ke liye koi transformation nahi
+
+    return {
+      folder: 'gyanstack_uploads',
+      // Allowed formats list
+      allowed_formats: ['jpg', 'png', 'jpeg', 'pdf', 'ppt', 'pptx', 'doc', 'docx', 'xls', 'xlsx', 'mp4', 'mkv', 'm4a', 'avi', 'sifz', 'zip', 'rar'],
+      
+      resource_type: resource_type,
+      transformation: transformation,
+      
+      // Raw files ke liye original naam rakhna zaroori hai taaki extension na kho jaye
+      use_filename: true, 
+      unique_filename: true
+    };
+  },
 });
 
-// Multer ko storage engine se connect karein
 const upload = multer({ 
   storage: storage,
-  
-  // FIX 2: Server par file size limit set karein (Example: 100MB)
-  // Iske bina server badi files par crash ho raha tha
   limits: {
     fileSize: 100 * 1024 * 1024 // 100 MB Limit
   }
