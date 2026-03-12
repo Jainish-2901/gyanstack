@@ -141,7 +141,7 @@ const DetailPreview = ({ item }) => {
         <div className="mb-4">
           <i className={`bi ${iconClass} display-1`}></i>
         </div>
-        <h3 className='fw-bold mb-3'>{item.title}</h3>
+        <h3 className='fw-bold mb-3'>{cleanTitle(item.title)}</h3>
         <div className="alert alert-info d-inline-block px-4 mb-0">
           <i className="bi bi-info-circle me-2"></i> This resource is ready for download.
         </div>
@@ -157,6 +157,13 @@ const DetailPreview = ({ item }) => {
   );
 };
 
+
+const cleanTitle = (title) => {
+  if (!title) return '';
+  const parts = title.split(/[,\-]+/).map(p => p.trim()).filter(p => p);
+  const unique = [...new Set(parts)];
+  return unique.length === 1 ? unique[0] : title;
+};
 
 // --- Main Page Component ---
 export default function ContentDetailPage() {
@@ -262,7 +269,7 @@ export default function ContentDetailPage() {
             <i className="bi bi-arrow-left me-2"></i> Go Back
           </button>
 
-          <h1 className="display-4 fw-bold mb-3">{item.title}</h1>
+          <h1 className="display-4 fw-bold mb-3">{cleanTitle(item.title)}</h1>
           
           <div className="d-flex flex-wrap align-items-center text-muted mb-4">
             <span className="me-3"><i className="bi bi-person-fill me-1"></i> Uploaded by: {item.uploadedBy?.username || 'Admin'}</span>

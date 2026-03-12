@@ -110,7 +110,13 @@ const ContentPreview = ({ item }) => {
 };
 
 
-// --- Main Content Card Component ---
+const cleanTitle = (title) => {
+  if (!title) return '';
+  // Split by common separators and check if they are all identical
+  const parts = title.split(/[,\-]+/).map(p => p.trim()).filter(p => p);
+  const unique = [...new Set(parts)];
+  return unique.length === 1 ? unique[0] : title;
+};
 
 export default function ContentCard({ item }) {
   const { user } = useAuth();
@@ -176,7 +182,7 @@ export default function ContentCard({ item }) {
                <i className={`bi ${iconClass} fs-3`}></i>
             </div>
             <div className='flex-grow-1'>
-              <h5 className="card-title fw-bold text-dark mb-1 line-clamp-1">{item.title}</h5>
+              <h5 className="card-title fw-bold text-dark mb-1 line-clamp-1">{cleanTitle(item.title)}</h5>
               <p className="card-text small text-muted mb-0">
                 <i className="bi bi-eye text-primary me-1"></i>{item.viewsCount} &nbsp;&nbsp; <i className={`bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'} me-1`}></i>{likesCount}
               </p>
@@ -185,7 +191,7 @@ export default function ContentCard({ item }) {
         ) : (
           // Naya 'Note/Link' waala layout (bina icon)
           <div className="mb-3">
-            <h5 className="card-title fw-bold mt-2 text-dark line-clamp-1">{item.title}</h5>
+            <h5 className="card-title fw-bold mt-2 text-dark line-clamp-1">{cleanTitle(item.title)}</h5>
             <p className="card-text small text-muted">
                <i className="bi bi-eye text-primary me-1"></i>{item.viewsCount} &nbsp;&nbsp; <i className={`bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'} me-1`}></i>{likesCount}
             </p>

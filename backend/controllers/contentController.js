@@ -29,8 +29,19 @@ exports.uploadContent = async (req, res) => {
   try {
     // Note: req.body ke data (title, categoryId, tags) sabhi files ke liye same rahenge
     let { title, type, link, textNote, categoryId, tags } = req.body;
-    // Ensure title is a single string if it comes as an array
-    if (Array.isArray(title)) title = title[0];
+    
+    // Sanitize title: Handle arrays or repeated strings (e.g., "Title, Title")
+    if (title) {
+      if (Array.isArray(title)) title = title[0];
+      if (typeof title === 'string') {
+        // Remove repeated parts if they are identical (handles "Title, Title" or "Title, Title - Title")
+        const cleanParts = title.split(/[,\-]+/).map(p => p.trim()).filter(p => p);
+        const uniqueParts = [...new Set(cleanParts)];
+        if (uniqueParts.length === 1) {
+          title = uniqueParts[0];
+        }
+      }
+    }
     const tagsArray = tags ? tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
     
     const uploadedItems = [];
