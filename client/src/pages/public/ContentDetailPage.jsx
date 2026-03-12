@@ -8,6 +8,13 @@ import { useAuth } from '../../context/AuthContext';
 
 // --- Helper Functions ---
 
+const cleanTitle = (title) => {
+  if (!title) return '';
+  const parts = title.split(/[,\-]+/).map(p => p.trim()).filter(p => p);
+  const unique = [...new Set(parts)];
+  return unique.length === 1 ? unique[0] : title;
+};
+
 const getYoutubeEmbedUrl = (url) => {
   try {
     const urlObj = new URL(url);
@@ -37,14 +44,29 @@ const getIcon = (type) => {
   return 'bi-file-earmark-fill text-secondary';
 };
 
+const getSafeFilename = (url, title) => {
+  if (!url) return cleanTitle(title) || 'download';
+  
+  // 1. Original extension nikaalein (Cloudinary URL ke end se)
+  const urlParts = url.split('.');
+  const extension = urlParts.length > 1 ? `.${urlParts.pop().split('?')[0]}` : '';
+
+  // 2. Title ko safe banayein (aur clean bhi)
+  const cleanTitleValue = cleanTitle(title);
+  const unsafeCharsRegex = new RegExp(/[\\/\\?%*:|"<>]/g);
+  let safeTitle = (cleanTitleValue || 'download').replace(unsafeCharsRegex, '-').replace(/\s+/g, '_'); 
+
+  // 3. Extension append karein agar missing ho
+  if (extension && !safeTitle.toLowerCase().endsWith(extension.toLowerCase())) {
+    safeTitle += extension;
+  }
+  return safeTitle;
+};
+
 const getDownloadUrl = (url, title) => {
   if (!url || !url.includes('/upload/')) return url;
-  
-  // FIX: Regex syntax issue fixed
-  const unsafeCharsRegex = new RegExp(/[\\/\\?%*:|"<>]/g);
-  const safeTitle = (title || 'download').replace(unsafeCharsRegex, '-').replace(/\s+/g, '_'); 
-  
-  return url.replace('/upload/', `/upload/fl_attachment:${safeTitle}/`);
+  const safeFilename = getSafeFilename(url, title);
+  return url.replace('/upload/', `/upload/fl_attachment:${encodeURIComponent(safeFilename)}/`);
 };
 
 
@@ -158,12 +180,7 @@ const DetailPreview = ({ item }) => {
 };
 
 
-const cleanTitle = (title) => {
-  if (!title) return '';
-  const parts = title.split(/[,\-]+/).map(p => p.trim()).filter(p => p);
-  const unique = [...new Set(parts)];
-  return unique.length === 1 ? unique[0] : title;
-};
+
 
 // --- Main Page Component ---
 export default function ContentDetailPage() {
@@ -230,9 +247,10 @@ export default function ContentDetailPage() {
       setDownloadsCount(data.downloadsCount); 
       
       const downloadUrl = getDownloadUrl(item.url, item.title);
+      const safeFilename = getSafeFilename(item.url, item.title);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.setAttribute('download', item.title); 
+      link.setAttribute('download', safeFilename); 
       link.setAttribute('target', '_blank');
       link.setAttribute('rel', 'noopener noreferrer');
       
