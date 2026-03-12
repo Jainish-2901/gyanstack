@@ -28,7 +28,9 @@ const getPublicIdFromUrl = (url) => {
 exports.uploadContent = async (req, res) => {
   try {
     // Note: req.body ke data (title, categoryId, tags) sabhi files ke liye same rahenge
-    const { title, type, link, textNote, categoryId, tags } = req.body;
+    let { title, type, link, textNote, categoryId, tags } = req.body;
+    // Ensure title is a single string if it comes as an array
+    if (Array.isArray(title)) title = title[0];
     const tagsArray = tags ? tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
     
     const uploadedItems = [];

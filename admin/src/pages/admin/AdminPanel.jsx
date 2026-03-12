@@ -201,7 +201,7 @@ export default function AdminPanel() {
       for (let i = 0; i < files.length; i++) {
         formData.append('files', files[i]);
       }
-      formData.append('title', title || 'Batch Upload');
+      // No need to append title again here as it's already appended above
       
     } else if (type === 'link') { 
       formData.append('link', link); 
