@@ -10,7 +10,7 @@ exports.getAllUsers = async (req, res) => {
     res.json({ users });
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Server error');
+    res.status(500).json({ message: 'Server error (getAllUsers): ' + err.message });
   }
 };
 
@@ -107,5 +107,35 @@ exports.getDashboardStats = async (req, res) => {
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error (getDashboardStats)');
+  }
+};
+
+// 4. User ko PERMANENTLY Delete Karna (SuperAdmin Only)
+exports.deleteUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Protection: Khud ko delete na kar paayein
+    if (user._id.toString() === req.user.id) {
+      return res.status(400).json({ message: 'You cannot delete yourself!' });
+    }
+
+    // Protection: Dusre SuperAdmin ko delete karne se pehle sochna chahiye
+    // Lekin abhi ke liye simplicity ke liye hum allow kar dete hain (unless special logic needed)
+
+    // 1. User ka content delete karein (Optional, but recommended)
+    await Content.deleteMany({ uploadedBy: user._id });
+
+    // 2. User ko delete karein
+    await User.findByIdAndDelete(req.params.id);
+
+    res.json({ message: 'User and their content deleted successfully' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error (deleteUser)');
   }
 };

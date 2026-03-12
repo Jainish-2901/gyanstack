@@ -15,16 +15,15 @@ const authMiddleware = async (req, res, next) => {
 
       // User ki ID ko request object mein add karein (password chhod kar)
       req.user = await User.findById(decoded.id).select('-password');
-      
       next(); // Agle step par jaane dein
     } catch (error) {
-      console.error(error);
-      res.status(401).json({ message: 'Not authorized, token failed' });
+      console.error("Auth Token Error:", error.message);
+      return res.status(401).json({ message: 'Not authorized, token failed' });
     }
   }
 
   if (!token) {
-    res.status(401).json({ message: 'Not authorized, no token' });
+    return res.status(401).json({ message: 'Not authorized, no token' });
   }
 };
 

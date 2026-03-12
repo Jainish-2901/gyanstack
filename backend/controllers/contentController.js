@@ -105,12 +105,18 @@ exports.getContent = async (req, res) => {
     if (req.query.categoryId) { query.categoryId = req.query.categoryId; }
     if (req.query.uploadedBy) { query.uploadedBy = req.query.uploadedBy; }
     if (req.query.search) {
-      query.$or = [
-        { title: { $regex: req.query.search, $options: 'i' } },
-        { tags: { $in: [new RegExp(req.query.search, 'i')] } }, 
-      ];
+      query.$text = { $search: req.query.search };
     }
-    const content = await Content.find(query).sort({ createdAt: -1 });
+    
+    // Sort by text score if search is present, else sort by creation date
+    let sortObj = { createdAt: -1 };
+    let projectObj = {};
+    if (req.query.search) {
+      sortObj = { score: { $meta: "textScore" } };
+      projectObj = { score: { $meta: "textScore" } };
+    }
+
+    const content = await Content.find(query, projectObj).sort(sortObj);
     res.json({ content });
   } catch (err) {
     console.error(err.message);

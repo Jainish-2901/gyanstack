@@ -4,18 +4,18 @@ const {
   createCategory, 
   getCategories, 
   deleteCategory, 
-  updateCategory, // <-- YEH MISSING THA
+  updateCategory, 
   reorderCategories,
-  getAllNestedCategories // <-- YEH MISSING THA
+  getAllNestedCategories 
 } = require('../controllers/categoryController');
 const authMiddleware = require('../middleware/authMiddleware');
-const { adminMiddleware } = require('../middleware/adminMiddleware'); // (Ya SuperAdmin)
+const { adminMiddleware } = require('../middleware/adminMiddleware'); 
 
 // POST /api/categories
 router.post('/', authMiddleware, adminMiddleware, createCategory);
 
 // GET /api/categories?parentId=...
-router.get('/', getCategories); // 'getCategories' ab parentId ke bina bhi chalega
+router.get('/', getCategories); 
 
 // --- NAYA ROUTE ---
 // AdminPanel me category map banane ke liye

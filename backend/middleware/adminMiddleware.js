@@ -11,7 +11,8 @@ const superAdminMiddleware = (req, res, next) => {
   if (req.user && req.user.role === 'superadmin') {
     next();
   } else {
-    res.status(403).json({ message: 'Not authorized as a superadmin' });
+    console.warn(`SuperAdmin Access Denied for user ${req.user?.username} (${req.user?.role})`);
+    return res.status(403).json({ message: 'Not authorized as a superadmin' });
   }
 };
 

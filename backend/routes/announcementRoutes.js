@@ -12,7 +12,10 @@ const {
 const authMiddleware = require('../middleware/authMiddleware');
 const { adminMiddleware, superAdminMiddleware } = require('../middleware/adminMiddleware');
 
-// 1. Public/General User Routes (Header Bell, Homepage, AnnouncementsPage)
+// 1. Subscription Route (Token store karne ke liye)
+router.post('/subscribe', authMiddleware, require('../controllers/announcementController').subscribeUser);
+
+// 2. Public/General User Routes (Header Bell, Homepage, AnnouncementsPage)
 // GET /api/announcements?limit=5&status=approved
 router.get('/', getAnnouncements); 
 

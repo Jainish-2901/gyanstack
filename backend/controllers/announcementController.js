@@ -1,4 +1,7 @@
 const Announcement = require('../models/announcementModel');
+const Subscription = require('../models/subscriptionModel');
+const User = require('../models/userModel');
+const axios = require('axios');
 
 // --- NAYA HELPER FUNCTION ---
 // Push Notification bhejta hai
@@ -45,18 +48,31 @@ const sendPushNotification = async (title, body) => {
 };
 // -----------------------------
 
-// 1. Nayi Announcement Request Karna (Admin Only)
+// 1. Nayi Announcement Request Karna (Admin/SuperAdmin)
 exports.requestAnnouncement = async (req, res) => {
     const { title, content } = req.body;
     try {
+        const isSuperAdmin = req.user.role === 'superadmin';
+        
         const newAnnouncement = new Announcement({
             title,
             content,
             requestedBy: req.user.id,
-            status: 'pending',
+            status: isSuperAdmin ? 'approved' : 'pending',
         });
+        
         await newAnnouncement.save();
-        res.status(201).json({ message: 'Announcement request submitted successfully' });
+
+        if (isSuperAdmin) {
+            // Auto-approved announcement ke liye notification bhejien
+            const pushTitle = `🚨 New Update: ${title}`;
+            const pushBody = content.substring(0, 100) + '... Tap to view.';
+            sendPushNotification(pushTitle, pushBody);
+        }
+
+        res.status(201).json({ 
+            message: isSuperAdmin ? 'Announcement published successfully' : 'Announcement request submitted successfully' 
+        });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
@@ -83,7 +99,7 @@ exports.getAnnouncements = async (req, res) => {
 
     } catch (err) {
         console.error(err.message);
-        res.status(500).send('Server error (getAnnouncements)');
+        res.status(500).json({ message: 'Server error (getAnnouncements): ' + err.message });
     }
 };
 // -----------------------------------------------------------------------------------
@@ -98,7 +114,7 @@ exports.getAllAnnouncements = async (req, res) => {
         res.json({ announcements });
     } catch (err) {
         console.error(err.message);
-        res.status(500).send('Server error');
+        res.status(500).json({ message: 'Server error (getAllAnnouncements): ' + err.message });
     }
 };
 
@@ -202,3 +218,24 @@ exports.updateAnnouncement = async (req, res) => {
         res.status(500).send('Server error');
     }
 };
+
+// 8. Push Notification Token Save Karna
+exports.subscribeUser = async (req, res) => {
+  const { fcmToken } = req.body;
+  if (!fcmToken) {
+    return res.status(400).json({ message: 'fcmToken is required' });
+  }
+
+  try {
+    // Agar user ka token pehle se exist karta hai to update karein, warna naya banayein
+    await Subscription.findOneAndUpdate(
+      { userId: req.user.id },
+      { fcmToken },
+      { upsert: true, new: true }
+    );
+    res.status(200).json({ message: 'Subscribed successfully for push notifications' });
+  } catch (err) {
+    console.error("Subscription Error:", err.message);
+    res.status(500).json({ message: 'Failed to subscribe: ' + err.message });
+  }
+};

@@ -71,5 +71,13 @@ const contentSchema = new mongoose.Schema({
 
 }, { timestamps: true }); // createdAt aur updatedAt automatic add karega
 
+// Add basic indexes to optimize frequent queries
+contentSchema.index({ categoryId: 1 });
+contentSchema.index({ uploadedBy: 1 });
+contentSchema.index({ createdAt: -1 });
+
+// Add text index for optimized search
+contentSchema.index({ title: 'text', tags: 'text', textNote: 'text' }, { weights: { title: 5, tags: 3, textNote: 1 }});
+
 const Content = mongoose.model('Content', contentSchema);
 module.exports = Content;
