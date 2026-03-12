@@ -25,6 +25,7 @@ const FeatureCard = ({ icon, title, text, colorClass }) => (
 );
 
 // --- CATEGORIZED CONTENT COMPONENT ---
+// REFACTORED: Now shows a list of items instead of cards, limited to 5 per category.
 const CategorizedContent = () => {
   const [categories, setCategories] = useState([]);
   const [contentList, setContentList] = useState([]);
@@ -72,65 +73,103 @@ const CategorizedContent = () => {
 
   // Group content by categoryId (including ancestors)
   const grouped = contentList.reduce((acc, item) => {
-    // Helper function to find all ancestor names for a categoryID
-    const getAncestorNames = (catId, names = []) => {
+    const getAncestorInfo = (catId, infos = []) => {
       const cat = categories.find(c => c._id === catId);
-      if (!cat) return names;
+      if (!cat) return infos;
       
-      names.push(cat.name);
+      infos.push({ id: cat._id, name: cat.name });
       
       if (cat.parentId && cat.parentId !== 'root') {
-        return getAncestorNames(cat.parentId, names);
+        return getAncestorInfo(cat.parentId, infos);
       }
-      return names;
+      return infos;
     };
 
-    const targetNames = getAncestorNames(item.categoryId);
-    if (targetNames.length === 0) targetNames.push('Other Resources');
+    const targetAncestors = getAncestorInfo(item.categoryId);
+    if (targetAncestors.length === 0) targetAncestors.push({ id: 'other', name: 'Other Resources' });
 
-    targetNames.forEach(name => {
-      if (!acc[name]) acc[name] = [];
-      // Prevent duplicates if an item name appears multi-level
-      if (!acc[name].find(i => i._id === item._id)) {
-        acc[name].push(item);
+    targetAncestors.forEach(cat => {
+      if (!acc[cat.name]) {
+        acc[cat.name] = {
+          id: cat.id,
+          items: []
+        };
+      }
+      // Prevent duplicates in grouping
+      if (!acc[cat.name].items.find(i => i._id === item._id)) {
+        acc[cat.name].items.push(item);
       }
     });
 
     return acc;
   }, {});
 
-  // Remove empty categories (just in case)
   const categoryEntries = Object.entries(grouped);
   if (categoryEntries.length === 0) return null;
+
+  // Helper to get icon for list items
+  const getSmallIcon = (type) => {
+    if (type?.includes('pdf')) return 'bi-file-earmark-pdf text-danger';
+    if (type?.includes('video')) return 'bi-play-circle text-info';
+    if (type?.includes('image')) return 'bi-image text-success';
+    if (type === 'link') return 'bi-link-45deg text-primary';
+    if (type === 'note') return 'bi-sticky text-warning';
+    return 'bi-file-earmark text-secondary';
+  };
 
   return (
     <section className="container py-5">
       <div className="text-center mb-5 fade-in">
         <h6 className="text-primary fw-bold text-uppercase tracking-wider">Explore Hub</h6>
-        <h2 className="display-6 fw-bold" style={{ color: 'var(--text-primary)' }}>Recent Uploads By Category</h2>
+        <h2 className="display-6 fw-bold" style={{ color: 'var(--text-primary)' }}>Quick Access By Category</h2>
+        <p className="text-muted">Browse the most recent 5 uploads across all our sections.</p>
       </div>
 
-      {categoryEntries.map(([catName, items]) => (
-        <div key={catName} className="mb-5 fade-in">
-          <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
-            <h4 className="fw-bold mb-0" style={{ color: 'var(--primary)' }}>
-              <i className="bi bi-folder2-open me-2"></i>
-              {catName}
-            </h4>
-            <Link to="/browse" className="btn btn-link text-decoration-none fw-bold p-0">
-              View All <i className="bi bi-arrow-right-short ms-1"></i>
-            </Link>
-          </div>
-          
-          <div className="row row-cols-2 row-cols-sm-3 row-cols-lg-4 g-3 g-md-4">
-            {items.slice(0, 4).map(item => (
-              <div key={item._id} className="col d-flex">
-                <ContentCard item={item} />
+      <div className="row g-4">
+        {categoryEntries.map(([catName, data]) => (
+          <div key={catName} className="col-lg-4 col-md-6 mb-3 fade-in">
+            <div className="glass-card h-100 p-4 border-0 shadow-sm transition-hover">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="fw-bold mb-0 text-dark d-flex align-items-center">
+                  <span className="p-2 bg-primary bg-opacity-10 rounded me-2">
+                    <i className="bi bi-folder2-open text-primary"></i>
+                  </span>
+                  {catName}
+                </h5>
+                <span className="badge bg-light text-muted fw-normal">{data.items.length} items</span>
               </div>
-            ))}
+              
+              <div className="content-list-simple">
+                {data.items.slice(0, 5).map(item => (
+                  <Link 
+                    key={item._id} 
+                    to={`/content/${item._id}`} 
+                    className="d-flex align-items-center mb-2 text-decoration-none py-2 px-1 rounded hover-bg-light transition-all"
+                  >
+                    <i className={`bi ${getSmallIcon(item.type)} me-3 fs-5`}></i>
+                    <span className="text-muted small text-truncate fw-medium" style={{maxWidth: '100%'}}>
+                      {item.title}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+
+              {data.items.length > 0 ? (
+                <div className="mt-3 pt-3 border-top border-light">
+                  <Link 
+                    to={`/browse?category=${data.id !== 'other' ? data.id : ''}`} 
+                    className="btn btn-sm btn-outline-primary rounded-pill w-100 fw-bold"
+                  >
+                    View All Resources <i className="bi bi-arrow-right ms-1"></i>
+                  </Link>
+                </div>
+              ) : (
+                <p className="text-muted small mt-2">No items found.</p>
+              )}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </section>
   );
 };

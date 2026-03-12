@@ -44,63 +44,20 @@ const getIcon = (type) => {
   return 'bi-file-earmark-fill text-secondary';
 };
 
-const getSafeFilename = (url, title, mimetype) => {
-  if (!url) return cleanTitle(title) || 'download';
+const getDownloadUrl = (url, title) => {
+  if (!url) return '#';
+  if (!url.includes('/upload/')) return url;
   
-  // 1. Extension nikaalne ke multiple methods
-  let extension = '';
-  
-  // Method A: URL ke end se (e.g., .pdf, .docx)
-  const urlParts = url.split('.');
-  if (urlParts.length > 1) {
-    extension = `.${urlParts.pop().split('?')[0]}`;
-  }
-
-  // Method B: Agar URL me extension nahi hai, to mimetype se guess karein (Raw files ke liye)
-  if (!extension || extension.length > 5) { // extension.length > 5 handles cases where it's not a real extension
-     const mimeMap = {
-       'application/pdf': '.pdf',
-       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
-       'application/msword': '.doc',
-       'application/vnd.openxmlformats-officedocument.presentationml.presentation': '.pptx',
-       'application/vnd.ms-powerpoint': '.ppt',
-       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
-       'application/vnd.ms-excel': '.xls',
-       'application/zip': '.zip',
-       'application/x-zip-compressed': '.zip',
-       'application/x-rar-compressed': '.rar',
-       'text/plain': '.txt',
-       'image/jpeg': '.jpg',
-       'image/png': '.png',
-       'video/mp4': '.mp4'
-     };
-     extension = mimeMap[mimetype] || '';
-  }
-
-  // 2. Title ko safe banayein (aur clean bhi)
-  const cleanTitleValue = cleanTitle(title);
-  let safeTitle = (cleanTitleValue || 'download');
-
-  // 3. Extension append karein agar missing ho
-  if (extension && !safeTitle.toLowerCase().endsWith(extension.toLowerCase())) {
-    safeTitle += extension;
-  }
-  return safeTitle;
-};
-
-const getDownloadUrl = (url, title, mimetype) => {
-  if (!url || !url.includes('/upload/')) return url;
-  
-  const safeFilename = getSafeFilename(url, title, mimetype);
-  
-  // Cloudinary FIX: Cloudinary transformations mein excessive encoding se 400 error aa sakta hai.
-  // Hum sirf alphanumeric, dots aur hyphens rakhenge taaki URL valid rahe.
-  const cloudSafeName = safeFilename
+  // 1. Clean and simplify title (NO DOTS, alphanumeric only)
+  // Cloudinary automatically appends the correct file extension if we omit it.
+  const baseTitle = cleanTitle(title) || 'download';
+  const safeName = baseTitle
+    .trim()
     .replace(/\s+/g, '_')
-    .replace(/[^a-zA-Z0-9.-]/g, '_');
+    .replace(/[^a-zA-Z0-9_-]/g, '');
 
-  // URL ko properly transform karein
-  return url.replace('/upload/', `/upload/fl_attachment:${cloudSafeName}/`);
+  // 2. Insert transformation
+  return url.replace('/upload/', `/upload/fl_attachment:${safeName}/`);
 };
 
 
@@ -280,11 +237,12 @@ export default function ContentDetailPage() {
       const { data } = await api.put(`/content/${id}/download`);
       setDownloadsCount(data.downloadsCount); 
       
-      const downloadUrl = getDownloadUrl(item.url, item.title, item.type);
-      const safeFilename = getSafeFilename(item.url, item.title, item.type);
+      const downloadUrl = getDownloadUrl(item.url, item.title);
+      
+      // Trigger download using a temporary hidden link
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.setAttribute('download', safeFilename); 
+      link.setAttribute('download', item.title || 'download'); 
       link.setAttribute('target', '_blank');
       link.setAttribute('rel', 'noopener noreferrer');
       
@@ -293,8 +251,9 @@ export default function ContentDetailPage() {
       document.body.removeChild(link);
       
     } catch (err) {
-      console.error('Download tracking failed', err);
-      window.open(getDownloadUrl(item.url, item.title), '_blank');
+      console.error('Download logic error', err);
+      // Clean fallback
+      window.open(item.url, '_blank');
     }
   };
 

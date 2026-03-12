@@ -574,3 +574,27 @@ body {
     margin-bottom: 1.5rem;
   }
 }
+
+/* Home Page Categorized List Styles */
+.hover-bg-light:hover {
+  background-color: rgba(99, 102, 241, 0.05);
+  transform: translateX(4px);
+}
+
+.transition-all {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.transition-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08) !important;
+}
+
+.content-list-simple {
+  max-height: 280px;
+  overflow: hidden;
+}

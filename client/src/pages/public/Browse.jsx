@@ -1,23 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import SearchBar from '../../components/SearchBar';
 import CategoryTree from '../../components/CategoryTree';
 import ContentList from '../../components/ContentList';
+import api from '../../services/api';
 
 export default function Browse() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [selectedCategoryName, setSelectedCategoryName] = useState('All Content');
   const [searchTerm, setSearchTerm] = useState('');
 
+  // URL search params ko check karein
+  useEffect(() => {
+    const categoryId = searchParams.get('category');
+    const term = searchParams.get('search');
+
+    if (categoryId) {
+      setSelectedCategoryId(categoryId);
+      // Category name fetch karein agar ID hai
+      const fetchCategoryName = async () => {
+        try {
+          const { data } = await api.get('/categories/all-nested');
+          const findCat = (cats) => {
+            for (const c of cats) {
+              if (c._id === categoryId) return c.name;
+              if (c.children) {
+                const found = findCat(c.children);
+                if (found) return found;
+              }
+            }
+            return null;
+          };
+          const name = findCat(data.categories);
+          if (name) setSelectedCategoryName(name);
+        } catch (err) {
+          console.error("Failed to fetch cat name", err);
+        }
+      };
+      fetchCategoryName();
+    } else if (term) {
+      setSearchTerm(term);
+      setSelectedCategoryName(`Search: ${term}`);
+    } else {
+      setSelectedCategoryId(null);
+      setSelectedCategoryName('All Content');
+    }
+  }, [searchParams]);
+
   const handleCategorySelect = (id, name) => {
-    setSelectedCategoryId(id);
-    setSelectedCategoryName(name);
-    setSearchTerm(''); // Search ko reset karein
+    setSearchParams({ category: id });
+    setSearchTerm(''); 
   };
 
   const handleSearch = (term) => {
-    setSearchTerm(term);
-    setSelectedCategoryId(null); // Category selection ko reset karein
-    setSelectedCategoryName(`Search results for "${term}"`);
+    setSearchParams({ search: term });
   };
 
   return (
