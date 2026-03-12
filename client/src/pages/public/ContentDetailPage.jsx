@@ -77,10 +77,9 @@ const getSafeFilename = (url, title, mimetype) => {
      extension = mimeMap[mimetype] || '';
   }
 
-  // 2. Title ko safe banayein
+  // 2. Title ko safe banayein (aur clean bhi)
   const cleanTitleValue = cleanTitle(title);
-  const unsafeCharsRegex = new RegExp(/[\\/\\?%*:|"<>]/g);
-  let safeTitle = (cleanTitleValue || 'download').replace(unsafeCharsRegex, '-').replace(/\s+/g, '_'); 
+  let safeTitle = (cleanTitleValue || 'download');
 
   // 3. Extension append karein agar missing ho
   if (extension && !safeTitle.toLowerCase().endsWith(extension.toLowerCase())) {
@@ -91,10 +90,17 @@ const getSafeFilename = (url, title, mimetype) => {
 
 const getDownloadUrl = (url, title, mimetype) => {
   if (!url || !url.includes('/upload/')) return url;
+  
   const safeFilename = getSafeFilename(url, title, mimetype);
-  // Hum encodeURIComponent sirf isliye use kar rahe hain taaki transformation string break na ho
-  // Lekin Cloudinary dots aur dashes ko handle kar leta hai
-  return url.replace('/upload/', `/upload/fl_attachment:${encodeURIComponent(safeFilename)}/`);
+  
+  // Cloudinary FIX: Cloudinary transformations mein excessive encoding se 400 error aa sakta hai.
+  // Hum sirf alphanumeric, dots aur hyphens rakhenge taaki URL valid rahe.
+  const cloudSafeName = safeFilename
+    .replace(/\s+/g, '_')
+    .replace(/[^a-zA-Z0-9.-]/g, '_');
+
+  // URL ko properly transform karein
+  return url.replace('/upload/', `/upload/fl_attachment:${cloudSafeName}/`);
 };
 
 
