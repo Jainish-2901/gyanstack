@@ -328,7 +328,7 @@ export default function AdminPanel() {
                   <select className="form-select mb-3" value={type} onChange={(e) => setType(e.target.value)}>
                     <option value="note">Text Note</option>
                     <option value="link">Link (YouTube, Website)</option>
-                    <option value="file">File (PDF, PPT, DOCX, Video)</option>
+                    <option value="file">File (PDF, PPT, DOCX, Video, Images, Zip, etc.)</option>
                   </select>
                   
                   {/* Type ke hisaab se input */}
@@ -346,7 +346,7 @@ export default function AdminPanel() {
                   )}
                   {type === 'file' && (
                     <div className="mb-3">
-                      <label htmlFor="files" className="form-label fw-bold">Upload File(s) (Max 20)</label>
+                      <label htmlFor="files" className="form-label fw-bold">Upload File(s) (Any Format - Max 100MB Total)</label>
                       {/* --- BATCH UPLOAD: multiple attribute add kiya gaya --- */}
                       <input 
                         type="file" 

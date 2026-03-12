@@ -12,16 +12,13 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'gyanstack_uploads', // Cloudinary mein folder ka naam
-    allowed_formats: ['jpg', 'png', 'pdf', 'ppt', 'pptx', 'doc', 'docx', 'xls', 'xlsx', 'mp4', 'mkv'],
     
-    // FIX 1: 'auto' zaroori hai taaki ye videos, images, aur raw files (PDF/PPT) ko handle kar sake
+    // FIX 1: 'auto' zaroori hai taaki ye videos, images, aur raw files (PDF/PPT/Any) ko handle kar sake
     resource_type: 'auto', 
     
     // OPTIMIZATION: Cloudinary me upload hote hi quality optimize ho jayegi
-    // Isse images aur videos compress ho jayenge
     quality: 'auto:good',
-    width: 1920,
-    crop: 'limit'
+    // Remove width/crop/height for raw files to avoid conversion errors
   }
 });
 
