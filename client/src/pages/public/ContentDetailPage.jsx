@@ -44,14 +44,40 @@ const getIcon = (type) => {
   return 'bi-file-earmark-fill text-secondary';
 };
 
-const getSafeFilename = (url, title) => {
+const getSafeFilename = (url, title, mimetype) => {
   if (!url) return cleanTitle(title) || 'download';
   
-  // 1. Original extension nikaalein (Cloudinary URL ke end se)
+  // 1. Extension nikaalne ke multiple methods
+  let extension = '';
+  
+  // Method A: URL ke end se (e.g., .pdf, .docx)
   const urlParts = url.split('.');
-  const extension = urlParts.length > 1 ? `.${urlParts.pop().split('?')[0]}` : '';
+  if (urlParts.length > 1) {
+    extension = `.${urlParts.pop().split('?')[0]}`;
+  }
 
-  // 2. Title ko safe banayein (aur clean bhi)
+  // Method B: Agar URL me extension nahi hai, to mimetype se guess karein (Raw files ke liye)
+  if (!extension || extension.length > 5) { // extension.length > 5 handles cases where it's not a real extension
+     const mimeMap = {
+       'application/pdf': '.pdf',
+       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+       'application/msword': '.doc',
+       'application/vnd.openxmlformats-officedocument.presentationml.presentation': '.pptx',
+       'application/vnd.ms-powerpoint': '.ppt',
+       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
+       'application/vnd.ms-excel': '.xls',
+       'application/zip': '.zip',
+       'application/x-zip-compressed': '.zip',
+       'application/x-rar-compressed': '.rar',
+       'text/plain': '.txt',
+       'image/jpeg': '.jpg',
+       'image/png': '.png',
+       'video/mp4': '.mp4'
+     };
+     extension = mimeMap[mimetype] || '';
+  }
+
+  // 2. Title ko safe banayein
   const cleanTitleValue = cleanTitle(title);
   const unsafeCharsRegex = new RegExp(/[\\/\\?%*:|"<>]/g);
   let safeTitle = (cleanTitleValue || 'download').replace(unsafeCharsRegex, '-').replace(/\s+/g, '_'); 
@@ -63,9 +89,11 @@ const getSafeFilename = (url, title) => {
   return safeTitle;
 };
 
-const getDownloadUrl = (url, title) => {
+const getDownloadUrl = (url, title, mimetype) => {
   if (!url || !url.includes('/upload/')) return url;
-  const safeFilename = getSafeFilename(url, title);
+  const safeFilename = getSafeFilename(url, title, mimetype);
+  // Hum encodeURIComponent sirf isliye use kar rahe hain taaki transformation string break na ho
+  // Lekin Cloudinary dots aur dashes ko handle kar leta hai
   return url.replace('/upload/', `/upload/fl_attachment:${encodeURIComponent(safeFilename)}/`);
 };
 
@@ -246,8 +274,8 @@ export default function ContentDetailPage() {
       const { data } = await api.put(`/content/${id}/download`);
       setDownloadsCount(data.downloadsCount); 
       
-      const downloadUrl = getDownloadUrl(item.url, item.title);
-      const safeFilename = getSafeFilename(item.url, item.title);
+      const downloadUrl = getDownloadUrl(item.url, item.title, item.type);
+      const safeFilename = getSafeFilename(item.url, item.title, item.type);
       const link = document.createElement('a');
       link.href = downloadUrl;
       link.setAttribute('download', safeFilename); 
