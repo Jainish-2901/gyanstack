@@ -120,9 +120,8 @@ const DetailPreview = ({ item }) => {
   // 5. PDF Type
   if (fileType.includes('pdf')) {
     return (
-      <div>
-        <div className="ratio ratio-4x3 shadow-lg rounded">
-          {/* PDF ko embed karein */}
+      <div className="shadow-lg rounded overflow-hidden">
+        <div className="ratio ratio-4x3">
           <iframe 
             src={item.url} 
             title={item.title || "PDF document"} 
@@ -130,26 +129,33 @@ const DetailPreview = ({ item }) => {
             loading="lazy"
           ></iframe>
         </div>
-        {/* --- BUTTON YAHAN SE HATA DIYA GAYA HAI --- */}
       </div>
     );
   }
   
-  // 6. 'Raw' File Type (PPT, ZIP, etc.)
-  // Agar 'raw' hai, lekin 'link', 'note', 'image', 'video', 'pdf' nahi hai
-  if (item.fileResourceType === 'raw') {
+  // 6. Fallback for all other files (DOCX, PPTX, ZIP, etc. or unknown)
+  if (item.url && fileType !== 'note' && fileType !== 'link') {
     const iconClass = getIcon(item.type);
     return (
-      <div className="text-center p-5 bg-light rounded shadow-sm border">
-        <i className={`bi ${iconClass} display-1`}></i>
-        <h3 className='mt-3'>File (Raw)</h3>
-        <p className="lead">Is file ko preview nahi kiya ja sakta.</p>
-        {/* --- BUTTON YAHAN SE HATA DIYA GAYA HAI --- */}
+      <div className="text-center p-5 glass-panel border shadow-sm">
+        <div className="mb-4">
+          <i className={`bi ${iconClass} display-1`}></i>
+        </div>
+        <h3 className='fw-bold'>{item.title}</h3>
+        <p className="lead text-muted">This file format ({fileType.split('/').pop() || 'Unknown'}) is ready for download.</p>
+        <div className="alert alert-info d-inline-block px-4">
+          <i className="bi bi-info-circle me-2"></i> Use the download button below to access this resource.
+        </div>
       </div>
     );
   }
 
-  return <p>Cannot preview this content type.</p>;
+  return (
+    <div className="alert alert-warning text-center">
+      <i className="bi bi-exclamation-triangle-fill me-2"></i>
+      Preview is not available for this specific content.
+    </div>
+  );
 };
 
 
@@ -299,22 +305,16 @@ export default function ContentDetailPage() {
             </button>
             {/* ------------------------------------------- */}
             
-            {/* --- NAYA DOWNLOAD BUTTON (SIRF FILES KE LIYE) --- */}
-            {/* --- CHANGE: Check karne ka tareeka update kiya gaya hai --- */}
-            {(item.fileResourceType === 'image' || item.type.includes('image') ||
-              item.fileResourceType === 'video' || item.type.includes('video') ||
-              item.fileResourceType === 'raw' || item.type.includes('pdf')) && (
-                
-                <a 
-                  href={getDownloadUrl(item.url, item.title)} // 'getDownloadUrl' function ka use karein
-                  download={item.title} // 'download' attribute ab bhi rakhein (file ka naam suggest karne ke liye)
-                  rel="noopener noreferrer" 
-                  className="btn btn-lg btn-info"
-                >
-                  <i className="bi bi-download me-2"></i>
-                  Download
-                </a>
-              )}
+            {/* --- UNIVERSAL DOWNLOAD BUTTON (FOR ALL FILES) --- */}
+            {item.url && item.type !== 'note' && item.type !== 'link' && (
+              <button 
+                onClick={handleDownload}
+                className="btn btn-lg btn-info shadow-sm px-5 rounded-pill fw-bold text-white"
+              >
+                <i className="bi bi-cloud-arrow-down-fill me-2 fs-4"></i>
+                Download Now
+              </button>
+            )}
             {/* ----------------------------------------------- */}
 
           </div>
