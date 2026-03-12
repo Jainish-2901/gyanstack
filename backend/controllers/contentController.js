@@ -42,7 +42,7 @@ exports.uploadContent = async (req, res) => {
         // Har file ke liye naya document banayein
         const newContent = new Content({
           // Har file ko unique title dein (e.g., Title - File-Name-Without-Ext)
-          title: `${batchTitleBase} - ${file.originalname.split('.').slice(0, -1).join('.')}`,
+          title: batchTitleBase,
           type: file.mimetype,
           url: file.path,
           fileResourceType: file.resource_type, 

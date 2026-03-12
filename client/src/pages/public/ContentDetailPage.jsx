@@ -141,10 +141,9 @@ const DetailPreview = ({ item }) => {
         <div className="mb-4">
           <i className={`bi ${iconClass} display-1`}></i>
         </div>
-        <h3 className='fw-bold'>{item.title}</h3>
-        <p className="lead text-muted">This file format ({fileType.split('/').pop() || 'Unknown'}) is ready for download.</p>
-        <div className="alert alert-info d-inline-block px-4">
-          <i className="bi bi-info-circle me-2"></i> Use the download button below to access this resource.
+        <h3 className='fw-bold mb-3'>{item.title}</h3>
+        <div className="alert alert-info d-inline-block px-4 mb-0">
+          <i className="bi bi-info-circle me-2"></i> This resource is ready for download.
         </div>
       </div>
     );
