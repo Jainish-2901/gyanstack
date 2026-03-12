@@ -121,8 +121,8 @@ exports.getContent = async (req, res) => {
     const content = await Content.find(query, projectObj).sort(sortObj);
     res.json({ content });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
+    console.error("getContent error:", err.message);
+    res.status(500).json({ message: 'Server error (getContent): ' + err.message });
   }
 };
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 // Yeh component password field aur toggle button ko handle karta hai
-export default function PasswordInput({ label, value, onChange, required = true, isConfirm = false }) {
+export default function PasswordInput({ label, value, onChange, required = true, isConfirm = false, ...props }) {
   const [showPassword, setShowPassword] = new useState(false);
   const type = showPassword ? 'text' : 'password';
 
@@ -35,6 +35,7 @@ export default function PasswordInput({ label, value, onChange, required = true,
         value={value}
         onChange={onChange}
         required={required}
+        {...props}
       />
       <label htmlFor={id}>{label}</label>
       <button

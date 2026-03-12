@@ -53,13 +53,15 @@ export default function Login() {
 
           <form onSubmit={handleSubmit}>
             <div className="form-floating mb-3">
-              <input type="text" className="form-control" id="loginId" placeholder="Username, Email, or Phone" value={loginId} onChange={(e) => setLoginId(e.target.value)} required />
+              <input type="text" className="form-control" id="loginId" name="loginId" autoComplete="username" placeholder="Username, Email, or Phone" value={loginId} onChange={(e) => setLoginId(e.target.value)} required />
               <label htmlFor="loginId">Username, Email, or Phone</label>
             </div>
             
             <div className="mb-3">
               <PasswordInput 
                 label="Password" 
+                name="password"
+                autoComplete="current-password"
                 value={password} 
                 onChange={(e) => setPassword(e.target.value)}
                 isConfirm={true}

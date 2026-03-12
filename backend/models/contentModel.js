@@ -79,5 +79,5 @@ contentSchema.index({ createdAt: -1 });
 // Add text index for optimized search
 contentSchema.index({ title: 'text', tags: 'text', textNote: 'text' }, { weights: { title: 5, tags: 3, textNote: 1 }});
 
-const Content = mongoose.model('Content', contentSchema);
+const Content = mongoose.models.Content || mongoose.model('Content', contentSchema);
 module.exports = Content;

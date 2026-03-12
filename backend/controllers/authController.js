@@ -1,9 +1,4 @@
-// --- FIX YAHIN HAI ---
-// 'Content' model ko pehle import karein taaki Mongoose use register kar le
-require('../models/contentModel'); 
-// ---------------------
-
-const User = require('../models/userModel'); // Ab yeh line error nahi degi
+const User = require('../models/userModel'); 
 const sendEmail = require('../services/mailService');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
@@ -84,8 +79,8 @@ exports.loginUser = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
+    console.error("Login Error:", err.message);
+    res.status(500).json({ message: 'Server error (loginUser): ' + err.message });
   }
 };
 

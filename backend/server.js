@@ -8,6 +8,15 @@ const announcementRoutes = require('./routes/announcementRoutes'); // <-- NAYA I
 
 dotenv.config();
 
+// --- REGISTER ALL MODELS FIRST (To avoid MissingSchemaError) ---
+require('./models/userModel');
+require('./models/contentModel');
+require('./models/categoryModel');
+require('./models/announcementModel');
+require('./models/subscriptionModel');
+require('./models/requestModel');
+// -------------------------------------------------------------
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 

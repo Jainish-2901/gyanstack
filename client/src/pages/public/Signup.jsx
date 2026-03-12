@@ -55,21 +55,23 @@ export default function Signup() {
 
           <form onSubmit={handleSubmit}>
             <div className="form-floating mb-3">
-              <input type="text" className="form-control" id="username" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} required />
+              <input type="text" className="form-control" id="username" name="username" autoComplete="username" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} required />
               <label htmlFor="username">Username</label>
             </div>
             <div className="form-floating mb-3">
-              <input type="email" className="form-control" id="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <input type="email" className="form-control" id="email" name="email" autoComplete="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
               <label htmlFor="email">Email address</label>
             </div>
             <div className="form-floating mb-3">
-              <input type="tel" className="form-control" id="phone" placeholder="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+              <input type="tel" className="form-control" id="phone" name="phone" autoComplete="tel" placeholder="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} required />
               <label htmlFor="phone">Phone Number</label>
             </div>
             
             <div className="mb-3">
               <PasswordInput 
                 label="Password (min. 6 characters)" 
+                name="password"
+                autoComplete="new-password"
                 value={password} 
                 onChange={(e) => setPassword(e.target.value)}
               />

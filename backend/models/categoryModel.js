@@ -25,5 +25,5 @@ const categorySchema = new mongoose.Schema({
 // Ensure karein ki ek parent ke andar duplicate naam na ho
 categorySchema.index({ name: 1, parentId: 1 }, { unique: true });
 
-const Category = mongoose.model('Category', categorySchema);
+const Category = mongoose.models.Category || mongoose.model('Category', categorySchema);
 module.exports = Category;

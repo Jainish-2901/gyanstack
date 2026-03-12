@@ -72,7 +72,12 @@ const DetailPreview = ({ item }) => {
       return (
         <div>
           <div className="ratio ratio-16x9 shadow-lg rounded">
-            <iframe src={embedUrl} title={item.title} allowFullScreen></iframe>
+            <iframe 
+              src={embedUrl} 
+              title={item.title || "YouTube video player"} 
+              allowFullScreen
+              loading="lazy"
+            ></iframe>
           </div>
           <a href={item.url} target="_blank" rel="noopener noreferrer" className="btn btn-outline-danger mt-3">
             <i className="bi bi-youtube me-2"></i> Open on YouTube
@@ -118,7 +123,12 @@ const DetailPreview = ({ item }) => {
       <div>
         <div className="ratio ratio-4x3 shadow-lg rounded">
           {/* PDF ko embed karein */}
-          <iframe src={item.url} title={item.title} allow="fullscreen"></iframe>
+          <iframe 
+            src={item.url} 
+            title={item.title || "PDF document"} 
+            allow="fullscreen"
+            loading="lazy"
+          ></iframe>
         </div>
         {/* --- BUTTON YAHAN SE HATA DIYA GAYA HAI --- */}
       </div>
