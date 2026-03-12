@@ -104,13 +104,29 @@ exports.uploadContent = async (req, res) => {
 exports.getContent = async (req, res) => {
   try {
     const query = {};
-    if (req.query.categoryId) { query.categoryId = req.query.categoryId; }
+    
+    // Recursive Category Fetch Logic
+    if (req.query.categoryId) { 
+      // Helper function to get all sub-category IDs
+      const getAllChildIds = async (pId) => {
+        let childIds = [pId];
+        const subCategories = await Category.find({ parentId: pId });
+        for (const sub of subCategories) {
+          const nestedIds = await getAllChildIds(sub._id.toString());
+          childIds = childIds.concat(nestedIds);
+        }
+        return childIds;
+      };
+
+      const allCatIds = await getAllChildIds(req.query.categoryId);
+      query.categoryId = { $in: allCatIds }; 
+    }
+
     if (req.query.uploadedBy) { query.uploadedBy = req.query.uploadedBy; }
     if (req.query.search) {
       query.$text = { $search: req.query.search };
     }
     
-    // Sort by text score if search is present, else sort by creation date
     let sortObj = { createdAt: -1 };
     let projectObj = {};
     if (req.query.search) {

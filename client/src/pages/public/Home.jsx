@@ -26,7 +26,7 @@ const FeatureCard = ({ icon, title, text, colorClass }) => (
 
 // --- CATEGORIZED CONTENT COMPONENT ---
 const CategorizedContent = () => {
-  const [categories, setCategories] = useState({});
+  const [categories, setCategories] = useState([]);
   const [contentList, setContentList] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -38,18 +38,18 @@ const CategorizedContent = () => {
           api.get('/content')
         ]);
         
-        // Flatten categories to mapping for easy lookup
-        const flattenCats = (cats, acc = {}) => {
+        // Flatten categories to array for flexible lookup
+        const flattenCats = (cats, acc = []) => {
             if(!cats) return acc;
             cats.forEach(c => {
-                acc[c._id] = c.name;
+                acc.push({ _id: c._id, name: c.name, parentId: c.parentId });
                 if(c.children) flattenCats(c.children, acc);
             });
             return acc;
         };
         
-        const catMap = flattenCats(catRes.data.categories);
-        setCategories(catMap);
+        const catArray = flattenCats(catRes.data.categories);
+        setCategories(catArray);
         setContentList(contentRes.data.content);
       } catch (err) {
         console.error("Failed to fetch categorized content", err);
@@ -70,11 +70,32 @@ const CategorizedContent = () => {
     );
   }
 
-  // Group content by categoryId
+  // Group content by categoryId (including ancestors)
   const grouped = contentList.reduce((acc, item) => {
-    const catName = categories[item.categoryId] || 'Other Resources';
-    if (!acc[catName]) acc[catName] = [];
-    acc[catName].push(item);
+    // Helper function to find all ancestor names for a categoryID
+    const getAncestorNames = (catId, names = []) => {
+      const cat = categories.find(c => c._id === catId);
+      if (!cat) return names;
+      
+      names.push(cat.name);
+      
+      if (cat.parentId && cat.parentId !== 'root') {
+        return getAncestorNames(cat.parentId, names);
+      }
+      return names;
+    };
+
+    const targetNames = getAncestorNames(item.categoryId);
+    if (targetNames.length === 0) targetNames.push('Other Resources');
+
+    targetNames.forEach(name => {
+      if (!acc[name]) acc[name] = [];
+      // Prevent duplicates if an item name appears multi-level
+      if (!acc[name].find(i => i._id === item._id)) {
+        acc[name].push(item);
+      }
+    });
+
     return acc;
   }, {});
 
