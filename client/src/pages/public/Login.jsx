@@ -43,7 +43,7 @@ export default function Login() {
     <div className="container py-5 fade-in" style={{ maxWidth: '480px' }}>
       <div className="glass-panel border-0 rounded-4 overflow-hidden shadow-lg">
         <div className="card-body p-4 p-sm-5 text-center">
-          <div className="mb-4 d-inline-block p-3 rounded-circle bg-primary bg-opacity-10">
+          <div className="mb-4 d-inline-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10" style={{ width: '80px', height: '80px' }}>
             <i className="bi bi-person-workspace text-primary fs-1"></i>
           </div>
           <h2 className="card-title mb-1 fw-bold fs-2 text-primary">Welcome Back</h2>

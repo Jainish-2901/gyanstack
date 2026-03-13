@@ -42,7 +42,7 @@ export default defineConfig({
       },
       workbox: {
         // Essential for "Online First" behavior
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'], // Explicitly define patterns to avoid warnings
+        globPatterns: [], // Set to empty to avoid "One of the glob patterns doesn't match any files" warnings in Dev
         runtimeCaching: [
           {
             // Static assets (images, etc) can be cache first

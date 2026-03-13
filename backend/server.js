@@ -35,9 +35,19 @@ if (!MONGO_URI) {
   }
 }
 
-mongoose.connect(MONGO_URI, { family: 4 })
+mongoose.connect(MONGO_URI, { 
+  family: 4,
+  serverSelectionTimeoutMS: 5000, // 5 seconds ke baad timeout ho jaye agar connection nahi bante
+  socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+})
   .then(() => console.log('MongoDB connected!'))
-  .catch(err => console.error('MongoDB connection error:', err));
+  .catch(err => {
+    console.error('MongoDB connection error:', err);
+    // In production (Vercel), we might want to log this specifically for debugging
+    if (process.env.NODE_ENV === 'production') {
+      console.log('TIP: Check if your IP (or 0.0.0.0/0) is whitelisted in MongoDB Atlas.');
+    }
+  });
 
 // Test Route
 app.get('/', (req, res) => {
