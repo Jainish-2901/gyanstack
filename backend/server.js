@@ -50,7 +50,12 @@ app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/announcements', announcementRoutes); // <-- NAYA REGISTRATION
 // ---------------------------------
 
-// Server ko start karein
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+// Server ko start karein (Sirf local development ke liye zaroori hai)
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+}
+
+// Vercel deployment ke liye app ko export karna zaroori hai
+module.exports = app;
