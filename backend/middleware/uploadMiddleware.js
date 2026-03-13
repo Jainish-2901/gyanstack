@@ -2,10 +2,13 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
+const os = require('os');
+
 // Temporary uploads folder ensure karein
-const uploadDir = 'tmp_uploads';
+// Vercel like serverless environments mein sirf /tmp writable hota hai
+const uploadDir = path.join(os.tmpdir(), 'gyanstack_uploads');
 if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir);
+    fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 const storage = multer.diskStorage({
