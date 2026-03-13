@@ -26,6 +26,15 @@ if ('serviceWorker' in navigator) {
       console.log('App ready to work offline');
     },
   });
+
+  // Connection listeners
+  window.addEventListener('online', () => {
+    console.log('App is back online');
+    // You could trigger a toast here if you have a toast system
+  });
+  window.addEventListener('offline', () => {
+    console.log('App is in offline mode');
+  });
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(

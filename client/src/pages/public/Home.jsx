@@ -439,8 +439,8 @@ export default function Home() {
                   <div className="d-flex align-items-center gap-3">
                     <i className="bi bi-cloud-slash-fill fs-2 text-info"></i>
                     <div>
-                      <h6 className="fw-bold mb-0">Work Offline</h6>
-                      <small className="text-muted">No internet needed</small>
+                      <h6 className="fw-bold mb-0">Stay Updated</h6>
+                      <small className="text-muted">Internet is required</small>
                     </div>
                   </div>
                 </div>

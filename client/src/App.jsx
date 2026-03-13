@@ -7,6 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
+import OfflineNotice from './components/OfflineNotice';
 // LoadingScreen ki zaroorat nahi hai yahaan
 
 // Kyunki previous attempts fail ho chuke hain, main is baar har import se './' hata raha hoon.
@@ -27,6 +28,7 @@ import UploaderProfile from './pages/public/UploaderProfile';
 export default function App() {
   return (
     <div className="App" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}> 
+      <OfflineNotice />
       <Header />
       <PWAInstallPrompt />
       <main className="container-fluid py-4 flex-grow-1">
