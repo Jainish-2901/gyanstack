@@ -9,7 +9,8 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       devOptions: {
-        enabled: true // PWA ko dev mode mein enable kiya takki localhost pe test ho sake
+        enabled: true,
+        navigateFallbackAllowlist: [/^index.html$/] // Dev mode mein routing warning fix karne ke liye
       },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg', 'logo.png'],
       manifest: {
