@@ -8,6 +8,9 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      devOptions: {
+        enabled: true // PWA ko dev mode mein enable kiya takki localhost pe test ho sake
+      },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg', 'logo.png'],
       manifest: {
         name: 'GyanStack - BCA/MCA Resource Hub',
