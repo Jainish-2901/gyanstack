@@ -9,10 +9,17 @@ const {
   getSavedContent,
   updateUserProfile, // <-- Naya import
   changePassword,     // <-- Naya import
-  toggleSaveContent // <-- Naya import
+  toggleSaveContent, // <-- Naya import
+  getPublicStats, // <-- NAYI IMPORT
+  getPublicUserProfile, // <-- NAYI IMPORT
+  getTopUploaders // <-- NAYI IMPORT
 } = require('../controllers/authController');
 const { body } = require('express-validator');
 const authMiddleware = require('../middleware/authMiddleware');
+const upload = require('../middleware/uploadMiddleware'); // <-- Naya import
+
+// Route 0: Public Stats (GET /api/auth/stats) - Public access
+router.get('/stats', getPublicStats);
 
 // Route 1: Register (POST /api/auth/register)
 router.post(
@@ -61,6 +68,7 @@ router.get('/saved-content', authMiddleware, getSavedContent);
 router.put(
     '/update-profile', 
     authMiddleware, 
+    upload.single('profileImage'), // Handle single file upload
     [
         body('username', 'Username is required').not().isEmpty(),
         body('phone', 'Phone is required').not().isEmpty(),
@@ -82,5 +90,11 @@ router.put(
 // Route 9: Content ko Save/Unsave Karna (PUT /api/auth/save/:id)
 router.put('/save/:id', authMiddleware, toggleSaveContent);
 // ---------------------------------
+
+// Route 10: Public Uploader Profile (GET /api/auth/uploader/:id)
+router.get('/uploader/:id', getPublicUserProfile);
+
+// Route 11: Top Uploaders (GET /api/auth/top-uploaders)
+router.get('/top-uploaders', getTopUploaders);
 
 module.exports = router;

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 // --- FIX: Sahi import paths (bina .js/.jsx) ---
-import api from '../../services/api'; 
-import LoadingScreen from '../../components/LoadingScreen'; 
-import { useAuth } from '../../context/AuthContext'; 
+import api from '../../services/api';
+import LoadingScreen from '../../components/LoadingScreen';
+import { useAuth } from '../../context/AuthContext';
+import ShareButton from '../../components/ShareButton';
+import ContentCard from '../../components/ContentCard';
 // ---------------------------------------------
 
 // --- Helper Functions ---
@@ -44,20 +46,23 @@ const getIcon = (type) => {
   return 'bi-file-earmark-fill text-secondary';
 };
 
-const getDownloadUrl = (url, title) => {
+const getDownloadUrl = (item) => {
+  const { url, title, googleDriveId } = item;
   if (!url) return '#';
-  if (!url.includes('/upload/')) return url;
-  
-  // 1. Clean and simplify title (NO DOTS, alphanumeric only)
-  // Cloudinary automatically appends the correct file extension if we omit it.
-  const baseTitle = cleanTitle(title) || 'download';
-  const safeName = baseTitle
-    .trim()
-    .replace(/\s+/g, '_')
-    .replace(/[^a-zA-Z0-9_-]/g, '');
 
-  // 2. Insert transformation
-  return url.replace('/upload/', `/upload/fl_attachment:${safeName}/`);
+  // 1. Google Drive URL handled specifically
+  if (googleDriveId) {
+    return `https://drive.google.com/uc?export=download&id=${googleDriveId}`;
+  }
+
+  // 2. Legacy Cloudinary Logic
+  if (url.includes('/upload/')) {
+    const baseTitle = cleanTitle(title) || 'download';
+    const safeName = baseTitle.trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
+    return url.replace('/upload/', `/upload/fl_attachment:${safeName}/`);
+  }
+
+  return url;
 };
 
 
@@ -65,6 +70,23 @@ const getDownloadUrl = (url, title) => {
 const DetailPreview = ({ item }) => {
   const fileType = item.type || '';
   const resourceType = item.fileResourceType || 'raw';
+
+  // 0. Google Drive Preview logic
+  if (item.googleDriveId) {
+    const previewUrl = `https://drive.google.com/file/d/${item.googleDriveId}/preview`;
+    return (
+      <div className="shadow-lg rounded overflow-hidden">
+        <div className="ratio ratio-4x3" style={{ minHeight: '500px' }}>
+          <iframe 
+            src={previewUrl} 
+            title={item.title} 
+            allow="autoplay; encrypted-media" 
+            allowFullScreen
+          ></iframe>
+        </div>
+      </div>
+    );
+  }
 
   // 1. Text/Note Type
   if (fileType === 'note' || item.textNote) {
@@ -85,9 +107,9 @@ const DetailPreview = ({ item }) => {
       return (
         <div>
           <div className="ratio ratio-16x9 shadow-lg rounded">
-            <iframe 
-              src={embedUrl} 
-              title={item.title || "YouTube video player"} 
+            <iframe
+              src={embedUrl}
+              title={item.title || "YouTube video player"}
               allowFullScreen
               loading="lazy"
             ></iframe>
@@ -135,9 +157,9 @@ const DetailPreview = ({ item }) => {
     return (
       <div className="shadow-lg rounded overflow-hidden">
         <div className="ratio ratio-4x3">
-          <iframe 
-            src={item.url} 
-            title={item.title || "PDF document"} 
+          <iframe
+            src={item.url}
+            title={item.title || "PDF document"}
             allow="fullscreen"
             loading="lazy"
           ></iframe>
@@ -145,7 +167,7 @@ const DetailPreview = ({ item }) => {
       </div>
     );
   }
-  
+
   // 6. Fallback for all other files (DOCX, PPTX, ZIP, etc. or unknown)
   if (item.url && fileType !== 'note' && fileType !== 'link') {
     const iconClass = getIcon(item.type);
@@ -178,16 +200,17 @@ export default function ContentDetailPage() {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
-  
+
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
-  const [savesCount, setSavesCount] = useState(0); 
+  const [savesCount, setSavesCount] = useState(0);
   const [downloadsCount, setDownloadsCount] = useState(0);
+  const [relatedItems, setRelatedItems] = useState([]);
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -203,6 +226,19 @@ export default function ContentDetailPage() {
           setIsLiked(data.likedBy.includes(user.id));
           setIsSaved(data.savedBy && data.savedBy.includes(user.id));
         }
+        
+        // --- Fetch Related Items ---
+        try {
+          const relRes = await api.get(`/content?category=${data.categoryId}`);
+          // Filter out current item and limit to 4
+          const filtered = relRes.data.content
+            .filter(i => i._id !== id)
+            .slice(0, 4);
+          setRelatedItems(filtered);
+        } catch (relErr) {
+          console.error("Related fetch error:", relErr);
+        }
+        
       } catch (err) {
         console.error("Content fetch error:", err);
         setError('Content not found or failed to load.');
@@ -221,7 +257,7 @@ export default function ContentDetailPage() {
       setLikeCount(data.likesCount);
     } catch (err) { setError('Failed to update like status.'); }
   };
-  
+
   const handleSave = async () => {
     if (!user) { alert('Please log in to save content.'); return; }
     try {
@@ -235,21 +271,21 @@ export default function ContentDetailPage() {
     if (!user) { alert('Please log in to download content.'); return; }
     try {
       const { data } = await api.put(`/content/${id}/download`);
-      setDownloadsCount(data.downloadsCount); 
-      
-      const downloadUrl = getDownloadUrl(item.url, item.title);
-      
+      setDownloadsCount(data.downloadsCount);
+
+      const downloadUrl = getDownloadUrl(item);
+
       // Trigger download using a temporary hidden link
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.setAttribute('download', item.title || 'download'); 
+      link.setAttribute('download', item.title || 'download');
       link.setAttribute('target', '_blank');
       link.setAttribute('rel', 'noopener noreferrer');
-      
+
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
     } catch (err) {
       console.error('Download logic error', err);
       // Clean fallback
@@ -281,15 +317,20 @@ export default function ContentDetailPage() {
           </button>
 
           <h1 className="display-4 fw-bold mb-3">{cleanTitle(item.title)}</h1>
-          
+
           <div className="d-flex flex-wrap align-items-center text-muted mb-4">
-            <span className="me-3"><i className="bi bi-person-fill me-1"></i> Uploaded by: {item.uploadedBy?.username || 'Admin'}</span>
+            <span className="me-3">
+              <i className="bi bi-person-fill me-1"></i> Uploaded by: 
+              <Link to={`/uploader/${item.uploadedBy?._id}`} className="ms-1 text-primary text-decoration-none fw-bold hover-underline">
+                {item.uploadedBy?.username || 'Admin'}
+              </Link>
+            </span>
             <span className="me-3"><i className="bi bi-eye-fill me-1"></i> {item.viewsCount} Views</span>
             <span className="me-3"><i className="bi bi-heart-fill me-1"></i> {likeCount} Likes</span>
             <span className="me-3"><i className="bi bi-download me-1"></i> {downloadsCount} Downloads</span>
             <span className="me-3"><i className="bi bi-calendar-event me-1"></i> On: {new Date(item.createdAt).toLocaleDateString()}</span>
           </div>
-          
+
           <div className="mb-4">
             {item.tags?.map(tag => (
               <span key={tag} className="badge bg-secondary me-1 fs-6">{tag}</span>
@@ -299,32 +340,38 @@ export default function ContentDetailPage() {
           <div className="mb-4">
             <DetailPreview item={item} />
           </div>
-          
+
           {/* 5. Action Buttons (Like, Save & Download) */}
           <div className="d-flex gap-3 mb-5">
-            <button 
+            <button
               className={`btn btn-lg ${isLiked ? 'btn-danger' : 'btn-outline-danger'}`}
               onClick={handleLike}
               disabled={!user}
             >
-              <i className={`bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'}`}></i> 
+              <i className={`bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'}`}></i>
               {isLiked ? ' Liked' : ' Like'}
             </button>
-            
+
             {/* --- SAVE BUTTON AB API SE CONNECTED HAI --- */}
-            <button 
+            <button
               className={`btn btn-lg ${isSaved ? 'btn-success' : 'btn-outline-success'}`}
               onClick={handleSave}
               disabled={!user}
             >
-              <i className={`bi ${isSaved ? 'bi-bookmark-fill' : 'bi-bookmark'}`}></i> 
+              <i className={`bi ${isSaved ? 'bi-bookmark-fill' : 'bi-bookmark'}`}></i>
               {isSaved ? ' Saved' : ' Save'}
             </button>
             {/* ------------------------------------------- */}
             
+            <ShareButton 
+              title={item.title} 
+              url={window.location.pathname} 
+              className="btn btn-lg btn-outline-primary"
+            />
+
             {/* --- UNIVERSAL DOWNLOAD BUTTON (FOR ALL FILES) --- */}
             {item.url && item.type !== 'note' && item.type !== 'link' && (
-              <button 
+              <button
                 onClick={handleDownload}
                 className="btn btn-lg btn-info shadow-sm px-5 rounded-pill fw-bold text-white"
               >
@@ -333,8 +380,26 @@ export default function ContentDetailPage() {
               </button>
             )}
             {/* ----------------------------------------------- */}
-
           </div>
+
+          {/* 6. RELATED RESOURCES SECTION */}
+          {relatedItems.length > 0 && (
+            <div className="mt-5 pt-5 border-top">
+              <div className="d-flex align-items-center mb-4">
+                <div className="bg-primary bg-opacity-10 p-2 rounded-3 me-3">
+                  <i className="bi bi-collection-fill text-primary fs-4"></i>
+                </div>
+                <h3 className="fw-bold mb-0">Related Resources</h3>
+              </div>
+              <div className="row g-4">
+                {relatedItems.map(rel => (
+                  <div key={rel._id} className="col-6 col-md-6 col-lg-3">
+                    <ContentCard item={rel} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
         </div>
       </div>

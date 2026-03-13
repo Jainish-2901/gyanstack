@@ -1,4 +1,42 @@
-const User = require('../models/userModel'); 
+const Content = require('../models/contentModel');
+const User = require('../models/userModel');
+const cloudinary = require('cloudinary').v2;
+const fs = require('fs');
+
+// Cloudinary Configuration
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// 10. Public Statistics Lena (Home Page ke liye)
+exports.getPublicStats = async (req, res) => {
+  try {
+    const contentCount = await Content.countDocuments();
+    const studentCount = await User.countDocuments();
+    
+    // Aggregation for total views
+    const aggregationStats = await Content.aggregate([
+      { 
+        $group: { 
+          _id: null, 
+          totalViews: { $sum: '$viewsCount' }
+        } 
+      }
+    ]);
+    const totalViews = aggregationStats.length > 0 ? aggregationStats[0].totalViews : 0;
+
+    res.json({
+      contentCount: contentCount + '+',
+      studentCount: studentCount + '+',
+      viewsCount: totalViews + '+'
+    });
+  } catch (err) {
+    console.error("Public Stats Error:", err.message);
+    res.status(500).json({ message: 'Server error while fetching stats' });
+  }
+};
 const sendEmail = require('../services/mailService');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
@@ -12,7 +50,6 @@ const generateToken = (id) => {
 
 // 1. Naya User Register Karna
 exports.registerUser = async (req, res) => {
-  // (Yeh code pehle jaisa hi hai)
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -40,6 +77,7 @@ exports.registerUser = async (req, res) => {
         email: user.email,
         phone: user.phone,
         role: user.role,
+        profileImage: user.profileImage || '',
       },
     });
   } catch (err) {
@@ -50,7 +88,6 @@ exports.registerUser = async (req, res) => {
 
 // 2. User Login Karna (Username, Email, ya Phone se)
 exports.loginUser = async (req, res) => {
-  // (Yeh code pehle jaisa hi hai)
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -76,6 +113,7 @@ exports.loginUser = async (req, res) => {
         email: user.email,
         phone: user.phone,
         role: user.role,
+        profileImage: user.profileImage || '',
       },
     });
   } catch (err) {
@@ -86,7 +124,6 @@ exports.loginUser = async (req, res) => {
 
 // 3. Forgot Password (OTP Bhejna)
 exports.forgotPassword = async (req, res) => {
-  // (Yeh code pehle jaisa hi hai)
   const { email } = req.body;
   try {
     const user = await User.findOne({ email });
@@ -106,7 +143,6 @@ exports.forgotPassword = async (req, res) => {
     res.status(200).json({ message: 'OTP sent to email' });
   } catch (err) {
     console.error(err.message);
-    // OTP fields clear karein agar error aaye
     const user = await User.findOne({ email });
     if (user) {
         user.resetPasswordOtp = undefined;
@@ -119,7 +155,6 @@ exports.forgotPassword = async (req, res) => {
 
 // 4. Reset Password (OTP Verify Karke)
 exports.resetPassword = async (req, res) => {
-  // (Yeh code pehle jaisa hi hai)
   const { otp, newPassword } = req.body;
   try {
     const user = await User.findOne({
@@ -140,21 +175,30 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
-// 5. User ki Profile Lena (Login ke baad)
+// 5. User ki Profile Lena (Login ke baad/Refresh par)
 exports.getUserProfile = async (req, res) => {
-  // (Yeh code pehle jaisa hi hai)
   try {
     const user = await User.findById(req.user.id).select('-password');
-    res.json(user);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json({
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      profileImage: user.profileImage || '',
+      createdAt: user.createdAt
+    });
   } catch (err) {
-    console.error(err.message);
+    console.error("getUserProfile Error:", err.message);
     res.status(500).send('Server error');
   }
 };
 
 // 6. User ka Saved Content Lena
 exports.getSavedContent = async (req, res) => {
-  // (Yeh code pehle jaisa hi hai)
   try {
     const user = await User.findById(req.user.id).populate('savedContent');
     if (!user) {
@@ -167,25 +211,18 @@ exports.getSavedContent = async (req, res) => {
   }
 };
 
-// --- YEH NAYE FUNCTIONS HAIN ---
-
 // 7. User ki Profile Update Karna (Dashboard se)
 exports.updateUserProfile = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
-
   const { username, phone } = req.body;
-
   try {
     const user = await User.findById(req.user.id);
-
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    
-    // Check karein ki naya username/phone pehle se exist karta hai (kisi *aur* user ke liye)
     if (username !== user.username) {
         const usernameExists = await User.findOne({ username, _id: { $ne: user._id } });
         if (usernameExists) {
@@ -200,12 +237,28 @@ exports.updateUserProfile = async (req, res) => {
         }
         user.phone = phone;
     }
-
+    if (req.file) {
+        try {
+            if (user.profileImage) {
+                const parts = user.profileImage.split('/');
+                const fileName = parts[parts.length - 1].split('.')[0];
+                const publicId = `gyanstack_profiles/${fileName}`;
+                await cloudinary.uploader.destroy(publicId);
+            }
+            const result = await cloudinary.uploader.upload(req.file.path, {
+                folder: 'gyanstack_profiles',
+                width: 200,
+                height: 200,
+                crop: 'fill'
+            });
+            user.profileImage = result.secure_url;
+            if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+        } catch (uploadErr) {
+            console.error("Profile Image Upload Error:", uploadErr);
+        }
+    }
     const updatedUser = await user.save({ validateBeforeSave: false });
-    
-    // Naya (updated) user data token ke saath bhejein
     const token = generateToken(user._id);
-
     res.json({
         token,
         user: {
@@ -214,9 +267,10 @@ exports.updateUserProfile = async (req, res) => {
             email: updatedUser.email,
             phone: updatedUser.phone,
             role: updatedUser.role,
+            profileImage: updatedUser.profileImage || '',
+            createdAt: updatedUser.createdAt
         },
     });
-
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error');
@@ -229,24 +283,16 @@ exports.changePassword = async (req, res) => {
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
-  
   const { currentPassword, newPassword } = req.body;
-  
   try {
     const user = await User.findById(req.user.id);
-    
-    // Current password check karein
     const isMatch = await user.matchPassword(currentPassword);
     if (!isMatch) {
       return res.status(401).json({ message: 'Incorrect current password' });
     }
-
-    // Naya password set karein (yeh automatic hash ho jaayega)
     user.password = newPassword;
     await user.save();
-    
     res.status(200).json({ message: 'Password changed successfully' });
-    
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error');
@@ -256,50 +302,80 @@ exports.changePassword = async (req, res) => {
 // 9. Content ko Save/Unsave Karna (Bookmark Toggle)
 exports.toggleSaveContent = async (req, res) => {
   try {
-    const contentId = req.params.id; // Content ki ID
-    const userId = req.user.id; // Logged-in user ki ID
-    
-    // Content aur User dono documents ko fetch karein
+    const contentId = req.params.id;
+    const userId = req.user.id;
     const user = await User.findById(userId);
     const content = await Content.findById(contentId);
-
     if (!user || !content) {
       return res.status(404).json({ message: 'User or Content not found' });
     }
-
     const isSavedOnUser = user.savedContent.includes(contentId);
-    const isSavedOnContent = content.savedBy.includes(userId);
-
     if (isSavedOnUser) {
-      // --- UNSAVE LOGIC ---
-      // 1. User: contentId ko savedContent array se hatayein
       user.savedContent.pull(contentId);
-      
-      // 2. Content: userId ko savedBy array se hatayein aur count ghata dein
       content.savedBy.pull(userId);
       content.savesCount = Math.max(0, content.savesCount - 1);
     } else {
-      // --- SAVE LOGIC ---
-      // 1. User: contentId ko savedContent array mein jodein
       user.savedContent.push(contentId);
-      
-      // 2. Content: userId ko savedBy array mein jodein aur count badhayein
       content.savedBy.push(userId);
       content.savesCount += 1;
     }
-
-    // Dono documents ko save karein
     await user.save({ validateBeforeSave: false }); 
     await content.save();
-    
-    // Frontend ko naya status return karein
     res.status(200).json({ 
         isSaved: !isSavedOnUser,
         savesCount: content.savesCount
     });
-
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error (toggleSaveContent)');
+  }
+};
+
+// 11. Public Uploader Profile (Har koi dekh sake)
+exports.getPublicUserProfile = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const user = await User.findById(userId).select('username email phone role createdAt profileImage');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    const contents = await Content.find({ uploadedBy: userId }).sort({ createdAt: -1 });
+    res.json({ user, contents });
+  } catch (err) {
+    console.error("Public Profile Error:", err.message);
+    res.status(500).json({ message: 'Server error while fetching uploader profile' });
+  }
+};
+
+// 12. Top Uploaders Lena (Home Page ke liye)
+exports.getTopUploaders = async (req, res) => {
+  try {
+    const topUploaders = await Content.aggregate([
+      { $group: { _id: '$uploadedBy', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 6 },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'userDetails'
+        }
+      },
+      { $unwind: '$userDetails' },
+      {
+        $project: {
+          _id: 1,
+          count: 1,
+          username: '$userDetails.username',
+          profileImage: '$userDetails.profileImage',
+          role: '$userDetails.role'
+        }
+      }
+    ]);
+    res.json({ uploaders: topUploaders });
+  } catch (err) {
+    console.error("Top Uploaders Error:", err.message);
+    res.status(500).json({ message: 'Server error while fetching uploaders' });
   }
 };

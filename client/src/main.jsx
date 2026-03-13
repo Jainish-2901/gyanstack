@@ -12,6 +12,22 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 // 3. Hamari custom CSS
 import './App.css'; 
 
+// PWA: Service Worker Registration
+import { registerSW } from 'virtual:pwa-register';
+
+if ('serviceWorker' in navigator) {
+  registerSW({
+    onNeedRefresh() {
+       if (confirm('New content available. Reload?')) {
+         window.location.reload();
+       }
+    },
+    onOfflineReady() {
+      console.log('App ready to work offline');
+    },
+  });
+}
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>

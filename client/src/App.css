@@ -30,6 +30,10 @@
   --bs-border-color: rgba(255, 255, 255, 0.6);
   --bs-card-bg: var(--glass-bg);
   
+  /* Hero Section - Light */
+  --hero-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  --hero-shadow: 0 20px 40px rgba(99, 102, 241, 0.15);
+  
   /* Layout constraints */
   --nav-height: 80px;
 }
@@ -62,6 +66,11 @@
   --bs-body-color: var(--text-primary);
   --bs-border-color: rgba(255, 255, 255, 0.1);
   --bs-card-bg: rgba(15, 23, 42, 0.75);
+  
+  /* Hero Section - Dark */
+  --hero-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+  --hero-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  --bs-heading-color: var(--text-primary);
 }
 
 html, body, #root {
@@ -151,6 +160,24 @@ body {
 
 .floating {
   animation: float 6s ease-in-out infinite;
+}
+
+/* Skeleton Loader Animation */
+@keyframes skeletonPulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+.skeleton {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 0.5rem;
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+  display: block;
+}
+
+[data-bs-theme="dark"] .skeleton {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 /* Header & Navbar Options */
@@ -271,14 +298,15 @@ body {
 
 /* Home Page Hero Section */
 .hero-section {
-  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%234f46e5" fill-opacity="0.05" d="M0,160L48,165.3C96,171,192,181,288,165.3C384,149,480,107,576,101.3C672,96,768,128,864,154.7C960,181,1056,203,1152,192C1248,181,1344,139,1392,117.3L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>'), linear-gradient(135deg, rgba(79,70,229,0.9) 0%, rgba(139,92,246,0.9) 100%);
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%234f46e5" fill-opacity="0.05" d="M0,160L48,165.3C96,171,192,181,288,165.3C384,149,480,107,576,101.3C672,96,768,128,864,154.7C960,181,1056,203,1152,192C1248,181,1344,139,1392,117.3L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>'), var(--hero-gradient);
   background-size: cover;
   background-position: center bottom;
   padding: 6rem 1rem;
   border-radius: 2rem !important;
-  box-shadow: 0 20px 40px rgba(79, 70, 229, 0.2);
+  box-shadow: var(--hero-shadow);
   position: relative;
   overflow: hidden;
+  transition: background 0.5s ease, box-shadow 0.5s ease;
 }
 
 .hero-section::before {
@@ -445,6 +473,29 @@ body {
 
 [data-bs-theme="dark"] .list-group-item:hover {
   background: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Fix dark mode heading issue */
+[data-bs-theme="dark"] .text-dark {
+    color: var(--text-primary) !important;
+}
+[data-bs-theme="dark"] .text-secondary {
+    color: var(--text-secondary) !important;
+}
+[data-bs-theme="dark"] .bg-light {
+    background-color: var(--surface-color) !important;
+}
+[data-bs-theme="dark"] .form-control {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+[data-bs-theme="dark"] .form-control:focus {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+[data-bs-theme="dark"] label {
+    color: var(--text-secondary);
 }
 
 /* Process Steps */

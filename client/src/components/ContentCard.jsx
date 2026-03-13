@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import ShareButton from './ShareButton';
 
 // --- Helper Functions ---
 
@@ -134,7 +135,14 @@ export default function ContentCard({ item }) {
   // Agar file type hai, to icon class fetch karein
   const iconClass = isFileType ? getIcon(item.type) : null;
   
-  const handleLike = async () => {
+  const navigate = useNavigate();
+
+  const handleCardClick = () => {
+    navigate(`/content/${item._id}`);
+  };
+
+  const handleLike = async (e) => {
+    e.stopPropagation(); // Card click trigger na ho
     if (!user) {
       alert("Please log in to like content.");
       return;
@@ -158,15 +166,20 @@ export default function ContentCard({ item }) {
     return (
       <Link 
         to={`/content/${item._id}`} 
-        className="btn btn-primary rounded-pill px-4 shadow-sm"
+        className="btn btn-primary rounded-pill px-3 py-2 shadow-sm"
+        style={{ fontSize: '0.85rem' }}
       >
-         <i className="bi bi-box-arrow-up-right me-2"></i>View
+         <i className="bi bi-box-arrow-up-right me-1"></i>View
       </Link>
     );
   };
 
   return (
-    <div className="glass-card h-100 d-flex flex-column position-relative overflow-hidden">
+    <div 
+      className="glass-card h-100 d-flex flex-column position-relative overflow-hidden transition-all" 
+      onClick={handleCardClick}
+      style={{ cursor: 'pointer' }}
+    >
       
       {/* --- YEH SIRF NOTE/LINK KE LIYE CHALEGA --- */}
       {showPreview && <ContentPreview item={item} />}
@@ -181,8 +194,8 @@ export default function ContentCard({ item }) {
             <div className="icon-wrapper bg-light rounded-circle shadow-sm me-3 flex-shrink-0" style={{width: '50px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                <i className={`bi ${iconClass} fs-3`}></i>
             </div>
-            <div className='flex-grow-1'>
-              <h5 className="card-title fw-bold text-dark mb-1 line-clamp-1">{cleanTitle(item.title)}</h5>
+            <div className='flex-grow-1 overflow-hidden'>
+              <h5 className="card-title fw-bold text-dark mb-1" style={{ fontSize: '1rem', lineHeight: '1.3' }}>{cleanTitle(item.title)}</h5>
               <p className="card-text small text-muted mb-0">
                 <i className="bi bi-eye text-primary me-1"></i>{item.viewsCount} &nbsp;&nbsp; <i className={`bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'} me-1`}></i>{likesCount}
               </p>
@@ -190,8 +203,8 @@ export default function ContentCard({ item }) {
           </div>
         ) : (
           // Naya 'Note/Link' waala layout (bina icon)
-          <div className="mb-3">
-            <h5 className="card-title fw-bold mt-2 text-dark line-clamp-1">{cleanTitle(item.title)}</h5>
+          <div className="mb-3 overflow-hidden">
+            <h5 className="card-title fw-bold mt-2 text-dark" style={{ fontSize: '1rem', lineHeight: '1.3' }}>{cleanTitle(item.title)}</h5>
             <p className="card-text small text-muted">
                <i className="bi bi-eye text-primary me-1"></i>{item.viewsCount} &nbsp;&nbsp; <i className={`bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'} me-1`}></i>{likesCount}
             </p>
@@ -200,9 +213,9 @@ export default function ContentCard({ item }) {
         {/* ----------------------------------------------------------- */}
         
         {/* Tags */}
-        <div className="mb-4 d-flex flex-wrap gap-1">
+        <div className="mb-3 d-flex flex-wrap gap-1 overflow-hidden">
           {item.tags?.map(tag => (
-            <span key={tag} className="badge rounded-pill fw-normal" style={{backgroundColor: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)', border: '1px solid rgba(79, 70, 229, 0.2)'}}>{tag}</span>
+            <span key={tag} className="badge rounded-pill fw-normal" style={{backgroundColor: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)', border: '1px solid rgba(79, 70, 229, 0.2)', fontSize: '0.7rem'}}>{tag}</span>
           ))}
         </div>
 
@@ -212,15 +225,22 @@ export default function ContentCard({ item }) {
           {renderActionButton()}
           {/* --------------------------------------- */}
 
-          {/* TODO: Save & Like button logic */}
-          <button 
-            className={`btn btn-light rounded-circle shadow-sm ${isLiked ? 'text-danger' : 'text-muted'}`} 
-            style={{width: '40px', height: '40px', padding: 0}}
-            onClick={handleLike}
-            disabled={loading}
-          >
-            <i className={`bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'} fs-5`}></i>
-          </button>
+          <div className="d-flex gap-2" onClick={(e) => e.stopPropagation()}>
+            <ShareButton 
+              title={item.title} 
+              url={`/content/${item._id}`} 
+              className="btn btn-light rounded-circle shadow-sm text-primary d-flex align-items-center justify-content-center"
+              style={{width: '38px', height: '38px', padding: 0}}
+            />
+            <button 
+              className={`btn btn-light rounded-circle shadow-sm d-flex align-items-center justify-content-center ${isLiked ? 'text-danger' : 'text-muted'}`} 
+              style={{width: '38px', height: '38px', padding: 0}}
+              onClick={handleLike}
+              disabled={loading}
+            >
+              <i className={`bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'} fs-6`}></i>
+            </button>
+          </div>
         </div>
       </div>
     </div>

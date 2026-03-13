@@ -116,7 +116,7 @@ export default function Header() {
 
   const closeNav = () => setIsNavOpen(false);
 
-  const activeClass = ({ isActive }) => (isActive ? 'nav-link active' : 'nav-link');
+  const activeClass = ({ isActive }) => (isActive ? 'nav-link active text-nowrap' : 'nav-link text-nowrap');
 
   return (
     <nav className="navbar navbar-expand-lg border-0 fancy-header sticky-top">
@@ -125,7 +125,7 @@ export default function Header() {
         {/* --- 1. BRAND AND MOBILE ACTIONS --- */}
         <div className="d-flex align-items-center justify-content-between w-100 w-lg-auto me-lg-4">
           
-          <Link className="navbar-brand" to="/" onClick={closeNav}>
+          <Link className="navbar-brand text-nowrap" to="/" onClick={closeNav}>
             <i className="bi bi-stack me-2"></i>GyanStack
           </Link>
           
@@ -168,7 +168,13 @@ export default function Header() {
                 ) : (
                     <div className="d-flex flex-column gap-2">
                         <Link to="/dashboard" className='btn btn-light text-primary fw-bold w-100 text-start d-flex align-items-center shadow-sm py-3' onClick={closeNav}>
-                            <i className='bi bi-person-circle fs-2 me-3'></i>
+                            <div className="rounded-circle border border-primary border-2 me-3 overflow-hidden shadow-sm d-flex align-items-center justify-content-center" style={{ width: '64px', height: '64px' }}>
+                              {user.profileImage ? (
+                                <img src={user.profileImage} alt="Profile" className="w-100 h-100 object-fit-cover" />
+                              ) : (
+                                <i className='bi bi-person-circle fs-1'></i>
+                              )}
+                            </div>
                             <div className="d-flex flex-column">
                               <span className="fs-5 lh-1 mb-1">{user.username}</span>
                               <small className="text-muted fw-normal" style={{fontSize: '0.8rem'}}>My Dashboard</small>
@@ -186,7 +192,7 @@ export default function Header() {
           )}
           
           {/* --- DESKTOP User Actions (d-none d-lg-flex) --- */}
-          <div className="d-none d-lg-flex align-items-center gap-3 ms-auto"> 
+          <div className="d-none d-lg-flex align-items-center gap-3 ms-auto text-nowrap"> 
             
             <ThemeToggle /> 
             <NotificationBell user={user} />
@@ -199,12 +205,18 @@ export default function Header() {
             ) : (
               <div className="nav-item dropdown position-relative">
                 <button 
-                  className="btn btn-light text-primary py-2 px-3 d-flex align-items-center gap-2 border border-primary border-opacity-10"
+                  className="btn btn-light text-primary py-1 px-2 d-flex align-items-center gap-2 border border-primary border-opacity-10 rounded-pill"
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
                 >
-                  <i className='bi bi-person-circle fs-5'></i>
-                  <span>{user.username}</span>
-                  <i className={`bi bi-chevron-${isProfileOpen ? 'up' : 'down'} small`}></i>
+                  <div className="rounded-circle overflow-hidden shadow-sm border border-primary border-opacity-25" style={{ width: '45px', height: '45px' }}>
+                    {user.profileImage ? (
+                      <img src={user.profileImage} alt="Profile" className="w-100 h-100 object-fit-cover" />
+                    ) : (
+                      <i className='bi bi-person-circle fs-4'></i>
+                    )}
+                  </div>
+                  <span className="fw-bold pe-1 text-nowrap">{user.username}</span>
+                  <i className={`bi bi-chevron-${isProfileOpen ? 'up' : 'down'} small opacity-50 pe-1`}></i>
                 </button>
                 
                 {isProfileOpen && (

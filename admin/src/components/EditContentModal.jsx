@@ -106,9 +106,9 @@ export default function EditContentModal({ item, onClose, onUpdate, categories }
                       onChange={(e) => setFile(e.target.files[0])} 
                     />
                     <div className="form-text mt-2">
-                      Current file: <span className="text-muted">{item.url.split('/').pop()}</span>
+                      Current: <span className="text-muted">{item.googleDriveId ? 'Google Drive Resource' : item.url.split('/').pop()}</span>
                       <br/>
-                      Select a new file to replace it. Leave blank to keep the current file.
+                      Select a new file if you want to replace it.
                     </div>
                   </div>
                 )}

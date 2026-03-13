@@ -83,13 +83,13 @@ export function AuthProvider({ children }) {
 
   // --- YEH NAYE FUNCTIONS HAIN ---
 
-  // 7. Profile Update (Username/Phone)
-  const updateProfile = async (username, phone) => {
+  // 7. Profile Update (Username/Phone/ProfileImage)
+  const updateProfile = async (formData) => {
     try {
-      // API call to backend
-      const { data } = await api.put('/auth/update-profile', { username, phone });
+      // API call to backend (sending FormData)
+      const { data } = await api.put('/auth/update-profile', formData);
       
-      // Naya token aur user data save karein (taaki Header mein naam update ho)
+      // Naya token aur user data save karein (taaki Header mein naam/photo update ho)
       localStorage.setItem('token', data.token);
       setUser(data.user);
       

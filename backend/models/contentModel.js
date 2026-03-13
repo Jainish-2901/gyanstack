@@ -20,6 +20,10 @@ const contentSchema = new mongoose.Schema({
     default: 'auto' // 'auto' matlab link ya note
   },
 
+  googleDriveId: {
+    type: String,
+  },
+
   textNote: {
     type: String,
   },

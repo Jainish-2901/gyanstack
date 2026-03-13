@@ -49,12 +49,20 @@ export default function DashboardLayout({ children, isSuperAdminView = false }) 
         {/* Left Sidebar (Attractive Design) */}
         <div className="col-lg-3 col-md-4 mb-4">
           <div className="glass-card sticky-top sidebar-card overflow-hidden" style={{ top: '100px', zIndex: 1000 }}>
-            <div className="card-header border-0 bg-transparent py-3 text-center">
+            <div className="card-header border-0 bg-transparent py-4 text-center">
+              <div className="position-relative d-inline-block mb-3">
+                <div className="rounded-circle border border-primary border-2 p-1 shadow-sm overflow-hidden" style={{ width: '80px', height: '80px' }}>
+                  {user.profileImage ? (
+                    <img src={user.profileImage} alt="Profile" className="w-100 h-100 object-fit-cover rounded-circle" />
+                  ) : (
+                    <i className="bi bi-person-circle fs-1 text-primary"></i>
+                  )}
+                </div>
+              </div>
               <h5 className="mb-0 fw-bold text-primary fs-5">
-                <i className="bi bi-person-circle fs-4 d-block mb-1"></i>
                 {user.username} 
               </h5>
-              <small className="text-muted" style={{fontSize: '0.8rem'}}>{user.role.toUpperCase()} Portal</small>
+              <small className="text-muted fw-medium" style={{fontSize: '0.75rem', letterSpacing: '0.5px'}}>{user.role.toUpperCase()} PORTAL</small>
             </div>
             <div className="list-group list-group-flush pb-2">
               {menuItems.map(item => (

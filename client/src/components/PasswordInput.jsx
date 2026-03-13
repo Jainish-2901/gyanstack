@@ -26,31 +26,36 @@ export default function PasswordInput({ label, value, onChange, required = true,
   const id = label.replace(/\s/g, ''); // Generate unique ID
 
   return (
-    <div className="form-floating input-group">
-      <input
-        type={type}
-        className="form-control" 
-        id={id}
-        placeholder={label}
-        value={value}
-        onChange={onChange}
-        required={required}
-        {...props}
-      />
-      <label htmlFor={id}>{label}</label>
+    <div className="input-group mb-0">
+      <div className="form-floating flex-grow-1">
+        <input
+          type={type}
+          className="form-control border-end-0" 
+          id={id}
+          placeholder={label}
+          value={value}
+          onChange={onChange}
+          required={required}
+          {...props}
+        />
+        <label htmlFor={id}>{label}</label>
+      </div>
       <button
-        className="btn btn-outline-secondary"
+        className="btn btn-outline-secondary border-start-0 py-0"
         type="button"
+        style={{ borderRadius: '0 0.75rem 0.75rem 0', borderColor: '#dee2e6' }}
         onClick={() => setShowPassword(!showPassword)}
       >
-        <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+        <i className={`bi ${showPassword ? 'bi-eye-slash-fill' : 'bi-eye-fill'} fs-5`}></i>
       </button>
       
-      {/* Strength Indicator (Check karein ki yeh Confirm Password nahi hai) */}
+      {/* Strength Indicator */}
       {!isConfirm && strength.text && (
-        <small className={`text-${strength.color} fw-bold ms-1 w-100`}>
-          Strength: {strength.text}
-        </small>
+        <div className="w-100 text-start mt-1">
+          <small className={`text-${strength.color} fw-bold ms-1`}>
+            Strength: {strength.text}
+          </small>
+        </div>
       )}
     </div>
   );

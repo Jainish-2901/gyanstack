@@ -46,10 +46,14 @@ export default function Signup() {
   };
 
   return (
-    <div className="container fade-in" style={{ maxWidth: '450px' }}>
-      <div className="card shadow-sm border-0 rounded-3">
-        <div className="card-body p-4 p-sm-5">
-          <h2 className="card-title text-center mb-4 fw-bold fs-3">Create Account</h2>
+    <div className="container py-4 fade-in" style={{ maxWidth: '500px' }}>
+      <div className="glass-panel border-0 rounded-4 overflow-hidden shadow-lg">
+        <div className="card-body p-4 p-sm-5 text-center">
+          <div className="mb-4 d-inline-block p-3 rounded-circle bg-success bg-opacity-10">
+            <i className="bi bi-person-plus-fill text-success fs-1"></i>
+          </div>
+          <h2 className="card-title mb-1 fw-bold fs-2 text-primary">Create Account</h2>
+          <p className="text-secondary mb-4">Join our community of learners today</p>
           
           {error && <div className="alert alert-danger">{error}</div>}
 

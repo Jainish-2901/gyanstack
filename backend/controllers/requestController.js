@@ -20,8 +20,37 @@ exports.createRequest = async (req, res) => {
 // 2. Sabhi Requests Lena (Admin Only)
 exports.getRequests = async (req, res) => {
   try {
-    const requests = await Request.find({ status: 'pending' })
-      .populate('requestedBy', 'username email') // User ki details fetch karein
+    const requests = await Request.find()
+      .populate('requestedBy', 'username email phone') // User ki details fetch karein
+      .sort({ createdAt: -1 });
+    res.json({ requests });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+};
+
+// 3. Request Status Update Karna (Admin Only)
+exports.updateRequestStatus = async (req, res) => {
+  const { status } = req.body;
+  try {
+    const request = await Request.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+    if (!request) return res.status(404).json({ message: 'Request not found' });
+    res.json({ message: 'Request status updated', request });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+};
+
+// 4. User Apni Requests Lena (User Only)
+exports.getUserRequests = async (req, res) => {
+  try {
+    const requests = await Request.find({ requestedBy: req.user.id })
       .sort({ createdAt: -1 });
     res.json({ requests });
   } catch (err) {

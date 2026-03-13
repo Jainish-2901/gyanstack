@@ -6,6 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GyanStack: College Study Partner | Notes & PYQs</title>
     
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#6366f1" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="GyanStack" />
+    <link rel="apple-touch-icon" href="/pwa-192x192.png" />
+    
     <!-- ---------------------------------------------------- -->
     <!-- --- SEO & SOCIAL SHARING METATAGS (CRITICAL) --- -->
     <!-- ---------------------------------------------------- -->
@@ -32,6 +39,19 @@
 
     <!-- ---------------------------------------------------- -->
     
+    <!-- Blocking script to prevent theme flash -->
+    <script>
+      (function() {
+        try {
+          const savedTheme = localStorage.getItem('theme');
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+          document.documentElement.setAttribute('data-bs-theme', theme);
+          if (theme === 'dark') document.documentElement.classList.add('dark');
+        } catch (e) {}
+      })();
+    </script>
+
     <!-- Google Font (Inter) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

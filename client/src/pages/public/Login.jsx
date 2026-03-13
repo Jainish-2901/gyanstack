@@ -40,10 +40,14 @@ export default function Login() {
   };
 
   return (
-    <div className="container fade-in" style={{ maxWidth: '450px' }}>
-      <div className="card shadow-sm border-0 rounded-3">
-        <div className="card-body p-4 p-sm-5">
-          <h2 className="card-title text-center mb-4 fw-bold fs-3">Student Log In</h2>
+    <div className="container py-5 fade-in" style={{ maxWidth: '480px' }}>
+      <div className="glass-panel border-0 rounded-4 overflow-hidden shadow-lg">
+        <div className="card-body p-4 p-sm-5 text-center">
+          <div className="mb-4 d-inline-block p-3 rounded-circle bg-primary bg-opacity-10">
+            <i className="bi bi-person-workspace text-primary fs-1"></i>
+          </div>
+          <h2 className="card-title mb-1 fw-bold fs-2 text-primary">Welcome Back</h2>
+          <p className="text-secondary mb-4">Log in to access your study materials</p>
           
           {error && <div className="alert alert-danger">{error}</div>}
 

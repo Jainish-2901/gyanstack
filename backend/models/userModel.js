@@ -42,7 +42,11 @@ const userSchema = new mongoose.Schema({
   savedContent: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Content' // 'Content' model ka reference
-  }]
+  }],
+  profileImage: {
+    type: String,
+    default: ''
+  }
 });
 
 // Password Hash karne ke liye (automatic)

@@ -523,6 +523,43 @@ body {
 }
 
 /* Mobile responsives */
+@media (max-width: 991.98px) {
+  .fancy-header {
+    width: calc(100% - 1rem);
+    top: 0.5rem;
+    border-radius: 1rem;
+    padding: 0.5rem 0.8rem;
+  }
+}
+
+/* Fix dark mode heading issue */
+[data-bs-theme="dark"] .text-dark {
+    color: var(--text-primary) !important;
+}
+[data-bs-theme="dark"] .text-secondary {
+    color: var(--text-secondary) !important;
+}
+[data-bs-theme="dark"] .bg-light {
+    background-color: var(--surface-color) !important;
+}
+[data-bs-theme="dark"] .card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+}
+[data-bs-theme="dark"] .form-control {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+[data-bs-theme="dark"] .form-control:focus {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+[data-bs-theme="dark"] label {
+    color: var(--text-secondary);
+}
+
+/* Mobile responsives */
 @media (max-width: 768px) {
   .hero-title {
     font-size: 2.5rem;

@@ -1,15 +1,21 @@
-// Cloudinary ko import karein (file delete karne ke liye)
 const cloudinary = require('cloudinary').v2;
 const Content = require('../models/contentModel');
 const Category = require('../models/categoryModel');
 const User = require('../models/userModel'); 
+const { uploadToDrive, deleteFromDrive } = require('../utils/googleDrive');
+const fs = require('fs');
 
-// --- HELPER FUNCTION ---
-// Ye function Cloudinary URL se Public ID nikalta hai (delete karne ke liye)
+// Cloudinary Configuration
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// --- HELPER FUNCTIONS ---
 const getPublicIdFromUrl = (url) => {
+  if (!url) return null;
   try {
-    // Example URL: http://res.cloudinary.com/cloud_name/resource_type/upload/v12345/gyanstack_uploads/file_id.pdf
-    // Humein 'gyanstack_uploads/file_id' chahiye
     const parts = url.split('/');
     const folderIndex = parts.findIndex(part => part === 'gyanstack_uploads');
     if (folderIndex === -1) return null;
@@ -18,16 +24,29 @@ const getPublicIdFromUrl = (url) => {
     const publicId = publicIdWithExtension.split('.').slice(0, -1).join('.');
     return publicId;
   } catch (e) {
-    console.error("Error parsing public_id from URL:", url, e);
     return null;
   }
 };
+
+// Recursive path finder for Categories
+const getCategoryPath = async (categoryId) => {
+  if (!categoryId || categoryId === 'root') return [];
+  const path = [];
+  let currentId = categoryId;
+  
+  while (currentId && currentId !== 'root') {
+    const cat = await Category.findById(currentId);
+    if (!cat) break;
+    path.unshift(cat.name); // Add to beginning
+    currentId = cat.parentId;
+  }
+  return path;
+};
 // -----------------------
 
-// 1. Naya Content Upload Karna (Admin Only) - (FINALIZED for Batch/Single)
+// 1. Naya Content Upload Karna (Google Drive)
 exports.uploadContent = async (req, res) => {
   try {
-    // Note: req.body ke data (title, categoryId, tags) sabhi files ke liye same rahenge
     let { title, type, link, textNote, categoryId, tags } = req.body;
     
     // Sanitize title: Handle arrays or repeated strings (e.g., "Title, Title")
@@ -45,27 +64,38 @@ exports.uploadContent = async (req, res) => {
     const tagsArray = tags ? tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
     
     const uploadedItems = [];
+    let lastError = null;
     
-    // --- BATCH UPLOAD LOGIC ---
+    // --- BATCH UPLOAD (Google Drive) ---
     if (req.files && req.files.length > 0) {
-      // Scenario 1: Multiple Files (Batch Upload)
-      const batchTitleBase = title || 'Batch Upload';
-
+      // Get category path for Drive organization
+      const folderPath = await getCategoryPath(categoryId);
+      
       for (const file of req.files) {
-        // Har file ke liye naya document banayein
-        const newContent = new Content({
-          // Har file ko unique title dein (e.g., Title - File-Name-Without-Ext)
-          title: batchTitleBase,
-          type: file.mimetype,
-          url: file.path,
-          fileResourceType: file.resource_type, 
-          categoryId,
-          tags: tagsArray,
-          uploadedBy: req.user.id, 
-        });
-        uploadedItems.push(await newContent.save());
+        try {
+          const driveData = await uploadToDrive(file, folderPath);
+          const newContent = new Content({
+            title: title || file.originalname,
+            type: file.mimetype,
+            url: driveData.webViewLink,
+            googleDriveId: driveData.id,
+            fileResourceType: 'raw', 
+            categoryId,
+            tags: tagsArray,
+            uploadedBy: req.user.id, 
+          });
+          const savedItem = await newContent.save();
+          uploadedItems.push(savedItem);
+          if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+        } catch (uploadErr) {
+          console.error("Upload failed for file:", file.originalname, uploadErr);
+          lastError = uploadErr.message;
+        }
       }
       
+      if (uploadedItems.length === 0 && lastError) {
+        return res.status(400).json({ message: `Upload failed: ${lastError}` });
+      }
     } else {
       // Scenario 2: Single Item (Link or Note)
       let fileUrl = '';
@@ -96,7 +126,10 @@ exports.uploadContent = async (req, res) => {
     // --- END BATCH UPLOAD LOGIC ---
 
     if (uploadedItems.length === 0) {
-        return res.status(400).json({ message: 'No valid content or file received for upload.' });
+        console.error("No items uploaded. lastError:", lastError);
+        return res.status(400).json({ 
+          message: lastError ? `Upload failed: ${lastError}` : 'No valid content or file received for upload.' 
+        });
     }
 
     // FIX: Batch upload ke liye saaf success message
@@ -136,6 +169,17 @@ exports.getContent = async (req, res) => {
     }
 
     if (req.query.uploadedBy) { query.uploadedBy = req.query.uploadedBy; }
+    
+    // Add logic to search by uploader name if requested
+    if (req.query.uploader) {
+      const uploaderUser = await User.findOne({ 
+        username: { $regex: req.query.uploader, $options: 'i' } 
+      });
+      if (uploaderUser) {
+        query.uploadedBy = uploaderUser._id;
+      }
+    }
+
     if (req.query.search) {
       query.$text = { $search: req.query.search };
     }
@@ -236,27 +280,26 @@ exports.updateContent = async (req, res) => {
         updateData.tags = tags ? tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
     }
 
-    // --- CHANGE: FILE REPLACE LOGIC ---
-    // Check karein agar nayi file upload hui hai
+    // --- FILE REPLACE LOGIC (Cloudinary or Drive) ---
     if (req.file) {
-      // 1. Purani file ko Cloudinary se delete karein (agar wo link/note nahi tha)
-      if (content.url && content.fileResourceType !== 'auto') {
+      if (content.googleDriveId) {
+        await deleteFromDrive(content.googleDriveId);
+      } else if (content.url && content.fileResourceType !== 'auto') {
         const publicId = getPublicIdFromUrl(content.url);
         if (publicId) {
-          // 'content.fileResourceType' ka use karein (e.g., 'raw', 'video')
-          await cloudinary.uploader.destroy(publicId, { 
-            resource_type: content.fileResourceType || 'raw' 
-          });
-          console.log("Deleted old file from Cloudinary:", publicId);
+          await cloudinary.uploader.destroy(publicId, { resource_type: content.fileResourceType || 'raw' });
         }
       }
       
-      // 2. Nayi file ki details ko updateData me daalein
-      updateData.url = req.file.path;
+      const folderPath = await getCategoryPath(categoryId || content.categoryId);
+      const driveData = await uploadToDrive(req.file, folderPath);
+      updateData.url = driveData.webViewLink;
+      updateData.googleDriveId = driveData.id;
       updateData.type = req.file.mimetype;
-      updateData.fileResourceType = req.file.resource_type;
+      updateData.fileResourceType = 'raw';
+
+      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
     }
-    // --- END OF FILE REPLACE LOGIC ---
 
     content = await Content.findByIdAndUpdate(
       req.params.id,
@@ -282,23 +325,56 @@ exports.deleteContent = async (req, res) => {
       return res.status(401).json({ message: 'User not authorized' });
     }
     
-    // --- CHANGE: CLOUDINARY SE DELETE KAREIN ---
-    if (content.url && content.fileResourceType !== 'auto') { // 'auto' matlab link/note
+    // --- DELETE LOGIC (Cloudinary or Drive) ---
+    if (content.googleDriveId) {
+      await deleteFromDrive(content.googleDriveId);
+    } else if (content.url && content.fileResourceType !== 'auto') {
       const publicId = getPublicIdFromUrl(content.url);
       if (publicId) {
-        await cloudinary.uploader.destroy(publicId, { 
-          resource_type: content.fileResourceType || 'raw' 
-        });
-        console.log("Deleted from Cloudinary:", publicId);
+        await cloudinary.uploader.destroy(publicId, { resource_type: content.fileResourceType || 'raw' });
       }
     }
-    // --- END OF CLOUDINARY DELETE ---
     
     await Content.findByIdAndDelete(req.params.id);
     res.json({ message: 'Content removed' });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error');
+  }
+};
+
+// 7.1 Bulk Delete Content (Admin Only)
+exports.bulkDeleteContent = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: 'No IDs provided for bulk delete.' });
+    }
+
+    const contents = await Content.find({ _id: { $in: ids } });
+    
+    for (const content of contents) {
+      // Check authorization
+      if (content.uploadedBy.toString() !== req.user.id) continue;
+
+      // DELETE LOGIC (Same as single delete)
+      if (content.googleDriveId) {
+        await deleteFromDrive(content.googleDriveId);
+      } else if (content.url && content.fileResourceType !== 'auto') {
+        const publicId = getPublicIdFromUrl(content.url);
+        if (publicId) {
+          await cloudinary.uploader.destroy(publicId, { resource_type: content.fileResourceType || 'raw' });
+        }
+      }
+    }
+
+    // Delete from DB
+    await Content.deleteMany({ _id: { $in: ids }, uploadedBy: req.user.id });
+    
+    res.json({ message: `${ids.length} items deleted successfully.` });
+  } catch (err) {
+    console.error("Bulk Delete Error:", err.message);
+    res.status(500).json({ message: 'Server error during bulk delete.' });
   }
 };
 

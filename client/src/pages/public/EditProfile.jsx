@@ -10,6 +10,8 @@ export default function EditProfile() {
     // State
     const [username, setUsername] = useState(user?.username || '');
     const [phone, setPhone] = useState(user?.phone || '');
+    const [profileImage, setProfileImage] = useState(null);
+    const [previewUrl, setPreviewUrl] = useState(user?.profileImage || '');
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     
@@ -19,6 +21,15 @@ export default function EditProfile() {
     const [loadingProfile, setLoadingProfile] = useState(false);
     const [loadingPassword, setLoadingPassword] = useState(false);
 
+    // Handle Image Change
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setProfileImage(file);
+            setPreviewUrl(URL.createObjectURL(file));
+        }
+    };
+
     // Profile Details Update Logic
     const handleProfileSubmit = async (e) => {
         e.preventDefault();
@@ -27,7 +38,14 @@ export default function EditProfile() {
         setLoadingProfile(true);
         
         try {
-            const message = await updateProfile(username, phone);
+            const formData = new FormData();
+            formData.append('username', username);
+            formData.append('phone', phone);
+            if (profileImage) {
+                formData.append('profileImage', profileImage);
+            }
+
+            const message = await updateProfile(formData);
             setSuccess(message);
         } catch (err) {
             setError(err.message);
@@ -71,28 +89,56 @@ export default function EditProfile() {
 
                 <div className="row g-4">
                     {/* Profile Update Card */}
-                    <div className="col-md-6">
-                        <div className="card shadow-lg h-100 border-0 rounded-lg">
-                            <div className="card-header bg-light">
-                                <h4 className="card-title mb-0 fw-bold">Update Details</h4>
+                    <div className="col-lg-6">
+                        <div className="card shadow-sm h-100 border-0 rounded-4 overflow-hidden">
+                            <div className="card-header bg-primary py-3">
+                                <h4 className="card-title mb-0 fw-bold text-white"><i className="bi bi-person-gear me-2"></i>Update Details</h4>
                             </div>
                             <div className="card-body p-4">
                                 <form onSubmit={handleProfileSubmit}>
+                                    {/* Profile Image Preview & Upload */}
+                                    <div className="text-center mb-4">
+                                        <div className="position-relative d-inline-block">
+                                            <div className="bg-light rounded-circle d-flex align-items-center justify-content-center border border-primary border-3" style={{ width: '120px', height: '120px', overflow: 'hidden' }}>
+                                                {previewUrl ? (
+                                                    <img src={previewUrl} alt="Profile" className="w-100 h-100 object-fit-cover" />
+                                                ) : (
+                                                    <i className="bi bi-person text-secondary" style={{ fontSize: '4rem' }}></i>
+                                                )}
+                                            </div>
+                                            <label htmlFor="image-upload" className="position-absolute bottom-0 end-0 btn btn-primary btn-sm rounded-circle d-flex align-items-center justify-content-center" style={{ width: '32px', height: '32px' }}>
+                                                <i className="bi bi-camera-fill"></i>
+                                                <input 
+                                                    type="file" 
+                                                    id="image-upload" 
+                                                    className="d-none" 
+                                                    accept="image/*" 
+                                                    onChange={handleImageChange}
+                                                    disabled={loadingProfile}
+                                                />
+                                            </label>
+                                        </div>
+                                        <p className="small text-muted mt-2">Click the camera icon to change photo</p>
+                                    </div>
+
                                     <div className="form-floating mb-3">
-                                        <input type="text" className="form-control" id="username" value={username} onChange={(e) => setUsername(e.target.value)} disabled={loadingProfile} />
+                                        <input type="text" className="form-control" id="username" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} disabled={loadingProfile} />
                                         <label htmlFor="username">Username</label>
                                     </div>
                                     <div className="form-floating mb-3">
-                                        <input type="email" className="form-control" id="email" value={user?.email || ''} disabled={true} />
-                                        <label htmlFor="email">Email (Cannot change)</label>
+                                        <input type="email" className="form-control bg-light" id="email" value={user?.email || ''} disabled={true} />
+                                        <label htmlFor="email">Email Address</label>
                                     </div>
-                                    <div className="form-floating mb-3">
-                                        <input type="tel" className="form-control" id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} disabled={loadingProfile} />
+                                    <div className="form-floating mb-4">
+                                        <input type="tel" className="form-control" id="phone" placeholder="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} disabled={loadingProfile} />
                                         <label htmlFor="phone">Phone Number</label>
                                     </div>
-                                    <button type="submit" className="btn btn-primary w-100" disabled={loadingProfile}>
-                                        <i className="bi bi-save me-2"></i>
-                                        {loadingProfile ? 'Saving...' : 'Save Profile'}
+                                    <button type="submit" className="btn btn-primary w-100 py-3 rounded-pill fw-bold" disabled={loadingProfile}>
+                                        {loadingProfile ? (
+                                            <><span className="spinner-border spinner-border-sm me-2"></span>Saving...</>
+                                        ) : (
+                                            <><i className="bi bi-check-circle-fill me-2"></i>Save Changes</>
+                                        )}
                                     </button>
                                 </form>
                             </div>

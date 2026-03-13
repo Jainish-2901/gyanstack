@@ -17,6 +17,7 @@ import SuperAdminPanel from './pages/admin/SuperAdminPanel'; // User/Role Manage
 import AdminDashboard from './pages/admin/AdminDashboard'; // Analytics/Stats
 import EditProfile from './pages/public/EditProfile'; // Account Settings
 import AnnouncementsPage from './pages/admin/AnnouncementsPage';
+import ViewContentRequests from './pages/admin/ViewContentRequests';
 
 export default function App() {
   return (
@@ -55,6 +56,12 @@ export default function App() {
           <Route path="/admin-panel" element={
             <ProtectedRoute roles={['admin', 'superadmin']}> 
               <AdminPanel />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/dashboard/requests" element={
+            <ProtectedRoute roles={['admin', 'superadmin']}> 
+              <ViewContentRequests />
             </ProtectedRoute>
           } />
           

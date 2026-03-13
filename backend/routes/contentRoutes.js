@@ -10,7 +10,8 @@ const {
   likeContent,
   saveContent, // --- NAYA IMPORT ---
   getSavedContent,
-  trackDownload // --- NAYA IMPORT (DOWNLOAD) ---
+  trackDownload, // --- NAYA IMPORT (DOWNLOAD) ---
+  bulkDeleteContent // <-- NAYA IMPORT
 } = require('../controllers/contentController');
 const authMiddleware = require('../middleware/authMiddleware');
 const { adminMiddleware } = require('../middleware/adminMiddleware');
@@ -72,6 +73,7 @@ router.get('/:id', getSingleContent);
 router.put('/:id/like', authMiddleware, likeContent);
 router.put('/:id/save', authMiddleware, saveContent);
 router.put('/:id/download', authMiddleware, trackDownload);
+router.delete('/bulk-delete', authMiddleware, adminMiddleware, bulkDeleteContent);
 router.delete('/:id', authMiddleware, adminMiddleware, deleteContent);
 
 module.exports = router;

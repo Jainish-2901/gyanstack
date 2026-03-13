@@ -11,10 +11,18 @@ import DashboardLayout from '../../components/DashboardLayout';
 // -------------------
 
 // --- 1. HELPER COMPONENT: Content Card for Mobile View ---
-const ContentCardMobile = ({ item, categoryMap, handleEditClick, handleDelete }) => (
-    <div className="card shadow-sm mb-3 border-0 rounded-lg">
+const ContentCardMobile = ({ item, categoryMap, handleEditClick, handleDelete, isSelected, onToggleSelect }) => (
+    <div className={`card shadow-sm mb-3 border-0 rounded-lg ${isSelected ? 'border-primary shadow' : ''}`} style={isSelected ? {borderWidth: '2px', borderStyle: 'solid'} : {}}>
         <div className="card-body">
-            <div className="data-item fw-bold text-primary" data-label="Title">{item.title}</div>
+            <div className="d-flex justify-content-between align-items-start mb-2">
+                <div className="data-item fw-bold text-primary" data-label="Title">{item.title}</div>
+                <input 
+                    type="checkbox" 
+                    className="form-check-input"
+                    checked={isSelected}
+                    onChange={() => onToggleSelect(item._id)}
+                />
+            </div>
             <div className="data-item" data-label="Category">
                 {categoryMap[item.categoryId] || <span className='text-danger'>Unknown</span>}
             </div>
@@ -24,7 +32,7 @@ const ContentCardMobile = ({ item, categoryMap, handleEditClick, handleDelete })
             <div className="data-item" data-label="Views/Likes">
                 {item.viewsCount} Views / {item.likesCount} Likes
             </div>
-            <div className="card-actions">
+            <div className="card-actions mt-2">
                 <button 
                     className="btn btn-sm btn-warning me-2"
                     onClick={() => handleEditClick(item)} 
@@ -104,6 +112,10 @@ export default function AdminPanel() {
   const [loadingContent, setLoadingContent] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [currentItem, setCurrentItem] = useState(null);
+  
+  // --- NAYA STATE: Bulk Selection ---
+  const [selectedIds, setSelectedIds] = useState([]);
+  // ----------------------------------
   
   // States for Announcement
   const [annTitle, setAnnTitle] = useState('');
@@ -231,11 +243,46 @@ export default function AdminPanel() {
     if (!window.confirm('Are you sure you want to delete this content?')) return;
     try {
       await api.delete(`/content/${id}`);
+      setSelectedIds(selectedIds.filter(itemId => itemId !== id));
       fetchData(); 
     } catch (err) {
       setError('Failed to delete content.');
     }
   };
+
+  // --- NAYA: Bulk Delete Logic ---
+  const handleBulkDelete = async () => {
+    if (!selectedIds.length) return;
+    if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} items?`)) return;
+    
+    try {
+      setLoadingContent(true);
+      await api.delete('/content/bulk-delete', { data: { ids: selectedIds } });
+      setSelectedIds([]);
+      setSuccess(`${selectedIds.length} items deleted successfully.`);
+      fetchData();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Bulk delete failed.');
+      setLoadingContent(false);
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === myContent.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(myContent.map(item => item._id));
+    }
+  };
+
+  const toggleSelect = (id) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter(itemId => itemId !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
+  // -------------------------------
   
   // Edit Logic
   const handleEditClick = (item) => { setCurrentItem(item); setIsEditing(true); };
@@ -346,7 +393,7 @@ export default function AdminPanel() {
                   )}
                   {type === 'file' && (
                     <div className="mb-3">
-                      <label htmlFor="files" className="form-label fw-bold">Upload File(s) (Any Format - Max 100MB Total)</label>
+                      <label htmlFor="files" className="form-label fw-bold">Upload File(s) (Any Format - Max 1GB Total)</label>
                       {/* --- BATCH UPLOAD: multiple attribute add kiya gaya --- */}
                       <input 
                         type="file" 
@@ -413,8 +460,14 @@ export default function AdminPanel() {
         
         {/* Content Management Table */}
         <div className="card shadow-lg border-0 rounded-3 mt-4">
-          <div className="card-header">
+          <div className="card-header d-flex justify-content-between align-items-center">
             <h3 className="fw-bold mb-0">Manage Your Content</h3>
+            {selectedIds.length > 0 && (
+              <button className="btn btn-danger btn-sm shadow-sm animate-pulse" onClick={handleBulkDelete}>
+                <i className="bi bi-trash-fill me-1"></i>
+                Delete Selected ({selectedIds.length})
+              </button>
+            )}
           </div>
           <div className="card-body p-0 responsive-card-view">
             {loadingContent ? (
@@ -428,6 +481,14 @@ export default function AdminPanel() {
                   <table className="table table-striped table-hover align-middle">
                     <thead>
                       <tr>
+                        <th style={{ width: '40px' }}>
+                          <input 
+                            type="checkbox" 
+                            className="form-check-input"
+                            checked={myContent.length > 0 && selectedIds.length === myContent.length}
+                            onChange={toggleSelectAll}
+                          />
+                        </th>
                         <th>Title</th>
                         <th>Type</th>
                         <th>Category</th>
@@ -436,7 +497,15 @@ export default function AdminPanel() {
                     </thead>
                     <tbody>
                       {myContent.map(item => (
-                        <tr key={item._id}>
+                        <tr key={item._id} className={selectedIds.includes(item._id) ? 'table-primary' : ''}>
+                          <td>
+                            <input 
+                              type="checkbox" 
+                              className="form-check-input"
+                              checked={selectedIds.includes(item._id)}
+                              onChange={() => toggleSelect(item._id)}
+                            />
+                          </td>
                           <td>{item.title}</td>
                           <td><span className="badge bg-secondary">{item.type}</span></td>
                           
@@ -473,6 +542,8 @@ export default function AdminPanel() {
                         categoryMap={categoryMap}
                         handleEditClick={handleEditClick}
                         handleDelete={handleDelete}
+                        isSelected={selectedIds.includes(item._id)}
+                        onToggleSelect={toggleSelect}
                     />
                   ))}
                 </div>

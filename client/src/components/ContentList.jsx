@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 // Ab yeh MongoDB API se content fetch karega
 import api from '../services/api'; // FIX: ../services/api
 import ContentCard from './ContentCard'; // FIX: ./ContentCard (Same folder me)
-import LoadingScreen from './LoadingScreen'; // FIX: ./LoadingScreen (Same folder me)
+import { CardSkeleton } from './SkeletonLoaders';
 
 // NOTE: MERN mein content fetch karne ke liye humein CategoryId ko query parameter se bhejna padega
-export default function ContentList({ categoryId, searchTerm }) {
+export default function ContentList({ categoryId, searchTerm, uploaderName }) {
   const [content, setContent] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,11 +18,15 @@ export default function ContentList({ categoryId, searchTerm }) {
 
         // --- FIX: Logic: Agar categoryId 'root' hai, to koi filter na lagayein ---
         if (categoryId && categoryId !== 'root') {
-          // Agar koi specific category select ki gayi hai (not 'All Content')
           params.categoryId = categoryId;
-        } else if (searchTerm) {
-          // Search term hone par category filter hatayein
+        }
+        
+        if (searchTerm) {
           params.search = searchTerm;
+        }
+
+        if (uploaderName) {
+          params.uploader = uploaderName;
         }
         // --------------------------------------------------------------------------
         
@@ -36,10 +40,18 @@ export default function ContentList({ categoryId, searchTerm }) {
       setLoading(false);
     };
     fetchContent();
-  }, [categoryId, searchTerm]); // Jab bhi filter badlega, yeh dobara chalega
+  }, [categoryId, searchTerm, uploaderName]); // Jab bhi filter badlega, yeh dobara chalega
 
   if (loading) {
-    return <LoadingScreen text="Loading content..." />;
+    return (
+      <div className="row g-4">
+        {[1, 2, 3, 4, 5, 6].map(i => (
+          <div key={i} className="col-md-6 col-lg-4">
+            <CardSkeleton />
+          </div>
+        ))}
+      </div>
+    );
   }
 
   if (content.length === 0) {
@@ -47,9 +59,9 @@ export default function ContentList({ categoryId, searchTerm }) {
   }
 
   return (
-    <div className="row g-4">
+    <div className="row g-3 g-md-4">
       {content.map(item => (
-        <div key={item._id} className="col-md-6 col-lg-4">
+        <div key={item._id} className="col-6 col-md-6 col-lg-4">
           <ContentCard item={item} />
         </div>
       ))}
