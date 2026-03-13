@@ -27,8 +27,12 @@ app.use(express.json());
 // Database Connection
 const MONGO_URI = process.env.MONGO_URI; 
 if (!MONGO_URI) {
-  console.error('FATAL ERROR: MONGO_URI is not defined in .env file');
-  process.exit(1);
+  console.error('FATAL ERROR: MONGO_URI is not defined. Please add it to your environment variables (e.g., in Vercel Dashboard).');
+  // In production, we don't want to crash immediately if possible to see other logs, 
+  // but for DB connection, it's a hard requirement.
+  if (process.env.NODE_ENV === 'production') {
+    // Optional: Log more production-specific debug info here
+  }
 }
 
 mongoose.connect(MONGO_URI, { family: 4 })
