@@ -42,8 +42,7 @@ export default defineConfig({
       },
       workbox: {
         // Essential for "Online First" behavior
-        // We are removing runtimeCaching for APIs to ensure pure "Online" behavior
-        // as requested. Static assets will still be cached for performance.
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'], // Explicitly define patterns to avoid warnings
         runtimeCaching: [
           {
             // Static assets (images, etc) can be cache first

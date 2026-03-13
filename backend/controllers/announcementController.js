@@ -28,7 +28,7 @@ const sendPushNotification = async (title, body) => {
         notification: {
             title: title,
             body: body,
-            icon: "/assets/logo.png" // Frontend me ek icon hona chahiye
+            icon: "/logo.png" // Corrected path to root logo.png
         },
         // 'registration_ids' array of tokens ko target karta hai
         registration_ids: tokens 

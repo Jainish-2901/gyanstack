@@ -127,7 +127,7 @@ export default function Header() {
 
           <div className="flex-grow-1 text-nowrap">
             <Link className="navbar-brand fw-bold fs-4 text-primary text-nowrap" to="/" onClick={closeNav}>
-              <i className="bi bi-stack me-2"></i>GyanStack
+              <img src="/logo.png" alt="Logo" className="me-2" style={{ height: '35px', width: 'auto' }} />GyanStack
             </Link>
           </div>
 

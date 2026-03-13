@@ -559,12 +559,78 @@ body {
     color: var(--text-secondary);
 }
 
-/* Mobile responsives */
 @media (max-width: 768px) {
   .hero-title {
     font-size: 2.5rem;
   }
   .glass-card {
     margin-bottom: 1rem;
+  }
+}
+
+/* Extra Small Devices (435px friendly) */
+@media (max-width: 480px) {
+  .hero-section {
+    padding: 3rem 1rem;
+    border-radius: 1.5rem !important;
+  }
+
+  .hero-title {
+    font-size: 1.7rem;
+    line-height: 1.2;
+  }
+
+  .hero-section .btn-lg {
+    width: 100%;
+    margin-bottom: 0.5rem;
+    padding: 0.75rem 1rem !important;
+    font-size: 0.9rem !important;
+  }
+
+  .display-4 {
+    font-size: 2rem !important;
+  }
+
+  .display-6 {
+    font-size: 1.5rem !important;
+  }
+
+  .card-body {
+    padding: 1.25rem;
+  }
+
+  .icon-wrapper {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+  }
+
+  .container {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+  
+  /* Admin Panel specific */
+  .table-responsive {
+    font-size: 0.85rem;
+  }
+
+  .dashboard-layout .row {
+    margin-right: -0.5rem;
+    margin-left: -0.5rem;
+  }
+
+  .sidebar-card {
+    position: relative !important;
+    top: 0 !important;
+    margin-bottom: 1.5rem;
+  }
+
+  .sidebar-card .card-header {
+    display: none;
+  }
+
+  .sidebar-card .list-group-item {
+    padding-left: 1rem !important;
   }
 }

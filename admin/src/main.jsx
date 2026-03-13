@@ -12,6 +12,26 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 // 3. Hamari custom CSS
 import './App.css'; 
 
+// PWA: Service Worker Registration
+import { registerSW } from 'virtual:pwa-register';
+
+if ('serviceWorker' in navigator) {
+  registerSW({
+    onNeedRefresh() {
+       if (confirm('New admin update available. Reload?')) {
+         window.location.reload();
+       }
+    },
+    onOfflineReady() {
+      console.log('Admin App ready to work offline (Static views only)');
+    },
+  });
+
+  // Connection listeners
+  window.addEventListener('online', () => console.log('Admin back online'));
+  window.addEventListener('offline', () => console.log('Admin offline mode'));
+}
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>

@@ -126,7 +126,7 @@ export default function Header() {
         <div className="d-flex align-items-center justify-content-between w-100 w-lg-auto me-lg-4">
           
           <Link className="navbar-brand text-nowrap" to="/" onClick={closeNav}>
-            <i className="bi bi-stack me-2"></i>GyanStack
+            <img src="/logo.png" alt="Logo" className="me-2" style={{ height: '35px', width: 'auto' }} />GyanStack
           </Link>
           
           <div className="d-flex align-items-center d-lg-none gap-2">
