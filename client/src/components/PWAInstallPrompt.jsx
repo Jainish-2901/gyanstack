@@ -65,10 +65,7 @@ const PWAInstallPrompt = () => {
                     </div>
                     <div>
                         <h6 className="fw-bold mb-0">Install GyanStack App</h6>
-                        <p className="text-muted small mb-0">Faster access & Offline study.</p>
-                        <small className="text-primary fw-bold" style={{ fontSize: '0.65rem' }}>
-                            <i className="bi bi-stars me-1"></i>Coming soon to App Stores
-                        </small>
+                        <p className="text-muted small mb-0">Faster access & Online study.</p>
                     </div>
                 </div>
                 <div className="d-flex gap-2 w-100 w-sm-auto justify-content-end">

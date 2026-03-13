@@ -38,20 +38,9 @@ export default defineConfig({
       },
       workbox: {
         // Essential for "Online First" behavior
+        // We are removing runtimeCaching for APIs to ensure pure "Online" behavior
+        // as requested. Static assets will still be cached for performance.
         runtimeCaching: [
-          {
-            // API calls should always try the network first
-            urlPattern: /^https?:\/\/.*\/api\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 // 24 hours
-              },
-              networkTimeoutSeconds: 10 // Wait 10s before falling back to cache
-            }
-          },
           {
             // Static assets (images, etc) can be cache first
             urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/,
