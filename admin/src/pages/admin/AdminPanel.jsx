@@ -6,8 +6,6 @@ import LoadingScreen from '../../components/LoadingScreen'; // Sahi import path
 import EditContentModal from '../../components/EditContentModal'; // Sahi import path
 import EditAnnouncementModal from '../../components/EditAnnouncementModal'; // Sahi import path
 import CategoryManager from '../../components/CategoryManager'; // Sahi import path
-// --- NAYA IMPORT ---
-import DashboardLayout from '../../components/DashboardLayout'; 
 // -------------------
 
 // --- 1. HELPER COMPONENT: Content Card for Mobile View ---
@@ -314,7 +312,9 @@ export default function AdminPanel() {
     setSuccess('');
     try {
       await api.post('/announcements/request', { title: annTitle, content: annContent });
-      setSuccess('Announcement request submitted to Super Admin for approval!');
+      setSuccess(user.role === 'superadmin' 
+        ? 'Announcement published successfully!' 
+        : 'Announcement request submitted to Super Admin for approval!');
       setAnnTitle('');
       setAnnContent('');
       fetchData(); 
@@ -350,7 +350,7 @@ export default function AdminPanel() {
 
   return (
     // --- DASHBOARD LAYOUT MEIN WRAP KAREIN ---
-    <DashboardLayout>
+    <>
       <div className="container-fluid fade-in">
         <h3 className="fw-bold mb-4 text-primary">Admin Panel</h3>
 
@@ -560,11 +560,17 @@ export default function AdminPanel() {
               />
             </div>
 
-            {/* Request Announcement Form */}
+            {/* Conditional Announcement Form */}
             <div className="card shadow-lg border-0 rounded-3">
               <div className="card-body p-4 p-sm-5">
-                <h3 className="fw-bold mb-4 text-primary">Request Announcement</h3>
-                <p>Home page par dikhane ke liye nayi update submit karein.</p>
+                <h3 className="fw-bold mb-4 text-primary">
+                  {user.role === 'superadmin' ? 'Quick Announcement' : 'Request Announcement'}
+                </h3>
+                <p>
+                  {user.role === 'superadmin' 
+                    ? 'Directly publish updates to all students.' 
+                    : 'Home page par dikhane ke liye nayi update submit karein.'}
+                </p>
                 <form onSubmit={handleAnnouncementSubmit}>
                   <div className="form-floating mb-3">
                     <input type="text" className="form-control" id="annTitle" placeholder="Title" value={annTitle} onChange={(e) => setAnnTitle(e.target.value)} required />
@@ -574,8 +580,10 @@ export default function AdminPanel() {
                     <textarea className="form-control" id="annContent" placeholder="Content..." style={{ height: '100px' }} value={annContent} onChange={(e) => setAnnContent(e.target.value)} required></textarea>
                     <label htmlFor="annContent">Content</label>
                   </div>
-                  <button type="submit" className="btn btn-info w-100" disabled={annLoading}>
-                    {annLoading ? 'Requesting...' : 'Request for Approval'}
+                  <button type="submit" className={`btn ${user.role === 'superadmin' ? 'btn-primary' : 'btn-info'} w-100`} disabled={annLoading}>
+                    {annLoading 
+                      ? (user.role === 'superadmin' ? 'Publishing...' : 'Requesting...') 
+                      : (user.role === 'superadmin' ? 'Publish Now' : 'Request for Approval')}
                   </button>
                 </form>
               </div>
@@ -713,74 +721,76 @@ export default function AdminPanel() {
           </div>
         </div>
         
-        {/* My Announcement Requests Table */}
-        <div className="card shadow-lg border-0 rounded-3 mt-4">
-          <div className="card-header">
-            <h3 className="fw-bold mb-0">My Announcement Requests</h3>
-          </div>
-          <div className="card-body p-0 responsive-card-view">
-            {loadingAnn ? (
-              <LoadingScreen text="Loading your requests..." />
-            ) : myAnnouncements.length === 0 ? (
-              <p className='p-3'>You have not requested any announcements yet.</p>
-            ) : (
-              <>
-                {/* DESKTOP VIEW: Table */}
-                <div className="table-responsive d-none d-lg-block">
-                  <table className="table table-striped table-hover align-middle">
-                    <thead>
-                      <tr>
-                        <th>Title</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {myAnnouncements.map(item => (
-                        <tr key={item._id}>
-                          <td>{item.title}</td>
-                          <td>
-                            <span className={`badge ${
-                              item.status === 'approved' ? 'bg-success' :
-                              item.status === 'rejected' ? 'bg-danger' : 'bg-warning'
-                            }`}>{item.status}</span>
-                          </td>
-                          <td>
-                            <button 
-                              className="btn btn-sm btn-warning me-2"
-                              onClick={() => handleAnnEditClick(item)}
-                              disabled={item.status !== 'pending'} 
-                            >
-                              Edit
-                            </button>
-                            <button 
-                              className="btn btn-sm btn-danger"
-                              onClick={() => handleAnnouncementDelete(item._id)}
-                            >
-                              Delete
-                            </button>
-                          </td>
+        {/* My Announcement Requests Table (Only for Admins) */}
+        {user.role !== 'superadmin' && (
+          <div className="card shadow-lg border-0 rounded-3 mt-4">
+            <div className="card-header">
+              <h3 className="fw-bold mb-0">My Announcement Requests</h3>
+            </div>
+            <div className="card-body p-0 responsive-card-view">
+              {loadingAnn ? (
+                <LoadingScreen text="Loading your requests..." />
+              ) : myAnnouncements.length === 0 ? (
+                <p className='p-3'>You have not requested any announcements yet.</p>
+              ) : (
+                <>
+                  {/* DESKTOP VIEW: Table */}
+                  <div className="table-responsive d-none d-lg-block">
+                    <table className="table table-striped table-hover align-middle">
+                      <thead>
+                        <tr>
+                          <th>Title</th>
+                          <th>Status</th>
+                          <th>Actions</th>
                         </tr>
+                      </thead>
+                      <tbody>
+                        {myAnnouncements.map(item => (
+                          <tr key={item._id}>
+                            <td>{item.title}</td>
+                            <td>
+                              <span className={`badge ${
+                                item.status === 'approved' ? 'bg-success' :
+                                item.status === 'rejected' ? 'bg-danger' : 'bg-warning'
+                              }`}>{item.status}</span>
+                            </td>
+                            <td>
+                              <button 
+                                className="btn btn-sm btn-warning me-2"
+                                onClick={() => handleAnnEditClick(item)}
+                                disabled={item.status !== 'pending'} 
+                              >
+                                Edit
+                              </button>
+                              <button 
+                                className="btn btn-sm btn-danger"
+                                onClick={() => handleAnnouncementDelete(item._id)}
+                              >
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  {/* MOBILE VIEW: Cards */}
+                  <div className="d-lg-none p-3">
+                      {myAnnouncements.map(item => (
+                          <AnnouncementCardMobile 
+                              key={item._id} 
+                              item={item}
+                              handleAnnEditClick={handleAnnEditClick}
+                              handleAnnouncementDelete={handleAnnouncementDelete}
+                          />
                       ))}
-                    </tbody>
-                  </table>
-                </div>
-                
-                {/* MOBILE VIEW: Cards */}
-                <div className="d-lg-none p-3">
-                    {myAnnouncements.map(item => (
-                        <AnnouncementCardMobile 
-                            key={item._id} 
-                            item={item}
-                            handleAnnEditClick={handleAnnEditClick}
-                            handleAnnouncementDelete={handleAnnouncementDelete}
-                        />
-                    ))}
-                </div>
-              </>
-            )}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Modals */}
         {isEditing && currentItem && (
@@ -801,6 +811,6 @@ export default function AdminPanel() {
           />
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 }

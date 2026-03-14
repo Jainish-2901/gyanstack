@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
-import DashboardLayout from '../../components/DashboardLayout';
+// -------------------
 import LoadingScreen from '../../components/LoadingScreen';
 
 export default function ContactInquiries() {
@@ -49,7 +49,7 @@ export default function ContactInquiries() {
     if (loading) return <LoadingScreen text="Fetching inquiries..." />;
 
     return (
-        <DashboardLayout>
+        <>
             <div className="container-fluid fade-in">
                 <div className="d-flex justify-content-between align-items-center mb-4">
                     <div>
@@ -176,6 +176,6 @@ export default function ContactInquiries() {
                     transform: translateY(-5px);
                 }
             `}</style>
-        </DashboardLayout>
+        </>
     );
 }

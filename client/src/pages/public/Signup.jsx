@@ -80,7 +80,7 @@ export default function Signup() {
     <div className="container py-4 fade-in" style={{ maxWidth: '500px' }}>
       <div className="glass-panel border-0 rounded-4 overflow-hidden shadow-lg">
         <div className="card-body p-4 p-sm-5 text-center">
-          <div className="mb-4 d-inline-block p-3 rounded-circle bg-success bg-opacity-10">
+          <div className="mb-4 d-inline-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10" style={{ width: '80px', height: '80px' }}>
             <i className="bi bi-person-plus-fill text-success fs-1"></i>
           </div>
           <h2 className="card-title mb-1 fw-bold fs-2 text-primary">Create Account</h2>

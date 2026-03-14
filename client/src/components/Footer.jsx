@@ -5,7 +5,9 @@ export default function Footer() {
   const socialLinks = {
     linkedin: 'jainish-dabgar-87474a320',
     github: 'Jainish-2901',
-    whatsapp: '+919773272749'
+    whatsapp: '+919773272749',
+    instagram: 'dabgar_jainish_2901',
+    phone: '+919773272749'
   };
 
   return (
@@ -57,6 +59,12 @@ export default function Footer() {
               </a>
               <a href={`https://wa.me/${socialLinks.whatsapp}`} target="_blank" rel="noopener noreferrer" className="social-link" title="WhatsApp">
                 <i className="bi bi-whatsapp fs-5"></i>
+              </a>
+              <a href={`https://instagram.com/${socialLinks.instagram}`} target="_blank" rel="noopener noreferrer" className="social-link" title="Instagram">
+                <i className="bi bi-instagram fs-5"></i>
+              </a>
+              <a href={`tel:${socialLinks.phone}`} className="social-link" title="Call Now">
+                <i className="bi bi-telephone-fill fs-5"></i>
               </a>
             </div>
           </div>

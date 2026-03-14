@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api'; // FIX: Absolute path (assuming src root)
 import LoadingScreen from '../../components/LoadingScreen'; // FIX: Absolute path
-import DashboardLayout from '../../components/DashboardLayout'; // <-- Layout Import
 import { Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -116,7 +115,7 @@ export default function AdminDashboard() {
 
   // --- DASHBOARD LAYOUT MEIN WRAP KAREIN ---
   return (
-    <DashboardLayout>
+    <>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h3 className="fw-bold text-primary mb-0">
           Analytics Dashboard
@@ -196,6 +195,6 @@ export default function AdminDashboard() {
         </div>
       )}
 
-    </DashboardLayout>
+    </>
   );
 }

@@ -1,16 +1,19 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const Groq = require('groq-sdk');
 const Content = require('../models/contentModel');
 const Category = require('../models/categoryModel');
+const Request = require('../models/requestModel');
 
-// Initialize Gemini
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+// Initialize Groq
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY || ''
+});
 
 exports.getAiResponse = async (req, res) => {
   try {
     const { message, chatHistory } = req.body;
-    
-    if (!process.env.GEMINI_API_KEY) {
-      return res.status(500).json({ message: 'Gemini API Key is missing in backend .env' });
+
+    if (!process.env.GROQ_API_KEY) {
+      return res.status(500).json({ message: 'Groq API Key (GROQ_API_KEY) is missing in backend .env' });
     }
 
     // 1. Fetch some context from DB to make AI "GyanStack Aware"
@@ -18,78 +21,125 @@ exports.getAiResponse = async (req, res) => {
     const recentUploads = await Content.find()
       .sort({ createdAt: -1 })
       .limit(10)
-      .select('title type');
+      .select('title type _id');
 
     const categoryNames = categories.map(c => c.name).join(', ');
-    const uploadSummary = recentUploads.map(r => `${r.title} (${r.type})`).join(', ');
+    const uploadSummary = recentUploads.map(r => `${r.title} (Type: ${r.type}, Link: /content/${r._id})`).join(' | ');
 
     const systemInstruction = `
-      You are "GyanStack AI Assistant", a friendly and premium academic guide for GyanStack - an educational resource hub for BCA, MCA, and other college students.
+      You are "GyanStack AI Assistant", a friendly academic guide for GyanStack - an educational platform for sharing study materials.
       
-      GyanStack currently has these categories: ${categoryNames}.
-      Some recent documents available are: ${uploadSummary}.
-      
+      STRICT DATA RULES:
+      1. ONLY mention these categories as available: ${categoryNames}.
+      2. ONLY mention these documents as available: ${uploadSummary}.
+      3. LINKING: When mentioning a document from the list above, you MUST provide a markdown link. Example: [SQL Solutions](/content/123).
+      4. If a user asks for something NOT listed above, tell them it is currently unavailable. 
+      5. IMPORTANT - TOOL USE: You must only call 'submit_content_request' if the user EXPLICITLY asks you to "make a request", "submit a request", or "please file a request for this". Do NOT call it just because content is missing. Ask them first: "Would you like me to submit a formal request for this?"
+      6. Handle users with care and professionalism.
+
       Your goals:
-      1. Help users find documents. If they ask for something specific, check if it matches our categories or recent uploads.
-      2. If you don't find a direct match, suggest they use the search bar or ask for a specific topic.
-      3. Provide helpful study suggestions (e.g., how to prepare for exams, importance of PYQs).
-      4. Keep responses concise, professional, and encouraging.
-      5. Use Markdown for formatting.
-      6. If they ask for content not on GyanStack, kindly explain that you are a GyanStack specialist but can give general study advice.
+      1. Help users find relevant documents from the available list.
+      2. Suggest effective study strategies (concise and professional).
+      3. Encourage users to upload their own notes to help the GyanStack community.
+      4. Ensure all shared links use the markdown [Title](URL) format. 
+      5. CONFIRMATION FORMAT: When you successfully submit a request, you MUST show the summary in this EXACT format:
+         Topic: [The Topic Name]
+         Message: [The Message Details]
     `;
 
-    // Initialize Model
-    // Note: If systemInstruction causes issues, we can move it to the prompt
-    // 4. Try Model Strategy
-    // REFACTORED: We found that 'gemini-1.5-flash' returns 404 for this key/region.
-    // 'gemini-flash-latest' is confirmed working.
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-flash-latest"
+    // 2. Define Tools for Groq
+    const tools = [
+      {
+        type: "function",
+        function: {
+          name: "submit_content_request",
+          description: "Submits a formal request for specific academic content (notes, videos, etc.) on behalf of the user.",
+          parameters: {
+            type: "object",
+            properties: {
+              topic: { type: "string", description: "The title or subject of the requested content (e.g. 'BCA Sem 4 SQL Notes')" },
+              message: { type: "string", description: "A brief reason or additional details for the request." }
+            },
+            required: ["topic"]
+          }
+        }
+      }
+    ];
+
+    let messages = [
+      { role: "system", content: systemInstruction },
+      ...(chatHistory || []).map(item => ({
+        role: item.role === 'assistant' ? 'assistant' : 'user',
+        content: item.content
+      })),
+      { role: "user", content: message }
+    ];
+
+    // 3. Get Completion with Tools from Groq
+    const chatCompletion = await groq.chat.completions.create({
+      messages: messages,
+      model: "llama-3.1-8b-instant",
+      tools: tools,
+      tool_choice: "auto",
+      temperature: 0.7,
+      max_tokens: 1024,
     });
 
-    // Prepend system instruction to the actual user message
-    const enrichedMessage = `[SYSTEM INSTRUCTION: ${systemInstruction.replace(/\n/g, ' ')}]\n\nUser Message: ${message}`;
+    const responseMsg = chatCompletion.choices[0].message;
 
-    // Handle history - Gemini strictly requires:
-    // 1. History must start with 'user'
-    // 2. Roles must alternate [user, model, user, model...]
-    // 3. History block must end with 'model' (since the current message is 'user')
-    const rawHistory = (chatHistory || []).map(item => ({
-        role: (item.role === 'user' || item.role === 'User') ? 'user' : 'model',
-        parts: [{ text: item.content }],
-    }));
+    // 4. Handle Tool Calls
+    if (responseMsg.tool_calls) {
+      const toolCall = responseMsg.tool_calls[0];
+      if (toolCall.function.name === 'submit_content_request') {
+        
+        // CHECK LOGIN STATUS
+        if (!req.user) {
+          return res.json({ 
+            reply: "I'd really like to help you with that request, but you need to be logged in first! Please log in so I can submit this for you. 🛡️" 
+          });
+        }
 
-    let cleanHistory = [];
-    let nextExpectedRole = 'user';
+        const args = JSON.parse(toolCall.function.arguments);
+        
+        try {
+          const newRequest = new Request({
+            topic: args.topic,
+            message: args.message || `Requested via AI Assistant: ${message}`,
+            requestedBy: req.user._id,
+          });
+          await newRequest.save();
 
-    for (const item of rawHistory) {
-      if (item.role === nextExpectedRole) {
-        cleanHistory.push(item);
-        nextExpectedRole = nextExpectedRole === 'user' ? 'model' : 'user';
+          // Add tool result to conversation and get final AI response
+          messages.push(responseMsg);
+          messages.push({
+            tool_call_id: toolCall.id,
+            role: "tool",
+            name: "submit_content_request",
+            content: `SUCCESS: Your request has been submitted. Summary - Topic: ${args.topic}${args.message ? `, Message: ${args.message}` : ''}`
+          });
+
+          // Final follow-up completion
+          const finalCompletion = await groq.chat.completions.create({
+            messages: messages,
+            model: "llama-3.1-8b-instant",
+          });
+
+          return res.json({ reply: finalCompletion.choices[0].message.content });
+
+        } catch (dbErr) {
+          console.error("DB Request Error:", dbErr);
+          return res.status(500).json({ message: "I tried to submit your request but hit a technical snag. Please try the manual request form." });
+        }
       }
     }
 
-    // Ensure it ends with 'model' so the current 'sendMessage(user)' alternates correctly
-    while (cleanHistory.length > 0 && cleanHistory[cleanHistory.length - 1].role !== 'model') {
-      cleanHistory.pop();
-    }
-
-    const chat = model.startChat({
-      history: cleanHistory,
-    });
-
-    const result = await chat.sendMessage(enrichedMessage);
-    const response = await result.response;
-    const text = response.text();
-
-    return res.json({ reply: text });
+    return res.json({ reply: responseMsg.content });
 
   } catch (err) {
-    console.error("AI Error:", err.message);
-    // Specialized error for Quota issues
+    console.error("Groq Tool Error:", err.message);
     if (err.message?.includes('429')) {
-        return res.status(429).json({ message: 'AI is a bit busy (Rate Limit). Please wait a few seconds and try again.' });
+      return res.status(429).json({ message: 'AI is a bit busy. Please wait a few seconds.' });
     }
-    res.status(500).json({ message: 'AI Assistant is currently unavailable. ' + err.message });
+    res.status(500).json({ message: 'AI Assistant encountered an error.' });
   }
 };

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api'; 
-import DashboardLayout from '../../components/DashboardLayout'; 
+// DashboardLayout removed
 
 // Main content component (Student specific)
 const StudentDashboardView = ({ user, requests, fetching }) => (
@@ -63,8 +63,9 @@ const StudentDashboardView = ({ user, requests, fetching }) => (
              style={{ background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)' }}>
           <div className="card-body p-4 text-white d-flex flex-column flex-md-row align-items-center justify-content-between">
             <div className="d-flex align-items-center mb-3 mb-md-0">
-               <div className="bg-white bg-opacity-20 rounded-circle p-3 me-3">
-                 <i className="bi bi-robot fs-1"></i>
+               <div className="bg-white rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" 
+                    style={{ width: '70px', height: '70px', flexShrink: 0 }}>
+                 <i className="bi bi-robot fs-1 text-primary"></i>
                </div>
                <div>
                  <h4 className="fw-bold mb-1">Meet your AI Study Buddy</h4>
@@ -160,8 +161,6 @@ export default function Dashboard() {
   if (loading || !user) return null; 
   
   return (
-    <DashboardLayout>
-      <StudentDashboardView user={user} requests={requests} fetching={fetching} />
-    </DashboardLayout>
+    <StudentDashboardView user={user} requests={requests} fetching={fetching} />
   );
 }

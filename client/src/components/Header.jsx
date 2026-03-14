@@ -2,98 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ThemeToggle from './ThemeToggle'; 
-import api from '../services/api'; 
+import NotificationBell from './NotificationBell';
 
-const NotificationBell = ({ user }) => {
-  const [announcements, setAnnouncements] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    if (!user) return;
-    const fetchAnnouncements = async () => {
-      setLoading(true);
-      try {
-        const { data } = await api.get('/announcements?status=approved&limit=5'); 
-        const lastSeenId = localStorage.getItem('lastSeenAnnId');
-        
-        const items = data.announcements.map((ann) => ({
-          ...ann,
-          isRead: lastSeenId ? (ann._id <= lastSeenId) : false, 
-        }));
-        
-        setAnnouncements(items);
-        // Count how many are strictly newer than lastSeenId
-        const unread = items.filter(i => !lastSeenId || i._id > lastSeenId).length;
-        setUnreadCount(unread);
-      } catch (err) {
-        console.error("Failed to fetch announcements:", err);
-        setUnreadCount(0);
-      }
-      setLoading(false);
-    };
-    fetchAnnouncements();
-  }, [user]);
-
-  const toggleDropdown = (e) => {
-    e.preventDefault();
-    setIsOpen(!isOpen);
-    
-    // When opening the dropdown, mark everything as read and persist the latest ID
-    if (!isOpen && announcements.length > 0) {
-      const latestId = announcements[0]._id;
-      localStorage.setItem('lastSeenAnnId', latestId);
-      
-      const updatedAnn = announcements.map(ann => ({ ...ann, isRead: true }));
-      setUnreadCount(0);
-      setAnnouncements(updatedAnn);
-    }
-  };
-
-  if (!user) return null; 
-
-  return (
-    <div className="nav-item dropdown notification-dropdown list-unstyled position-relative">
-      <a 
-        className="nav-link p-2" 
-        href="#" 
-        onClick={toggleDropdown}
-      >
-        <i className="bi bi-bell-fill fs-5 position-relative text-primary"></i>
-        {unreadCount > 0 && (
-          <span className="position-absolute translate-middle badge rounded-pill bg-danger" style={{ top: '8px', right: '0px' }}>
-            {unreadCount}
-          </span>
-        )}
-      </a>
-      
-      {isOpen && (
-        <ul className="dropdown-menu dropdown-menu-end shadow-lg show position-absolute glass-panel border-0" style={{ minWidth: '320px', maxHeight: '400px', overflowY: 'auto', right: 0, top: '120%', zIndex: 1050 }}>
-          <li className='dropdown-header fw-bold border-bottom d-flex justify-content-between align-items-center bg-transparent'>
-            <span className="text-primary">Announcements ({unreadCount} New)</span>
-            <button className="btn-close" style={{fontSize: '0.6rem'}} onClick={() => setIsOpen(false)}></button>
-          </li>
-          
-          {loading && <li className='dropdown-item text-center my-3 bg-transparent'><span className="spinner-border spinner-border-sm me-2 text-primary"></span><span className="text-muted">Loading...</span></li>}
-          {announcements.length === 0 && !loading && <li className='dropdown-item text-muted small my-3 text-center bg-transparent'>No recent announcements.</li>}
-
-          {announcements.map((ann, index) => (
-            <li key={index} >
-              <Link onClick={() => setIsOpen(false)} to="/announcements" className="dropdown-item py-2 border-bottom" style={{ cursor: 'pointer', whiteSpace: 'normal' }}>
-                <span className={`d-block small ${!ann.isRead ? 'fw-bold text-primary' : 'text-muted'}`}>{ann.title}</span>
-                <small className='d-block fst-italic text-secondary mt-1' style={{fontSize: '0.75rem'}}>
-                  {ann.isRead ? 'Read' : 'New Update'} - {new Date(ann.createdAt).toLocaleDateString()}
-                </small>
-              </Link>
-            </li>
-          ))}
-          <li><Link onClick={() => setIsOpen(false)} className="dropdown-item text-center small text-primary fw-bold py-3 bg-transparent" to="/announcements">View All Notifications</Link></li>
-        </ul>
-      )}
-    </div>
-  );
-};
+// NotificationBell component removed from here
 
 
 export default function Header() {
@@ -108,6 +19,18 @@ export default function Header() {
     setIsProfileOpen(false);
   }, [location.pathname]);
 
+  // Fix for background scroll when mobile nav is open
+  useEffect(() => {
+    if (isNavOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isNavOpen]);
+
   const handleLogout = () => {
     setIsNavOpen(false);
     setIsProfileOpen(false);
@@ -120,6 +43,14 @@ export default function Header() {
 
   return (
     <nav className="navbar navbar-expand-lg border-0 fancy-header sticky-top">
+      {/* Sidebar Overlay for Mobile (<= 490px) */}
+      {isNavOpen && (
+        <div 
+          className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-lg-none" 
+          style={{ zIndex: 1999 }}
+          onClick={() => setIsNavOpen(false)}
+        ></div>
+      )}
       <div className="container-fluid">
         
         {/* --- 1. BRAND AND MOBILE ACTIONS --- */}
@@ -133,7 +64,7 @@ export default function Header() {
             <ThemeToggle /> 
             <NotificationBell user={user} />
             <button 
-                className="navbar-toggler border-0 shadow-none p-0 ms-2" 
+                className="navbar-toggler border-0 shadow-none p-0 ms-1" 
                 type="button" 
                 onClick={() => setIsNavOpen(!isNavOpen)}
                 aria-expanded={isNavOpen}
@@ -144,6 +75,36 @@ export default function Header() {
         </div>
         
         <div className={`navbar-collapse ${isNavOpen ? 'show mt-3 border-top pt-3' : 'collapse'}`} id="navbarNav">
+          {/* Close button for Sidebar (<= 490px) */}
+          <div className="d-flex d-lg-none justify-content-between align-items-center mb-4 border-bottom pb-3">
+             <div className="navbar-brand text-primary fw-bold">Menu</div>
+             <button className="btn btn-link text-primary p-0" onClick={() => setIsNavOpen(false)}>
+               <i className="bi bi-x-lg fs-4"></i>
+             </button>
+          </div>
+
+          {!user ? null : (
+            <div className="d-lg-none mb-4 p-3 glass-panel rounded-4 border-primary border-opacity-10 shadow-sm">
+               <div className="d-flex align-items-center mb-3">
+                  <div className="rounded-circle border border-primary border-2 me-3 overflow-hidden shadow-sm d-flex align-items-center justify-content-center bg-primary" style={{ width: '50px', height: '50px' }}>
+                    {user.profileImage ? (
+                      <img src={user.profileImage} alt="Profile" className="w-100 h-100 object-fit-cover" />
+                    ) : (
+                      <span className="text-white fs-4 fw-bold">{user.username.charAt(0).toUpperCase()}</span>
+                    )}
+                  </div>
+                  <div className="d-flex flex-column overflow-hidden">
+                    <span className="fs-6 fw-bold text-primary text-truncate">{user.username}</span>
+                    <small className="text-muted text-uppercase" style={{fontSize: '0.65rem'}}>{user.role}</small>
+                  </div>
+               </div>
+               <Link to="/dashboard" className="btn btn-primary w-100 rounded-pill py-2 fw-bold shadow-sm" onClick={() => setIsNavOpen(false)}>
+                  <i className="bi bi-grid-fill me-2"></i>
+                  Go to Dashboard
+               </Link>
+            </div>
+          )}
+
           {/* Main Navigation Links */}
           <ul className="navbar-nav me-auto mb-2 mb-lg-0 gap-lg-1"> 
             <li className="nav-item">
@@ -158,39 +119,29 @@ export default function Header() {
             <li className="nav-item">
               <NavLink className={activeClass} to="/contact" onClick={closeNav}>Contact</NavLink>
             </li>
+            {user && (
+              <li className="nav-item d-lg-none">
+                <Link to="/settings" className="nav-link text-muted" onClick={closeNav}>
+                  <i className="bi bi-gear-fill me-2"></i> Profile Settings
+                </Link>
+              </li>
+            )}
+             {user && (
+              <li className="nav-item d-lg-none">
+                <button className="nav-link text-danger border-0 bg-transparent w-100 text-start" onClick={handleLogout}>
+                  <i className="bi bi-box-arrow-right me-2"></i> Logout
+                </button>
+              </li>
+            )}
           </ul>
           
-          {/* --- MOBILE PROFILE ACTIONS (d-lg-none) --- */}
-          {isNavOpen && (
+          {/* --- MOBILE LOGIN/SIGNUP (d-lg-none) --- */}
+          {!user && isNavOpen && (
             <div className="d-lg-none border-top mt-2 pt-3 border-opacity-25 pb-2">
-                {!user ? ( 
-                    <div className='d-flex flex-column gap-2'>
-                        <Link className="btn btn-outline-primary fw-bold w-100 py-2" to="/login" onClick={closeNav}>Login</Link>
-                        <Link className="btn btn-primary fw-bold w-100 shadow-sm py-2" to="/signup" onClick={closeNav}>Sign Up</Link>
-                    </div>
-                ) : (
-                    <div className="d-flex flex-column gap-2">
-                        <Link to="/dashboard" className='btn btn-light text-primary fw-bold w-100 text-start d-flex align-items-center shadow-sm py-3' onClick={closeNav}>
-                            <div className="rounded-circle border border-primary border-2 me-3 overflow-hidden shadow-sm d-flex align-items-center justify-content-center bg-primary" style={{ width: '64px', height: '64px' }}>
-                              {user.profileImage ? (
-                                <img src={user.profileImage} alt="Profile" className="w-100 h-100 object-fit-cover" />
-                              ) : (
-                                <span className="text-white fs-2 fw-bold">{user.username.charAt(0).toUpperCase()}</span>
-                              )}
-                            </div>
-                            <div className="d-flex flex-column">
-                              <span className="fs-5 lh-1 mb-1">{user.username}</span>
-                              <small className="text-muted fw-normal" style={{fontSize: '0.8rem'}}>My Dashboard</small>
-                            </div>
-                        </Link>
-                        
-                        <Link to="/settings" className='btn btn-link text-muted text-start mt-3 text-decoration-none fw-medium p-0' onClick={closeNav}><i className="bi bi-gear-fill me-2"></i> Profile Settings</Link>
-                        
-                        <button className="btn btn-danger fw-bold mt-4 d-flex align-items-center justify-content-center py-2 shadow-sm rounded-pill" onClick={handleLogout}>
-                            <i className='bi bi-box-arrow-right fs-5 me-2'></i> LOGOUT
-                        </button>
-                    </div>
-                )}
+                <div className='d-flex flex-column gap-2'>
+                    <Link className="btn btn-outline-primary fw-bold w-100 py-2" to="/login" onClick={closeNav}>Login</Link>
+                    <Link className="btn btn-primary fw-bold w-100 shadow-sm py-2" to="/signup" onClick={closeNav}>Sign Up</Link>
+                </div>
             </div>
           )}
           

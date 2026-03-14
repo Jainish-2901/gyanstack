@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../services/api'; 
 import LoadingScreen from '../../components/LoadingScreen'; 
 import { useAuth } from '../../context/AuthContext'; 
-import DashboardLayout from '../../components/DashboardLayout';
+// -------------------
 
 // Announcement Item Card Component
 const AnnouncementItem = ({ ann }) => {
@@ -60,7 +60,7 @@ export default function AnnouncementsPage() {
   if (loading) return <LoadingScreen text="Fetching all announcements..." />;
   
   return (
-    <DashboardLayout>
+    <>
         <div className="container-fluid fade-in">
         <h3 className="fw-bold mb-4 text-primary">
             System Announcements
@@ -83,6 +83,6 @@ export default function AnnouncementsPage() {
             </div>
         )}
         </div>
-    </DashboardLayout>
+    </>
   );
 }

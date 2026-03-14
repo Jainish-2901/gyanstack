@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import LoadingScreen from '../../components/LoadingScreen';
-import DashboardLayout from '../../components/DashboardLayout';
+// -------------------
 
 export default function ViewContentRequests() {
   const [requests, setRequests] = useState([]);
@@ -42,7 +42,7 @@ export default function ViewContentRequests() {
   if (loading) return <LoadingScreen text="Fetching user requests..." />;
 
   return (
-    <DashboardLayout>
+    <>
       <div className="container-fluid animate-fade-in">
         <div className="d-flex justify-content-between align-items-center mb-4">
           <div>
@@ -144,6 +144,6 @@ export default function ViewContentRequests() {
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 }

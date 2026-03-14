@@ -33,7 +33,7 @@ export default function Login() {
         await requestForToken();
 
         if (role === 'superadmin') {
-            navigate('/super-admin-panel');
+            navigate('/dashboard/admin'); // Both go to admin analytics overview
         } else {
             navigate('/dashboard/admin');
         }

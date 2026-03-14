@@ -5,18 +5,27 @@ import LoadingScreen from './LoadingScreen'; // FIX: ./LoadingScreen (Same folde
 
 // Yeh ek recursive component hai jo categories aur sub-categories dikhayega
 function CategoryItem({ category, onSelect, activeCategoryId }) {
-  // FIX 2: Default Open State -> Ab yeh hamesha 'true' rahega (Browse Page ke liye)
-  const [isOpen, setIsOpen] = useState(true); 
+  // FIX: Start with categories collapsed by default for a cleaner UI
+  const [isOpen, setIsOpen] = useState(false); 
 
-  // FIX 3: Lazy loading logic hataya gaya
-  const handleToggle = () => {
-    setIsOpen(!isOpen);
-  };
+  // Auto-expand if active category is this or a child of this
+  useEffect(() => {
+    const isChildActive = (cat) => {
+        if (cat._id === activeCategoryId) return true;
+        if (cat.children) {
+            return cat.children.some(child => isChildActive(child));
+        }
+        return false;
+    };
+
+    if (activeCategoryId && isChildActive(category)) {
+        setIsOpen(true);
+    }
+  }, [activeCategoryId, category]);
 
   const handleClick = (e) => {
     e.stopPropagation();
-    onSelect(category._id, category.name); // MongoDB mein ID '_id' hoti hai
-    // FIX 4: Click karne par toggle na ho, sirf select ho
+    onSelect(category._id, category.name); 
   };
   
   // FIX 5: children se check karein

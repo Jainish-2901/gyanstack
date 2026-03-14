@@ -78,6 +78,7 @@ exports.registerUser = async (req, res) => {
         phone: user.phone,
         role: user.role,
         profileImage: user.profileImage || '',
+        googleId: user.googleId || null,
       },
     });
   } catch (err) {
@@ -114,6 +115,7 @@ exports.loginUser = async (req, res) => {
         phone: user.phone,
         role: user.role,
         profileImage: user.profileImage || '',
+        googleId: user.googleId || null,
       },
     });
   } catch (err) {
@@ -171,6 +173,7 @@ exports.googleLogin = async (req, res) => {
         phone: user.phone || '',
         role: user.role,
         profileImage: user.profileImage || '',
+        googleId: user.googleId || null,
       },
     });
 
@@ -247,6 +250,7 @@ exports.getUserProfile = async (req, res) => {
       phone: user.phone,
       role: user.role,
       profileImage: user.profileImage || '',
+      googleId: user.googleId || null,
       createdAt: user.createdAt
     });
   } catch (err) {
@@ -342,6 +346,7 @@ exports.updateUserProfile = async (req, res) => {
             phone: updatedUser.phone,
             role: updatedUser.role,
             profileImage: updatedUser.profileImage || '',
+            googleId: updatedUser.googleId || null,
             createdAt: updatedUser.createdAt
         },
     });

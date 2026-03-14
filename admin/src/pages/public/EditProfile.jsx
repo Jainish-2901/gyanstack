@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import PasswordInput from '../../components/PasswordInput';
-import DashboardLayout from '../../components/DashboardLayout'; // <-- NAYA IMPORT
+// -------------------
 
 export default function EditProfile() {
     // AuthContext se naye functions lein
     const { user, updateProfile, changePassword } = useAuth();
-    
+
     // State
     const [username, setUsername] = useState(user?.username || '');
     const [phone, setPhone] = useState(user?.phone || '');
@@ -15,7 +15,7 @@ export default function EditProfile() {
     const [removeImageRequested, setRemoveImageRequested] = useState(false);
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
-    
+
     // Status messages
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -45,12 +45,12 @@ export default function EditProfile() {
         setError('');
         setSuccess('');
         setLoadingProfile(true);
-        
+
         try {
             const formData = new FormData();
             formData.append('username', username);
             formData.append('phone', phone);
-            
+
             if (removeImageRequested) {
                 formData.append('removeProfileImage', 'true');
             } else if (profileImage) {
@@ -79,7 +79,7 @@ export default function EditProfile() {
             setLoadingPassword(false);
             return;
         }
-        
+
         try {
             const message = await changePassword(currentPassword, newPassword);
             setSuccess(message);
@@ -93,10 +93,10 @@ export default function EditProfile() {
     };
 
     return (
-        <DashboardLayout>
+        <>
             <div className="container-fluid fade-in">
                 <h3 className="fw-bold mb-4 text-primary">Account Settings</h3>
-                
+
                 {success && <div className="alert alert-info alert-dismissible fade show border-0 shadow-sm" role="alert">
                     <i className="bi bi-check-circle-fill me-2"></i> {success}
                     <button type="button" className="btn-close" onClick={() => setSuccess('')}></button>
@@ -125,26 +125,26 @@ export default function EditProfile() {
                                                 )}
                                             </div>
                                             {/* Camera Icon Button */}
-                                            <label htmlFor="image-upload" 
-                                                className="position-absolute bottom-0 end-0 btn btn-primary rounded-circle d-flex align-items-center justify-content-center shadow-sm border border-white border-2" 
+                                            <label htmlFor="image-upload"
+                                                className="position-absolute bottom-0 end-0 btn btn-primary rounded-circle d-flex align-items-center justify-content-center shadow-sm border border-white border-2"
                                                 style={{ width: '38px', height: '38px', cursor: 'pointer', padding: '0', transition: 'all 0.2s' }}
                                             >
                                                 <i className="bi bi-camera-fill fs-6"></i>
-                                                <input 
-                                                    type="file" 
-                                                    id="image-upload" 
-                                                    className="d-none" 
-                                                    accept="image/*" 
+                                                <input
+                                                    type="file"
+                                                    id="image-upload"
+                                                    className="d-none"
+                                                    accept="image/*"
                                                     onChange={handleImageChange}
                                                     disabled={loadingProfile}
                                                 />
                                             </label>
-                                            
+
                                             {/* Remove Button */}
                                             {(previewUrl || user.profileImage) && !removeImageRequested && (
-                                                <button 
+                                                <button
                                                     type="button"
-                                                    className="position-absolute bottom-0 start-0 btn btn-danger rounded-circle d-flex align-items-center justify-content-center shadow-sm border border-white border-2" 
+                                                    className="position-absolute bottom-0 start-0 btn btn-danger rounded-circle d-flex align-items-center justify-content-center shadow-sm border border-white border-2"
                                                     style={{ width: '38px', height: '38px', padding: '0', transition: 'all 0.2s' }}
                                                     onClick={handleRemoveImage}
                                                     title="Remove Photo"
@@ -180,39 +180,41 @@ export default function EditProfile() {
                         </div>
                     </div>
 
-                    {/* Password Change Card */}
-                    <div className="col-md-6">
-                        <div className="card shadow-lg h-100 border-0 rounded-lg">
-                            <div className="card-header bg-light">
-                                <h4 className="card-title mb-0 fw-bold">Change Password</h4>
-                            </div>
-                            <div className="card-body p-4">
-                                <form onSubmit={handlePasswordSubmit}>
-                                    <div className="mb-3">
-                                        <PasswordInput 
-                                            label="Current Password" 
-                                            value={currentPassword} 
-                                            onChange={(e) => setCurrentPassword(e.target.value)}
-                                            isConfirm={true}
-                                        />
-                                    </div>
-                                    <div className="mb-4">
-                                        <PasswordInput 
-                                            label="New Password (min. 6 chars)" 
-                                            value={newPassword} 
-                                            onChange={(e) => setNewPassword(e.target.value)}
-                                        />
-                                    </div>
-                                    <button type="submit" className="btn btn-warning w-100" disabled={loadingPassword}>
-                                        <i className="bi bi-key-fill me-2"></i>
-                                        {loadingPassword ? 'Changing...' : 'Change Password'}
-                                    </button>
-                                </form>
+                    {/* Password Change Card (Only for non-Google users) */}
+                    {!user?.googleId && (
+                        <div className="col-md-6">
+                            <div className="card shadow-lg h-100 border-0 rounded-lg">
+                                <div className="card-header bg-light">
+                                    <h4 className="card-title mb-0 fw-bold">Change Password</h4>
+                                </div>
+                                <div className="card-body p-4">
+                                    <form onSubmit={handlePasswordSubmit}>
+                                        <div className="mb-3">
+                                            <PasswordInput
+                                                label="Current Password"
+                                                value={currentPassword}
+                                                onChange={(e) => setCurrentPassword(e.target.value)}
+                                                isConfirm={true}
+                                            />
+                                        </div>
+                                        <div className="mb-4">
+                                            <PasswordInput
+                                                label="New Password (min. 6 chars)"
+                                                value={newPassword}
+                                                onChange={(e) => setNewPassword(e.target.value)}
+                                            />
+                                        </div>
+                                        <button type="submit" className="btn btn-warning w-100" disabled={loadingPassword}>
+                                            <i className="bi bi-key-fill me-2"></i>
+                                            {loadingPassword ? 'Changing...' : 'Change Password'}
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
-        </DashboardLayout>
+        </>
     );
 }

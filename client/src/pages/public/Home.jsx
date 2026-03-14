@@ -114,10 +114,17 @@ const CategorizedContent = ({ setGlobalStats }) => {
 
   return (
     <section className="container py-5">
-      <div className="text-center mb-5 fade-in">
-        <h6 className="text-primary fw-bold text-uppercase tracking-wider">Explore Hub</h6>
-        <h2 className="display-6 fw-bold" style={{ color: 'var(--text-primary)' }}>Quick Access By Category</h2>
-        <p className="text-muted">Browse the most recent 5 uploads across all our sections.</p>
+      <div className="d-flex flex-column flex-md-row justify-content-between align-items-center align-items-md-end mb-5 fade-in gap-4">
+        <div className="text-center text-md-start">
+          <h6 className="text-primary fw-bold text-uppercase tracking-wider">Explore Hub</h6>
+          <h2 className="display-6 fw-bold" style={{ color: 'var(--text-primary)' }}>Quick Access By Category</h2>
+          <p className="text-muted mb-0">Browse the most recent 5 uploads across all our sections.</p>
+        </div>
+        <div className="flex-shrink-0">
+          <Link to="/browse" className='btn btn-light btn-lg glass-card px-4 border-0 shadow-sm text-primary fw-bold rounded-pill'>
+            <i className='bi bi-funnel-fill me-2'></i> Browse All
+          </Link>
+        </div>
       </div>
 
       <div className="row g-4">
@@ -357,17 +364,31 @@ export default function Home() {
             colorClass="bg-gradient-3"
           />
           <FeatureCard
+            icon="bi-shield-check"
+            title="Quality Verified"
+            text="Every note and assignment is reviewed by our top contributors for accuracy and relevance."
+            colorClass="bg-gradient-4"
+          />
+          <FeatureCard
             icon="bi-bell-fill"
             title="Instant Alerts"
             text="Get notified on your device immediately when new important notes are uploaded."
-            colorClass="bg-gradient-4"
+            colorClass="bg-gradient-1"
+          />
+          <FeatureCard
+            icon="bi-megaphone-fill"
+            title="Ad-Free Forever"
+            text="Focus entirely on your studies. No annoying popups or video ads to distract you from success."
+            colorClass="bg-gradient-2"
+          />
+          <FeatureCard
+            icon="bi-people-fill"
+            title="Community Powered"
+            text="Join 1000+ BCA/MCA students sharing and helping each other grow together."
+            colorClass="bg-gradient-3"
           />
         </div>
-        <div className="text-center mt-5 fade-in">
-          <Link to="/browse" className='btn btn-light btn-lg glass-card px-5 border-0 shadow-sm text-primary fw-bold rounded-pill'>
-            <i className='bi bi-funnel-fill me-2'></i> Browse By Category
-          </Link>
-        </div>
+        {/* Button removed from here and moved to Explore Hub header above */}
       </section>
 
       {/* --- NEW SECTION: Categorized Content --- */}
@@ -386,7 +407,7 @@ export default function Home() {
           <div className="row text-center">
             <div className="col-lg-4 mb-4">
               <div className="process-step h-100">
-                <div className="bg-primary bg-opacity-10 rounded-circle d-inline-flex p-4 mb-4">
+                <div className="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style={{ width: '100px', height: '100px' }}>
                   <i className="bi bi-person-plus-fill display-5 text-primary"></i>
                 </div>
                 <h4 className="fw-bold">1. Join Community</h4>
@@ -395,7 +416,7 @@ export default function Home() {
             </div>
             <div className="col-lg-4 mb-4">
               <div className="process-step h-100">
-                <div className="bg-success bg-opacity-10 rounded-circle d-inline-flex p-4 mb-4">
+                <div className="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style={{ width: '100px', height: '100px' }}>
                   <i className="bi bi-search-heart-fill display-5 text-success"></i>
                 </div>
                 <h4 className="fw-bold">2. Find Topics</h4>
@@ -404,7 +425,7 @@ export default function Home() {
             </div>
             <div className="col-lg-4 mb-4">
               <div className="process-step h-100">
-                <div className="bg-danger bg-opacity-10 rounded-circle d-inline-flex p-4 mb-4">
+                <div className="bg-danger bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style={{ width: '100px', height: '100px' }}>
                   <i className="bi bi-cloud-arrow-down-fill display-5 text-danger"></i>
                 </div>
                 <h4 className="fw-bold">3. Access Always</h4>

@@ -1,98 +1,78 @@
 import React from 'react';
-import { Routes, Route, Link } from 'react-router-dom'; 
-// FIX: Paths ko theek kiya gaya hai (assuming App.jsx is in src/)
+import { Routes, Route, Link, Navigate } from 'react-router-dom'; 
 import ProtectedRoute from './components/ProtectedRoute'; 
+import AdminLayout from './components/AdminLayout'; // The new professional layout
 
 // Components
-import Header from './components/Header';
-import Footer from './components/Footer';
 import OfflineNotice from './components/OfflineNotice';
-// LoadingScreen ki zaroorat nahi hai yahaan
 
-// Kyunki previous attempts fail ho chuke hain, main is baar har import se './' hata raha hoon.
-import { Navigate } from 'react-router-dom';
+// Pages
 import Login from './pages/public/Login';
 import ForgotPassword from './pages/public/ForgotPassword'; 
-import AdminPanel from './pages/admin/AdminPanel'; // Content Management (Admin Only)
-import SuperAdminPanel from './pages/admin/SuperAdminPanel'; // User/Role Management (SuperAdmin Only)
-import AdminDashboard from './pages/admin/AdminDashboard'; // Analytics/Stats
-import EditProfile from './pages/public/EditProfile'; // Account Settings
+import AdminPanel from './pages/admin/AdminPanel';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import EditProfile from './pages/public/EditProfile';
 import AnnouncementsPage from './pages/admin/AnnouncementsPage';
 import ViewContentRequests from './pages/admin/ViewContentRequests';
 import ContactInquiries from './pages/admin/ContactInquiries';
+import ManageUsers from './pages/admin/ManageUsers';
+import ManageAnnouncements from './pages/admin/ManageAnnouncements';
 
 export default function App() {
   return (
-    <div className="App" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}> 
+    <div className="App" style={{ minHeight: '100vh' }}> 
       <OfflineNotice />
-      <Header />
-      <main className="container-fluid py-4 flex-grow-1">
-        <Routes>
-          {/* 1. Public Auth Routes */}
-          <Route path="/" element={<Navigate to="/dashboard/admin" replace />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
+      
+      <Routes>
+        {/* 1. Public Auth Routes (No Dashboard Layout) */}
+        <Route path="/" element={<Navigate to="/dashboard/admin" replace />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
-          {/* 2. Common Protected Routes */}
-          <Route path="/settings" element={
-            <ProtectedRoute roles={['admin', 'superadmin']}> 
-              <EditProfile />
-            </ProtectedRoute>
-          } />
+        {/* 2. PROTECTED DASHBOARD ROUTES (Wrapped in AdminLayout) */}
+        <Route 
+          path="/*" 
+          element={
+            <ProtectedRoute roles={['admin', 'superadmin']}>
+              <AdminLayout>
+                <Routes>
+                  <Route path="dashboard/admin" element={<AdminDashboard />} />
+                  <Route path="admin-panel" element={<AdminPanel />} />
+                  <Route path="settings" element={<EditProfile />} />
+                  <Route path="announcements" element={<AnnouncementsPage />} />
+                  <Route path="dashboard/requests" element={<ViewContentRequests />} />
+                  
+                  {/* Super Admin Restricted Routes */}
+                  <Route path="dashboard/contact" element={
+                    <ProtectedRoute roles={['superadmin']}> 
+                      <ContactInquiries />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="dashboard/users" element={
+                    <ProtectedRoute roles={['superadmin']}> 
+                      <ManageUsers />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="dashboard/announcements-manage" element={
+                    <ProtectedRoute roles={['superadmin']}> 
+                      <ManageAnnouncements />
+                    </ProtectedRoute>
+                  } />
 
-          <Route path="/announcements" element={
-            <ProtectedRoute roles={['admin', 'superadmin']}> 
-              <AnnouncementsPage />
+                  {/* 404 inside Dashboard */}
+                  <Route path="*" element={
+                    <div className='text-center py-5'>
+                      <h1 className='display-1 fw-bold text-primary'>404</h1>
+                      <p className='lead'>Dashboard section not found</p>
+                      <Link to="/dashboard/admin" className="btn btn-primary rounded-pill">Go to Dashboard</Link>
+                    </div>
+                  } />
+                </Routes>
+              </AdminLayout>
             </ProtectedRoute>
-          } />
-
-          {/* 3. ADMIN/SUPERADMIN ONLY ROUTES */}
-          
-          {/* Admin Dashboard (Analytics & Stats - Admin and Superadmin ko dikhega) */}
-          <Route path="/dashboard/admin" element={
-            <ProtectedRoute roles={['admin', 'superadmin']}> 
-              <AdminDashboard />
-            </ProtectedRoute>
-          } />
-          
-          {/* Admin Panel (Content, Upload, Category Management - Admin and Superadmin ko dikhega) */}
-          <Route path="/admin-panel" element={
-            <ProtectedRoute roles={['admin', 'superadmin']}> 
-              <AdminPanel />
-            </ProtectedRoute>
-          } />
-
-          <Route path="/dashboard/requests" element={
-            <ProtectedRoute roles={['admin', 'superadmin']}> 
-              <ViewContentRequests />
-            </ProtectedRoute>
-          } />
-
-          <Route path="/dashboard/contact" element={
-            <ProtectedRoute roles={['superadmin']}> 
-              <ContactInquiries />
-            </ProtectedRoute>
-          } />
-          
-          {/* Super Admin Panel (User Roles, Global Control - ONLY Superadmin ko dikhega) */}
-          <Route path="/super-admin-panel" element={
-            <ProtectedRoute roles={['superadmin']}> 
-              <SuperAdminPanel />
-            </ProtectedRoute>
-          } />
-
-          {/* 4. 404 Page */}
-          <Route path="*" element={
-            <div className='text-center'>
-              <h1 className='display-1 fw-bold'>404</h1>
-              <p className='lead'>Page Not Found</p>
-              <Link to="/">Go back home</Link>
-            </div>
-          } />
-
-        </Routes>
-      </main>
-      <Footer />
+          } 
+        />
+      </Routes>
     </div>
   );
 }
