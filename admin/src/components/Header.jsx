@@ -170,11 +170,11 @@ export default function Header() {
               ) : (
                 <div className="d-flex flex-column gap-2">
                   <Link to="/dashboard" className='btn btn-light text-primary fw-bold w-100 text-start d-flex align-items-center shadow-sm py-3' onClick={closeNav}>
-                    <div className="rounded-circle border border-primary border-2 me-3 overflow-hidden shadow-sm d-flex align-items-center justify-content-center" style={{ width: '64px', height: '64px' }}>
+                    <div className="rounded-circle border border-primary border-2 me-3 overflow-hidden shadow-sm d-flex align-items-center justify-content-center bg-primary" style={{ width: '64px', height: '64px' }}>
                       {user.profileImage ? (
                         <img src={user.profileImage} alt="Profile" className="w-100 h-100 object-fit-cover" />
                       ) : (
-                        <i className='bi bi-person-circle fs-1'></i>
+                        <span className="text-white fs-2 fw-bold">{user.username.charAt(0).toUpperCase()}</span>
                       )}
                     </div>
                     <div className="d-flex flex-column">
@@ -220,11 +220,11 @@ export default function Header() {
                   className="btn btn-light text-primary py-1 px-2 d-flex align-items-center gap-2 border border-primary border-opacity-10 rounded-pill"
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
                 >
-                  <div className="rounded-circle overflow-hidden shadow-sm border border-primary border-opacity-25" style={{ width: '45px', height: '45px' }}>
+                  <div className="rounded-circle overflow-hidden shadow-sm border border-primary border-opacity-25 d-flex align-items-center justify-content-center bg-primary" style={{ width: '45px', height: '45px' }}>
                     {user.profileImage ? (
                       <img src={user.profileImage} alt="Profile" className="w-100 h-100 object-fit-cover" />
                     ) : (
-                      <i className='bi bi-person-circle fs-4'></i>
+                      <span className="text-white fw-bold">{user.username.charAt(0).toUpperCase()}</span>
                     )}
                   </div>
                   <span className="text-nowrap">{user.username}</span>

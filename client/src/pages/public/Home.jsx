@@ -351,6 +351,12 @@ export default function Home() {
             colorClass="bg-gradient-3"
           />
           <FeatureCard
+            icon="bi-robot"
+            title="Smart AI Assistant"
+            text="Get instant study suggestions and document help from our specialized GyanStack AI."
+            colorClass="bg-gradient-3"
+          />
+          <FeatureCard
             icon="bi-bell-fill"
             title="Instant Alerts"
             text="Get notified on your device immediately when new important notes are uploaded."

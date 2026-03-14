@@ -99,11 +99,14 @@ export default function AdminPanel() {
   const [categoryId, setCategoryId] = useState('');
   const [categoryName, setCategoryName] = useState('None Selected');
   
+  const [uploadMode, setUploadMode] = useState('single'); // 'single' or 'batch'
+  
   // --- NAYA STATE: Category Map ---
   const [categoryMap, setCategoryMap] = useState({});
   // ------------------------------
   
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0); // For progress bar
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -199,6 +202,7 @@ export default function AdminPanel() {
       return;
     }
     setUploading(true);
+    setUploadProgress(0);
     setError('');
     setSuccess('');
     const formData = new FormData();
@@ -209,12 +213,17 @@ export default function AdminPanel() {
 
     // --- BATCH UPLOAD LOGIC ---
     if (type === 'file' && files && files.length > 0) { 
+      // Single mode validation
+      if (uploadMode === 'single' && files.length > 1) {
+        setError('Please select only one file for Single Upload mode.');
+        setUploading(false);
+        return;
+      }
+      
       // Har file ko FormData mein 'files' field ke naam se append karein
       for (let i = 0; i < files.length; i++) {
         formData.append('files', files[i]);
       }
-      // No need to append title again here as it's already appended above
-      
     } else if (type === 'link') { 
       formData.append('link', link); 
     } else if (type === 'note') { 
@@ -224,16 +233,22 @@ export default function AdminPanel() {
     
     try {
       const { data } = await api.post('/content', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percentCompleted);
+        }
       });
       setSuccess(data.message || 'Content uploaded successfully!');
       
       // Form reset karein
       setTitle(''); setType('note'); setFiles(null); setLink(''); setNote(''); setTags('');
       setCategoryId(''); setCategoryName('None Selected');
+      setUploadProgress(0);
       fetchData(); // Sabkuch refresh karein
     } catch (err) {
       setError(err.response?.data?.message || 'Upload failed. Check server.');
+      setUploadProgress(0);
     }
     setUploading(false);
   };
@@ -347,13 +362,85 @@ export default function AdminPanel() {
           <div className="col-lg-7">
             <div className="card shadow-lg border-0 rounded-3 mb-4">
               <div className="card-body p-4 p-sm-5">
-                <h3 className="fw-bold mb-4 text-primary">Upload New Content</h3>
-                <form onSubmit={handleUpload}>
-                  {/* Title */}
-                  <div className="form-floating mb-3">
-                    <input type="text" className="form-control" id="title" placeholder="Content Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-                    <label htmlFor="title">Content Title</label>
+                  <h3 className="fw-bold mb-4 text-primary">Upload New Content</h3>
+                  
+                  {/* Content Type Selector */}
+                  <div className="mb-4">
+                    <label className="form-label fw-bold">Step 1: Select Type</label>
+                    <div className="d-flex gap-2 flex-wrap">
+                      <button 
+                        type="button" 
+                        className={`btn ${type === 'note' ? 'btn-primary' : 'btn-outline-primary'}`}
+                        onClick={() => setType('note')}
+                      >
+                        <i className="bi bi-card-text me-2"></i>Text Note
+                      </button>
+                      <button 
+                        type="button" 
+                        className={`btn ${type === 'link' ? 'btn-primary' : 'btn-outline-primary'}`}
+                        onClick={() => setType('link')}
+                      >
+                        <i className="bi bi-link-45deg me-2"></i>Link
+                      </button>
+                      <button 
+                        type="button" 
+                        className={`btn ${type === 'file' ? 'btn-primary' : 'btn-outline-primary'}`}
+                        onClick={() => setType('file')}
+                      >
+                        <i className="bi bi-file-earmark-plus me-2"></i>File(s)
+                      </button>
+                    </div>
                   </div>
+
+                  {/* Mode Selector for Files */}
+                  {type === 'file' && (
+                    <div className="mb-4 p-3 bg-light rounded-3">
+                      <label className="form-label fw-bold d-block mb-3">Step 2: Upload Mode</label>
+                      <div className="btn-group w-100" role="group">
+                        <input 
+                          type="radio" 
+                          className="btn-check" 
+                          name="uploadMode" 
+                          id="modeSingle" 
+                          autoComplete="off" 
+                          checked={uploadMode === 'single'} 
+                          onChange={() => setUploadMode('single')} 
+                        />
+                        <label className="btn btn-outline-primary" htmlFor="modeSingle">
+                          <i className="bi bi-file-earmark me-2"></i>Single File Upload
+                        </label>
+
+                        <input 
+                          type="radio" 
+                          className="btn-check" 
+                          name="uploadMode" 
+                          id="modeBatch" 
+                          autoComplete="off" 
+                          checked={uploadMode === 'batch'} 
+                          onChange={() => setUploadMode('batch')} 
+                        />
+                        <label className="btn btn-outline-primary" htmlFor="modeBatch">
+                          <i className="bi bi-files me-2"></i>Batch Upload (Multiple)
+                        </label>
+                      </div>
+                      <small className="text-muted mt-2 d-block">
+                        {uploadMode === 'single' 
+                          ? 'Upload one file with a custom title.' 
+                          : 'Upload multiple files. Titles will be auto-generated from filenames.'}
+                      </small>
+                    </div>
+                  )}
+
+                  <hr className="my-4 opacity-10" />
+
+                  <form onSubmit={handleUpload}>
+                    {/* Title (Only for Single/Note/Link) */}
+                    {(type !== 'file' || uploadMode === 'single') && (
+                      <div className="form-floating mb-3">
+                        <input type="text" className="form-control" id="title" placeholder="Content Title" value={title} onChange={(e) => setTitle(e.target.value)} required={uploadMode === 'single' || type !== 'file'} />
+                        <label htmlFor="title">Content Title</label>
+                      </div>
+                    )}
                   
                   {/* --- NAYA CATEGORY SELECTOR --- */}
                   <div className="mb-3">
@@ -393,20 +480,31 @@ export default function AdminPanel() {
                   )}
                   {type === 'file' && (
                     <div className="mb-3">
-                      <label htmlFor="files" className="form-label fw-bold">Upload File(s) (Any Format - Max 1GB Total)</label>
-                      {/* --- BATCH UPLOAD: multiple attribute add kiya gaya --- */}
+                      <label htmlFor="files" className="form-label fw-bold">
+                        {uploadMode === 'single' ? 'Step 4: Select Single File' : 'Step 4: Select Multiple Files'}
+                      </label>
                       <input 
                         type="file" 
                         className="form-control" 
                         id="files" 
                         onChange={handleFileChange} 
-                        multiple 
+                        multiple={uploadMode === 'batch'} 
+                        required
                       />
-                      {/* --- NAYA: Files ka count dikhayein --- */}
                       {files && files.length > 0 && (
-                        <small className="text-success mt-1 d-block">
-                          {files.length} file(s) selected for upload.
-                        </small>
+                        <div className="mt-2 p-3 bg-light rounded border border-success border-opacity-25 overflow-auto" style={{maxHeight: '150px'}}>
+                          <p className="small fw-bold text-success mb-2">
+                             Selected {files.length} file(s):
+                          </p>
+                          <ul className="list-unstyled mb-0 small">
+                            {Array.from(files).map((f, i) => (
+                              <li key={i} className="text-truncate">
+                                <i className="bi bi-check-circle-fill text-success me-2"></i>
+                                {f.name}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
                       )}
                     </div>
                   )}
@@ -418,9 +516,36 @@ export default function AdminPanel() {
                   </div>
                   
                   {/* Submit Button */}
-                  <button type="submit" className="btn btn-primary btn-lg w-100" disabled={uploading}>
-                    {uploading ? 'Uploading...' : 'Upload Content'}
-                  </button>
+                  <div className="d-grid gap-2">
+                    {uploading && (
+                      <div className="mb-2">
+                        <div className="d-flex justify-content-between mb-1 small fw-bold">
+                          <span>{uploadProgress < 100 ? 'Uploading to Server...' : 'Processing on Cloud...'}</span>
+                          <span>{uploadProgress}%</span>
+                        </div>
+                        <div className="progress" style={{ height: '8px' }}>
+                          <div 
+                            className={`progress-bar progress-bar-striped progress-bar-animated ${uploadProgress === 100 ? 'bg-success' : 'bg-primary'}`} 
+                            role="progressbar" 
+                            style={{ width: `${uploadProgress}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    )}
+                    <button className="btn btn-primary d-flex align-items-center justify-content-center py-2 fw-bold text-uppercase" type="submit" disabled={uploading}>
+                      {uploading ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                          Please wait...
+                        </>
+                      ) : (
+                        <>
+                          <i className="bi bi-cloud-arrow-up-fill me-2 fs-5"></i>
+                          Upload Content
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </form>
               </div>
             </div>
@@ -460,8 +585,44 @@ export default function AdminPanel() {
         
         {/* Content Management Table */}
         <div className="card shadow-lg border-0 rounded-3 mt-4">
-          <div className="card-header d-flex justify-content-between align-items-center">
-            <h3 className="fw-bold mb-0">Manage Your Content</h3>
+          <div className="card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div className="d-flex align-items-center flex-wrap gap-2">
+              <h3 className="fw-bold mb-0">Manage Your Content</h3>
+              
+              {!loadingContent && myContent.length > 0 && (
+                <div className="ms-md-3 d-flex flex-wrap gap-2">
+                  <span className="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10 py-2 px-3 small">
+                    <i className="bi bi-layers-fill me-1"></i>
+                    {myContent.length} Total
+                  </span>
+                  
+                  {/* Notes Count */}
+                  {myContent.filter(c => c.type === 'note').length > 0 && (
+                    <span className="badge rounded-pill bg-info bg-opacity-10 text-info border border-info border-opacity-10 py-2 px-3 small">
+                      <i className="bi bi-card-text me-1"></i>
+                      {myContent.filter(c => c.type === 'note').length} Notes
+                    </span>
+                  )}
+                  
+                  {/* Links Count */}
+                  {myContent.filter(c => c.type === 'link').length > 0 && (
+                    <span className="badge rounded-pill bg-success bg-opacity-10 text-success border border-success border-opacity-10 py-2 px-3 small">
+                      <i className="bi bi-link-45deg me-1"></i>
+                      {myContent.filter(c => c.type === 'link').length} Links
+                    </span>
+                  )}
+                  
+                  {/* Files Count */}
+                  {myContent.filter(c => c.type !== 'note' && c.type !== 'link').length > 0 && (
+                    <span className="badge rounded-pill bg-warning bg-opacity-10 text-warning border border-warning border-opacity-10 py-2 px-3 small">
+                      <i className="bi bi-file-earmark-arrow-up me-1"></i>
+                      {myContent.filter(c => c.type !== 'note' && c.type !== 'link').length} Files
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+
             {selectedIds.length > 0 && (
               <button className="btn btn-danger btn-sm shadow-sm animate-pulse" onClick={handleBulkDelete}>
                 <i className="bi bi-trash-fill me-1"></i>

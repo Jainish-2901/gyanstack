@@ -3,19 +3,19 @@ import { Link } from 'react-router-dom';
 
 export default function Footer() {
   const socialLinks = {
-    linkedin: 'jainish-dabgar-87474a320', 
-    github: 'Jainish-2901',       
-    whatsapp: '+919773272749' 
+    linkedin: 'jainish-dabgar-87474a320',
+    github: 'Jainish-2901',
+    whatsapp: '+919773272749'
   };
-  
+
   return (
     <footer className="fancy-footer">
       <div className="container">
         <div className="row g-5 mb-5">
           {/* Column 1: Brand Info */}
           <div className="col-lg-4 col-md-6">
-            <Link className="navbar-brand d-inline-block mb-3" to="/">
-              <i className="bi bi-stack me-2"></i>GyanStack
+            <Link className="navbar-brand text-nowrap" to="/">
+              <img src="/logo.png" alt="Logo" className="me-2" style={{ height: '35px', width: 'auto' }} />GyanStack
             </Link>
             <p className="footer-text pe-lg-4">
               Your ultimate resource hub for BCA/MCA study materials. Simplified learning for complex subjects. We are here to make your academic journey smoother and smarter.
@@ -29,6 +29,7 @@ export default function Footer() {
               <li><Link to="/" className="footer-link">Home</Link></li>
               <li><Link to="/browse" className="footer-link">Browse Library</Link></li>
               <li><Link to="/request" className="footer-link">Request Content</Link></li>
+              <li><Link to="/contact" className="footer-link">Contact Us</Link></li>
               <li><Link to="/dashboard" className="footer-link">My Dashboard</Link></li>
             </ul>
           </div>
@@ -60,14 +61,14 @@ export default function Footer() {
             </div>
           </div>
         </div>
-        
+
         {/* Copyright & Branding Line */}
-        <div className="border-top" style={{borderColor: 'var(--glass-border)'}}></div>
-        <div className="d-flex flex-column flex-md-row justify-content-between align-items-center pt-4">
+        <div className="border-top" style={{ borderColor: 'var(--glass-border)' }}></div>
+        <div className="d-flex flex-column flex-md-row justify-content-between align-items-center pt-4 text-center">
           <p className="footer-text small mb-2 mb-md-0">
             © {new Date().getFullYear()} GyanStack. All Rights Reserved.
           </p>
-          <a href={`https://www.linkedin.com/in/${socialLinks.linkedin}`} target="_blank" rel="noopener noreferrer" className="footer-link small d-flex align-items-center" title="Developer">
+          <a href={`https://www.linkedin.com/in/${socialLinks.linkedin}`} target="_blank" rel="noopener noreferrer" className="footer-link small d-flex align-items-center justify-content-center" title="Developer">
             Designed & Developed with <i className="bi bi-heart-fill text-danger mx-1"></i> by Jainish Dabgar
           </a>
         </div>

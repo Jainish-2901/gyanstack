@@ -7,7 +7,9 @@ export default function EditContentModal({ item, onClose, onUpdate, categories }
   // Form state ko 'item' se initialize karein
   const [title, setTitle] = useState(item.title);
   const [categoryId, setCategoryId] = useState(item.categoryId);
-  const [tags, setTags] = useState(item.tags.join(', ')); // Array ko string mein badlein
+  const [tags, setTags] = useState((item.tags || []).join(', ')); // Array ko string mein badlein
+  const [url, setUrl] = useState(item.url || '');
+  const [textNote, setTextNote] = useState(item.textNote || '');
   const [file, setFile] = useState(null); // Naya state file replace ke liye
   
   const [loading, setLoading] = useState(false);
@@ -24,6 +26,12 @@ export default function EditContentModal({ item, onClose, onUpdate, categories }
     formData.append('title', title);
     formData.append('categoryId', categoryId);
     formData.append('tags', tags);
+    
+    if (item.type === 'link') {
+      formData.append('url', url);
+    } else if (item.type === 'note') {
+      formData.append('textNote', textNote);
+    }
     
     // Agar user ne nayi file select ki hai, tabhi use append karein
     if (file) {
@@ -94,24 +102,59 @@ export default function EditContentModal({ item, onClose, onUpdate, categories }
                   <label htmlFor="editTags">Tags (comma se alag)</label>
                 </div>
 
-                {/* --- CHANGE: File Replace ka option --- */}
-                {/* Ye 'note' ya 'link' type ke liye nahi dikhega */}
-                {(item.fileResourceType === 'raw' || item.fileResourceType === 'image' || item.fileResourceType === 'video') && (
-                  <div className="mb-3 p-3 border rounded bg-light">
-                    <label htmlFor="editFile" className="form-label fw-bold">Replace File (Optional)</label>
-                    <input 
-                      type="file" 
-                      className="form-control" 
-                      id="editFile" 
-                      onChange={(e) => setFile(e.target.files[0])} 
-                    />
-                    <div className="form-text mt-2">
-                      Current: <span className="text-muted">{item.googleDriveId ? 'Google Drive Resource' : item.url.split('/').pop()}</span>
-                      <br/>
-                      Select a new file if you want to replace it.
-                    </div>
+                {/* --- NAYA: Edit Link or Note Content --- */}
+                {item.type === 'link' && (
+                  <div className="form-floating mb-3">
+                    <input type="url" className="form-control" id="editUrl" placeholder="https://..." value={url} onChange={(e) => setUrl(e.target.value)} required />
+                    <label htmlFor="editUrl">URL Link</label>
                   </div>
                 )}
+
+                {item.type === 'note' && (
+                  <div className="form-floating mb-3">
+                    <textarea className="form-control" id="editNote" placeholder="Write your note..." style={{ height: '150px' }} value={textNote} onChange={(e) => setTextNote(e.target.value)} required></textarea>
+                    <label htmlFor="editNote">Text Note</label>
+                  </div>
+                )}
+
+                {/* --- ENHANCED: Resource & File Replace Logic --- */}
+                <div className="mb-3 p-3 border rounded bg-light shadow-sm">
+                  <label className="form-label fw-bold d-flex align-items-center">
+                    <i className="bi bi-file-earmark-arrow-up me-2 text-primary"></i>
+                    Resource Management
+                  </label>
+                  
+                  <div className="current-resource mb-3 p-2 bg-white rounded border small">
+                    <div className="text-muted mb-1 x-small text-uppercase fw-bold">Current Resource Location:</div>
+                    <div className="d-flex align-items-center">
+                      <i className={`bi ${item.googleDriveId ? 'bi-google-drive text-success' : (item.type === 'link' ? 'bi-link-45deg text-info' : 'bi-card-text text-secondary')} me-2 fs-5`}></i>
+                      <span className="text-truncate flex-grow-1 fw-medium">
+                        {item.googleDriveId ? (
+                           <span className="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 py-1">Google Drive Secure Link</span>
+                        ) : (
+                          item.type === 'note' ? 'Internal Database Note' : (item.url || 'No URL')
+                        )}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Only show file upload if it's not a simple note/link OR if it's already a drive resource */}
+                  {(item.googleDriveId || (item.url && item.fileResourceType !== 'auto')) && (
+                    <div className="replacement-section">
+                      <label htmlFor="editFile" className="form-label small fw-bold">Replace with New File</label>
+                      <input 
+                        type="file" 
+                        className="form-control form-control-sm" 
+                        id="editFile" 
+                        onChange={(e) => setFile(e.target.files[0])} 
+                      />
+                      <div className="form-text x-small mt-2">
+                        <i className="bi bi-info-circle-fill me-1 text-info"></i>
+                        Selecting a new file will <strong>automatically replace</strong> the old one on Google Drive, Server, and Website.
+                      </div>
+                    </div>
+                  )}
+                </div>
                 {/* -------------------------------------- */}
 
                 <button type="submit" className="btn btn-primary w-100" disabled={loading}>

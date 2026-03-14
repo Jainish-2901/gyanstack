@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import api from "./services/api";
 
 const firebaseConfig = {
@@ -14,6 +15,8 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
+export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
 
 export const requestForToken = async () => {
   try {
@@ -27,11 +30,8 @@ export const requestForToken = async () => {
     if (permission === "granted") {
       console.log("Notification permission granted.");
       
-      const swUrl = `/firebase-messaging-sw.js?apiKey=${import.meta.env.VITE_FIREBASE_API_KEY}&authDomain=${import.meta.env.VITE_FIREBASE_AUTH_DOMAIN}&projectId=${import.meta.env.VITE_FIREBASE_PROJECT_ID}&storageBucket=${import.meta.env.VITE_FIREBASE_STORAGE_BUCKET}&messagingSenderId=${import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID}&appId=${import.meta.env.VITE_FIREBASE_APP_ID}`;
-      
-      const registration = await navigator.serviceWorker.register(swUrl, {
-        scope: '/firebase-cloud-messaging-push-scope', // Different scope to avoid PWA conflict
-      });
+      // Wait for the PWA Service Worker to be ready
+      const registration = await navigator.serviceWorker.ready;
       
       const currentToken = await getToken(messaging, {
         vapidKey: import.meta.env.VITE_VAPID_PUBLIC_KEY,

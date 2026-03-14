@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import PasswordInput from '../../components/PasswordInput';
-import { requestForToken } from '../../firebase';
+import { requestForToken, auth, googleProvider } from '../../firebase';
+import { signInWithPopup } from "firebase/auth";
+import api from '../../services/api';
 
 export default function Login() {
   const [loginId, setLoginId] = useState('');
@@ -39,6 +41,41 @@ export default function Login() {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setError('');
+    setLoading(true);
+    try {
+        const result = await signInWithPopup(auth, googleProvider);
+        const { user: firebaseUser } = result;
+
+        // Send to our backend
+        const { data } = await api.post('/auth/google-login', {
+            email: firebaseUser.email,
+            username: firebaseUser.displayName,
+            googleId: firebaseUser.uid,
+            profileImage: firebaseUser.photoURL
+        });
+
+        // Use our context to set state
+        const loggedInUser = await login(null, null, data); // We passed the full data
+
+        // Check if admin trying to login
+        if (loggedInUser.role !== 'student') {
+            logout();
+            setError('Admins cannot log in here. Please use the Admin Portal.');
+            setLoading(false);
+            return;
+        }
+
+        await requestForToken();
+        navigate('/dashboard');
+    } catch (err) {
+        console.error("Google Auth Error:", err);
+        setError('Google Sign-In failed. Please try again.');
+        setLoading(false);
+    }
+  };
+
   return (
     <div className="container py-5 fade-in" style={{ maxWidth: '480px' }}>
       <div className="glass-panel border-0 rounded-4 overflow-hidden shadow-lg">
@@ -72,13 +109,31 @@ export default function Login() {
               <Link to="/forgot-password">Forgot Password?</Link>
             </div>
             
-            <div className="d-grid">
+            <div className="d-grid mb-3">
               <button 
                 className="btn btn-primary btn-lg" 
                 type="submit" 
                 disabled={loading}
               >
                 {loading ? 'Logging in...' : 'Log In'}
+              </button>
+            </div>
+
+            <div className="d-flex align-items-center my-4">
+              <hr className="flex-grow-1" />
+              <span className="mx-3 text-muted small fw-bold">OR</span>
+              <hr className="flex-grow-1" />
+            </div>
+
+            <div className="d-grid">
+              <button 
+                type="button" 
+                className="btn btn-outline-dark btn-lg border-2 d-flex align-items-center justify-content-center"
+                onClick={handleGoogleSignIn}
+                disabled={loading}
+              >
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="me-2" style={{ width: '20px' }} />
+                Sign in with Google
               </button>
             </div>
           </form>

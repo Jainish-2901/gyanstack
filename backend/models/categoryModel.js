@@ -20,6 +20,9 @@ const categorySchema = new mongoose.Schema({
     type: Number,
     default: 0, // Drag-and-drop ke liye order
   },
+  googleDriveFolderId: {
+    type: String, // Store Drive Folder ID to avoid searching by name
+  },
 }, { timestamps: true }); // createdAt aur updatedAt automatic add karega
 
 // Ensure karein ki ek parent ke andar duplicate naam na ho

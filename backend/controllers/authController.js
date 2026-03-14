@@ -122,6 +122,64 @@ exports.loginUser = async (req, res) => {
   }
 };
 
+// ** googleLogin controller **
+exports.googleLogin = async (req, res) => {
+  const { email, username, googleId, profileImage } = req.body;
+  
+  try {
+    // 1. Check if user already exists by googleId
+    let user = await User.findOne({ googleId });
+    
+    // 2. If not found by googleId, check by email (Account Linking)
+    if (!user) {
+      user = await User.findOne({ email });
+      if (user) {
+        // Link Google Account to existing email account
+        user.googleId = googleId;
+        if (!user.profileImage) user.profileImage = profileImage;
+        await user.save({ validateBeforeSave: false });
+      }
+    }
+
+    // 3. If still not found, create NEW user
+    if (!user) {
+      // Create unique username if collides
+      let finalUsername = username.replace(/\s+/g, '').toLowerCase();
+      const existingUser = await User.findOne({ username: finalUsername });
+      if (existingUser) {
+        finalUsername = `${finalUsername}${Math.floor(Math.random() * 1000)}`;
+      }
+
+      user = new User({
+        username: finalUsername,
+        email,
+        googleId,
+        profileImage: profileImage || '',
+        role: 'student'
+      });
+      await user.save({ validateBeforeSave: false });
+    }
+
+    // 4. Generate Token & Send Response
+    const token = generateToken(user._id);
+    res.status(200).json({
+      token,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        phone: user.phone || '',
+        role: user.role,
+        profileImage: user.profileImage || '',
+      },
+    });
+
+  } catch (err) {
+    console.error("Google Login Backend Error:", err.message);
+    res.status(500).json({ message: 'Google login failed on server.' });
+  }
+};
+
 // 3. Forgot Password (OTP Bhejna)
 exports.forgotPassword = async (req, res) => {
   const { email } = req.body;
@@ -217,39 +275,55 @@ exports.updateUserProfile = async (req, res) => {
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
-  const { username, phone } = req.body;
+  const { username, phone, removeProfileImage } = req.body;
   try {
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+
     if (username !== user.username) {
         const usernameExists = await User.findOne({ username, _id: { $ne: user._id } });
-        if (usernameExists) {
-            return res.status(400).json({ message: 'Username is already taken' });
-        }
+        if (usernameExists) return res.status(400).json({ message: 'Username is already taken' });
         user.username = username;
     }
     if (phone !== user.phone) {
         const phoneExists = await User.findOne({ phone, _id: { $ne: user._id } });
-        if (phoneExists) {
-            return res.status(400).json({ message: 'Phone number is already taken' });
-        }
+        if (phoneExists) return res.status(400).json({ message: 'Phone number is already taken' });
         user.phone = phone;
     }
+
+    // --- HANDLE PROFILE IMAGE REMOVAL ---
+    if (removeProfileImage === 'true' && user.profileImage) {
+        try {
+            const parts = user.profileImage.split('/');
+            const fileName = parts[parts.length - 1].split('.')[0];
+            const publicId = `gyanstack_profiles/${fileName}`;
+            await cloudinary.uploader.destroy(publicId);
+            user.profileImage = null; // Profile photo ko null karke hatayein
+            console.log(`Cloudinary image removed: ${publicId}`);
+        } catch (err) {
+            console.warn("Cloudinary removal failed:", err.message);
+        }
+    }
+
+    // --- HANDLE NEW IMAGE UPLOAD ---
     if (req.file) {
         try {
+            // Agar purana image hai to pehle use hatayein
             if (user.profileImage) {
                 const parts = user.profileImage.split('/');
                 const fileName = parts[parts.length - 1].split('.')[0];
                 const publicId = `gyanstack_profiles/${fileName}`;
                 await cloudinary.uploader.destroy(publicId);
             }
+            
             const result = await cloudinary.uploader.upload(req.file.path, {
                 folder: 'gyanstack_profiles',
-                width: 200,
-                height: 200,
-                crop: 'fill'
+                width: 250,
+                height: 250,
+                crop: 'fill',
+                gravity: 'face'
             });
             user.profileImage = result.secure_url;
             if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);

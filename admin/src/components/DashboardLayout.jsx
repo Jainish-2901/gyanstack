@@ -21,6 +21,7 @@ const getMenuItems = (role) => {
     { name: 'Analytics Dashboard', path: '/dashboard/admin', icon: 'bi-bar-chart-line-fill', roles: ['admin', 'superadmin'] },
     { name: 'Content Manager', path: '/admin-panel', icon: 'bi-cloud-arrow-up-fill', roles: ['admin', 'superadmin'] },
     { name: 'View Requests', path: '/dashboard/requests', icon: 'bi-chat-left-text-fill', roles: ['admin', 'superadmin'] },
+    { name: 'Contact Inquiries', path: '/dashboard/contact', icon: 'bi-envelope-check-fill', roles: ['superadmin'] },
     { name: 'View Announcements', path: '/announcements', icon: 'bi-megaphone-fill', roles: ['admin', 'superadmin'] },
   
     // 3. SUPER ADMIN LINKS
@@ -53,11 +54,11 @@ export default function DashboardLayout({ children, isSuperAdminView = false }) 
           <div className="glass-card sticky-top sidebar-card overflow-hidden" style={{ top: '100px', zIndex: 1000 }}>
             <div className="card-header border-0 bg-transparent py-4 text-center">
               <div className="position-relative d-inline-block mb-3">
-                <div className="rounded-circle border border-primary border-2 p-1 shadow-sm overflow-hidden" style={{ width: '80px', height: '80px' }}>
+                <div className="rounded-circle border border-primary border-2 p-1 shadow-sm overflow-hidden d-flex align-items-center justify-content-center bg-primary" style={{ width: '80px', height: '80px' }}>
                   {user.profileImage ? (
                     <img src={user.profileImage} alt="Profile" className="w-100 h-100 object-fit-cover rounded-circle" />
                   ) : (
-                    <i className="bi bi-person-circle fs-1 text-primary"></i>
+                    <span className="text-white fs-1 fw-bold">{user.username.charAt(0).toUpperCase()}</span>
                   )}
                 </div>
               </div>

@@ -12,6 +12,7 @@ export default function EditProfile() {
     const [phone, setPhone] = useState(user?.phone || '');
     const [profileImage, setProfileImage] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(user?.profileImage || '');
+    const [removeImageRequested, setRemoveImageRequested] = useState(false);
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     
@@ -27,7 +28,15 @@ export default function EditProfile() {
         if (file) {
             setProfileImage(file);
             setPreviewUrl(URL.createObjectURL(file));
+            setRemoveImageRequested(false); // Image upload cancels removal
         }
+    };
+
+    // Remove logic
+    const handleRemoveImage = () => {
+        setProfileImage(null);
+        setPreviewUrl('');
+        setRemoveImageRequested(true);
     };
 
     // Profile Details Update Logic
@@ -41,12 +50,17 @@ export default function EditProfile() {
             const formData = new FormData();
             formData.append('username', username);
             formData.append('phone', phone);
-            if (profileImage) {
+            
+            if (removeImageRequested) {
+                formData.append('removeProfileImage', 'true');
+            } else if (profileImage) {
                 formData.append('profileImage', profileImage);
             }
 
             const message = await updateProfile(formData);
             setSuccess(message);
+            setRemoveImageRequested(false);
+            setProfileImage(null);
         } catch (err) {
             setError(err.message);
         }
@@ -78,14 +92,16 @@ export default function EditProfile() {
         setLoadingPassword(false);
     };
 
-
     return (
         <DashboardLayout>
             <div className="container-fluid fade-in">
                 <h3 className="fw-bold mb-4 text-primary">Account Settings</h3>
                 
-                {success && <div className="alert alert-success">{success}</div>}
-                {error && <div className="alert alert-danger">{error}</div>}
+                {success && <div className="alert alert-info alert-dismissible fade show border-0 shadow-sm" role="alert">
+                    <i className="bi bi-check-circle-fill me-2"></i> {success}
+                    <button type="button" className="btn-close" onClick={() => setSuccess('')}></button>
+                </div>}
+                {error && <div className="alert alert-danger border-0 shadow-sm">{error}</div>}
 
                 <div className="row g-4">
                     {/* Profile Update Card */}
@@ -103,11 +119,17 @@ export default function EditProfile() {
                                                 {previewUrl ? (
                                                     <img src={previewUrl} alt="Profile" className="w-100 h-100 object-fit-cover" />
                                                 ) : (
-                                                    <i className="bi bi-person text-secondary" style={{ fontSize: '4rem' }}></i>
+                                                    <div className="w-100 h-100 bg-primary text-white d-flex align-items-center justify-content-center fw-bold fs-2">
+                                                        {username ? username.charAt(0).toUpperCase() : 'U'}
+                                                    </div>
                                                 )}
                                             </div>
-                                            <label htmlFor="image-upload" className="position-absolute bottom-0 end-0 btn btn-primary btn-sm rounded-circle d-flex align-items-center justify-content-center" style={{ width: '32px', height: '32px' }}>
-                                                <i className="bi bi-camera-fill"></i>
+                                            {/* Camera Icon Button */}
+                                            <label htmlFor="image-upload" 
+                                                className="position-absolute bottom-0 end-0 btn btn-primary rounded-circle d-flex align-items-center justify-content-center shadow-sm border border-white border-2" 
+                                                style={{ width: '38px', height: '38px', cursor: 'pointer', padding: '0', transition: 'all 0.2s' }}
+                                            >
+                                                <i className="bi bi-camera-fill fs-6"></i>
                                                 <input 
                                                     type="file" 
                                                     id="image-upload" 
@@ -117,8 +139,21 @@ export default function EditProfile() {
                                                     disabled={loadingProfile}
                                                 />
                                             </label>
+                                            
+                                            {/* Remove Button if image exists or preview exists */}
+                                            {(previewUrl || user.profileImage) && !removeImageRequested && (
+                                                <button 
+                                                    type="button"
+                                                    className="position-absolute bottom-0 start-0 btn btn-danger rounded-circle d-flex align-items-center justify-content-center shadow-sm border border-white border-2" 
+                                                    style={{ width: '38px', height: '38px', padding: '0', transition: 'all 0.2s' }}
+                                                    onClick={handleRemoveImage}
+                                                    title="Remove Photo"
+                                                >
+                                                    <i className="bi bi-trash3-fill fs-6"></i>
+                                                </button>
+                                            )}
                                         </div>
-                                        <p className="small text-muted mt-2">Click the camera icon to change photo</p>
+                                        <p className="small text-muted mt-2">Update or remove your profile photo</p>
                                     </div>
 
                                     <div className="form-floating mb-3">

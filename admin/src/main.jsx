@@ -12,10 +12,10 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 // 3. Hamari custom CSS
 import './App.css'; 
 
-// PWA: Service Worker Registration
+// PWA: Service Worker Registration (Only in Production)
 import { registerSW } from 'virtual:pwa-register';
 
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
   registerSW({
     onNeedRefresh() {
        if (confirm('New admin update available. Reload?')) {

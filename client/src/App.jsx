@@ -18,12 +18,16 @@ import Dashboard from './pages/public/Dashboard'; // Student Dashboard
 import ForgotPassword from './pages/public/ForgotPassword'; 
 import Browse from './pages/public/Browse';
 import RequestContent from './pages/public/RequestContent';
+import Contact from './pages/public/Contact';
 
 import EditProfile from './pages/public/EditProfile'; 
 import SavedContent from './pages/public/SavedContent'; 
 import ContentDetailPage from './pages/public/ContentDetailPage'; 
 import AnnouncementsPage from './pages/public/AnnouncementsPage';
 import UploaderProfile from './pages/public/UploaderProfile';
+import MyInquiries from './pages/public/MyInquiries';
+import ChatWidget from './components/ChatWidget'; // <-- AI Assistant
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 export default function App() {
   return (
@@ -41,6 +45,7 @@ export default function App() {
           <Route path="/browse" element={<Browse />} />
 
           <Route path="/content/:id" element={<ContentDetailPage />} />
+          <Route path="/contact" element={<Contact />} />
           <Route path="/announcements" element={<AnnouncementsPage />} />
           <Route path="/uploader/:id" element={<UploaderProfile />} />
 
@@ -54,6 +59,12 @@ export default function App() {
           <Route path="/dashboard/saved" element={
             <ProtectedRoute>
               <SavedContent />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/dashboard/inquiries" element={
+            <ProtectedRoute>
+              <MyInquiries />
             </ProtectedRoute>
           } />
           
@@ -83,6 +94,7 @@ export default function App() {
         </Routes>
       </main>
       <Footer />
+      <ChatWidget />
     </div>
   );
 }

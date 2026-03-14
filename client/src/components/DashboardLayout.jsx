@@ -12,6 +12,7 @@ const getMenuItems = (role) => {
     { name: 'Home Dashboard', path: '/dashboard', icon: 'bi-grid-fill', roles: ['student'] },
     { name: 'Saved Content', path: '/dashboard/saved', icon: 'bi-bookmark-fill', roles: ['student'] },
     { name: 'Request Content', path: '/request', icon: 'bi-megaphone-fill', roles: ['student'] },
+    { name: 'My Inquiries', path: '/dashboard/inquiries', icon: 'bi-chat-left-dots-fill', roles: ['student'] },
 
     // Common links for everyone
     { name: 'Profile Settings', path: '/settings', icon: 'bi-gear-fill', roles: ['student', 'admin', 'superadmin'] },
@@ -51,11 +52,11 @@ export default function DashboardLayout({ children, isSuperAdminView = false }) 
           <div className="glass-card sticky-top sidebar-card overflow-hidden" style={{ top: '100px', zIndex: 1000 }}>
             <div className="card-header border-0 bg-transparent py-4 text-center">
               <div className="position-relative d-inline-block mb-3">
-                <div className="rounded-circle border border-primary border-2 p-1 shadow-sm overflow-hidden" style={{ width: '80px', height: '80px' }}>
+                <div className="rounded-circle border border-primary border-2 p-1 shadow-sm overflow-hidden d-flex align-items-center justify-content-center bg-primary" style={{ width: '80px', height: '80px' }}>
                   {user.profileImage ? (
                     <img src={user.profileImage} alt="Profile" className="w-100 h-100 object-fit-cover rounded-circle" />
                   ) : (
-                    <i className="bi bi-person-circle fs-1 text-primary"></i>
+                    <span className="text-white fs-1 fw-bold">{user.username.charAt(0).toUpperCase()}</span>
                   )}
                 </div>
               </div>

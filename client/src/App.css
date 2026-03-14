@@ -672,11 +672,49 @@ body {
 
   .fancy-footer {
     padding: 3rem 0 1.5rem;
+    overflow-x: hidden;
   }
 
   .fancy-footer .footer-title {
     font-size: 1.1rem;
     margin-bottom: 1rem;
+  }
+
+  .fancy-footer .row {
+    margin-right: 0;
+    margin-left: 0;
+  }
+
+  .fancy-footer .footer-text {
+    font-size: 0.9rem;
+    text-align: center;
+  }
+
+  .fancy-footer .col-md-6, .fancy-footer .col-lg-4, .fancy-footer .col-lg-3, .fancy-footer .col-lg-2 {
+    text-align: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .fancy-footer .social-link {
+    margin: 0 auto;
+  }
+
+  .fancy-footer .d-flex.gap-3 {
+    justify-content: center;
+  }
+
+  /* Footer bottom text center on mobile */
+  .fancy-footer .pt-4.text-center-mobile {
+     text-align: center;
+  }
+
+  .fancy-footer .footer-link.small {
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+    margin-top: 10px;
+    line-height: 1.5;
   }
 
   /* ContentCard Button Responsiveness */

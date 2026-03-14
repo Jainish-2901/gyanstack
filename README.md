@@ -8,6 +8,12 @@ Built with a focus on modern aesthetics (Glassmorphism), speed, and offline capa
 
 ## ✨ Key Features
 
+### 🤖 Smart AI Assistant
+- **Study Buddy**: Integrated AI assistant powered by **Google Gemini** for instant academic guidance.
+- **Context Aware**: Specialized knowledge about GyanStack's categories, notes, and study paths.
+- **Resource Finder**: Help students find specific documents and topics through natural conversation.
+- **Study Tips**: Get personalized suggestions on exam preparation and resource discovery.
+
 ### 📚 Resource Management
 - **Categorized Library**: Multi-level category tree for organized navigation.
 - **Multi-Format Support**: Handle PDF notes, Video links, Text notes, and Image assignments.
@@ -42,6 +48,7 @@ Built with a focus on modern aesthetics (Glassmorphism), speed, and offline capa
 | **Backend** | Node.js, Express.js, MongoDB (Mongoose) |
 | **Storage** | Google Drive API, Cloudinary (for Media/Profiles) |
 | **PWA** | Vite-Plugin-PWA |
+| **AI Integration** | Google Gemini AI (`@google/generative-ai`) |
 | **Security** | JWT, BcryptJS, Express Validator |
 
 ---
@@ -77,6 +84,7 @@ Built with a focus on modern aesthetics (Glassmorphism), speed, and offline capa
    CLOUDINARY_API_SECRET=...
    GOOGLE_DRIVE_CLIENT_EMAIL=...
    GOOGLE_DRIVE_PRIVATE_KEY=...
+   GEMINI_API_KEY=your_google_gemini_api_key
    ```
    Start the server:
    ```bash

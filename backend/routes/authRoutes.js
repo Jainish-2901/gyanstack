@@ -12,7 +12,8 @@ const {
   toggleSaveContent, // <-- Naya import
   getPublicStats, // <-- NAYI IMPORT
   getPublicUserProfile, // <-- NAYI IMPORT
-  getTopUploaders // <-- NAYI IMPORT
+  getTopUploaders, // <-- NAYI IMPORT
+  googleLogin // <-- NAYI IMPORT
 } = require('../controllers/authController');
 const { body } = require('express-validator');
 const authMiddleware = require('../middleware/authMiddleware');
@@ -42,6 +43,9 @@ router.post(
   ],
   loginUser
 );
+
+// Route 2.5: Google Login (POST /api/auth/google-login)
+router.post('/google-login', googleLogin);
 
 // Route 3: Forgot Password (POST /api/auth/forgotpassword)
 router.post('/forgotpassword', [body('email', 'Please include a valid email').isEmail()], forgotPassword);

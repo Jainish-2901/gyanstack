@@ -1,4 +1,5 @@
 const Category = require('../models/categoryModel'); // Apne model ka path check karein
+const { updateDriveFile } = require('../utils/googleDrive');
 
 // --- NAYA HELPER FUNCTION ---
 // Sabhi nested categories ko fetch karne ke liye
@@ -90,8 +91,20 @@ exports.updateCategory = async (req, res) => {
       return res.status(400).json({ message: 'Another category with this name already exists at this level.' });
     }
     
+    const oldName = category.name;
     category.name = name;
     await category.save();
+
+    // --- SYNC RENAME TO DRIVE ---
+    if (category.googleDriveFolderId && oldName !== name) {
+      try {
+        await updateDriveFile(category.googleDriveFolderId, name);
+        console.log(`Renamed Drive folder from ${oldName} to ${name}`);
+      } catch (driveErr) {
+        console.error("Failed to rename Drive folder:", driveErr.message);
+      }
+    }
+
     res.json(category);
 
   } catch (err) {

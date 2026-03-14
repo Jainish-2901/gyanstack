@@ -42,12 +42,13 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const login = async (loginId, password) => {
+  const login = async (loginId, password, preFetchedData = null) => {
     try {
-      const { data } = await api.post('/auth/login', {
+      const data = preFetchedData || (await api.post('/auth/login', {
         loginId,
         password,
-      });
+      })).data;
+
       localStorage.setItem('token', data.token);
       setUser(data.user);
       return data.user;

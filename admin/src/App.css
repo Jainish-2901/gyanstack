@@ -605,6 +605,38 @@ body {
     font-size: 1.5rem;
   }
 
+  .fancy-footer {
+    padding: 3rem 0 1.5rem;
+    overflow-x: hidden;
+  }
+
+  .fancy-footer .row {
+    margin-right: 0;
+    margin-left: 0;
+  }
+
+  .fancy-footer .footer-text {
+    font-size: 0.9rem;
+    text-align: center;
+  }
+
+  .fancy-footer .col-md-6, .fancy-footer .col-lg-4, .fancy-footer .col-lg-3, .fancy-footer .col-lg-2 {
+    text-align: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .fancy-footer .social-link {
+    margin: 0 auto;
+  }
+
+  .fancy-footer .d-flex.gap-3 {
+    justify-content: center;
+  }
+  .sidebar-card .list-group-item {
+    padding-left: 1rem !important;
+  }
+
   .container {
     padding-left: 0.75rem !important;
     padding-right: 0.75rem !important;
@@ -629,8 +661,57 @@ body {
   .sidebar-card .card-header {
     display: none;
   }
+}
 
-  .sidebar-card .list-group-item {
-    padding-left: 1rem !important;
-  }
+/* Scrollable Action Groups for Super Admin */
+.scroll-selection {
+  display: flex !important;
+  overflow-x: auto !important;
+  gap: 8px !important;
+  padding-bottom: 8px !important;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.scroll-selection::-webkit-scrollbar {
+  height: 4px;
+}
+
+.scroll-selection::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  opacity: 0.3;
+  border-radius: 4px;
+}
+
+.scroll-selection .btn {
+  white-space: nowrap !important;
+  flex: 0 0 auto !important;
+}
+
+.responsive-card-view {
+  max-height: 450px;
+  overflow-y: auto !important;
+  scrollbar-width: thin;
+}
+
+.responsive-card-view::-webkit-scrollbar {
+  width: 4px;
+}
+
+.responsive-card-view::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  opacity: 0.3;
+  border-radius: 4px;
+}
+
+.fancy-footer .pt-4.text-center {
+    text-align: center;
+}
+
+.fancy-footer .footer-link.small {
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+  margin-top: 10px;
+  line-height: 1.5;
 }

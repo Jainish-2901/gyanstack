@@ -1,20 +1,22 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // useNavigate import kiya
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import PasswordInput from '../../components/PasswordInput';
-import { requestForToken } from '../../firebase';
+import { requestForToken, auth, googleProvider } from '../../firebase';
+import { signInWithPopup } from "firebase/auth";
+import api from '../../services/api';
 
 export default function Signup() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState(''); // Confirm password field
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
-  const { register } = useAuth();
-  const navigate = useNavigate(); // <-- Yahaan navigate hook use kiya
+  const { register, login, logout } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,7 +28,7 @@ export default function Signup() {
       setLoading(false);
       return;
     }
-    if (password !== confirmPassword) { // Check karein ki password match karte hain
+    if (password !== confirmPassword) {
       setError('Passwords do not match.');
       setLoading(false);
       return;
@@ -34,14 +36,43 @@ export default function Signup() {
     
     try {
       await register(username, email, phone, password);
-      
-      // --- PUSH NOTIFICATION PERMISSION ---
       await requestForToken();
-
       navigate('/dashboard');
     } catch (err) {
       setLoading(false);
       setError(err.message || 'Failed to create account. Please check inputs.');
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError('');
+    setLoading(true);
+    try {
+        const result = await signInWithPopup(auth, googleProvider);
+        const { user: firebaseUser } = result;
+
+        const { data } = await api.post('/auth/google-login', {
+            email: firebaseUser.email,
+            username: firebaseUser.displayName,
+            googleId: firebaseUser.uid,
+            profileImage: firebaseUser.photoURL
+        });
+
+        const loggedInUser = await login(null, null, data); 
+
+        if (loggedInUser.role !== 'student') {
+            logout();
+            setError('Admins cannot register here.');
+            setLoading(false);
+            return;
+        }
+
+        await requestForToken();
+        navigate('/dashboard');
+    } catch (err) {
+        console.error("Google Auth Error:", err);
+        setError('Google Sign-In failed.');
+        setLoading(false);
     }
   };
 
@@ -89,9 +120,27 @@ export default function Signup() {
               />
             </div>
             
-            <div className="d-grid">
+            <div className="d-grid mb-3">
               <button className="btn btn-primary btn-lg" type="submit" disabled={loading}>
                 {loading ? 'Creating account...' : 'Sign Up'}
+              </button>
+            </div>
+
+            <div className="d-flex align-items-center my-4">
+              <hr className="flex-grow-1" />
+              <span className="mx-3 text-muted small fw-bold">OR</span>
+              <hr className="flex-grow-1" />
+            </div>
+
+            <div className="d-grid">
+              <button 
+                type="button" 
+                className="btn btn-outline-dark btn-lg border-2 d-flex align-items-center justify-content-center"
+                onClick={handleGoogleSignIn}
+                disabled={loading}
+              >
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="me-2" style={{ width: '20px' }} />
+                Sign up with Google
               </button>
             </div>
           </form>

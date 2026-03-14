@@ -17,14 +17,18 @@ const userSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
-    required: [true, 'Please provide a phone number'],
     unique: true,
+    sparse: true, // Allow multiple nulls for Google users
     trim: true,
   },
   password: {
     type: String,
-    required: [true, 'Please provide a password'],
     minlength: 6,
+  },
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true,
   },
   role: {
     type: String,

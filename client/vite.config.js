@@ -7,10 +7,14 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      strategies: 'injectManifest', // Using custom consolidated SW
+      srcDir: 'src',
+      filename: 'sw.js', // Output will be public/sw.js 
       registerType: 'autoUpdate',
       devOptions: {
-        enabled: true,
-        navigateFallbackAllowlist: [/^index.html$/] // Dev mode mein routing warning fix karne ke liye
+        enabled: false, // Disabled in dev to stop Workbox precache warnings
+        type: 'module', // Essential for using imports in SW
+        navigateFallbackAllowlist: [/^index.html$/] 
       },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg', 'logo.png'],
       manifest: {
@@ -40,24 +44,6 @@ export default defineConfig({
           }
         ]
       },
-      workbox: {
-        // Essential for "Online First" behavior
-        globPatterns: [], // Set to empty to avoid "One of the glob patterns doesn't match any files" warnings in Dev
-        runtimeCaching: [
-          {
-            // Static assets (images, etc) can be cache first
-            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'image-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
-              }
-            }
-          }
-        ]
-      }
     })
   ],
 })

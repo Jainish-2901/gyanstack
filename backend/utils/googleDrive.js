@@ -13,9 +13,15 @@ const oauth2Client = new google.auth.OAuth2(
 
 oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
 
+// Utility to escape single quotes for Drive API queries
+const escapeQuery = (val) => val.replace(/'/g, "\\'");
+
+let driveInstance = null;
 const getDriveInstance = async () => {
+    if (driveInstance) return driveInstance;
     try {
-        return google.drive({ version: 'v3', auth: oauth2Client });
+        driveInstance = google.drive({ version: 'v3', auth: oauth2Client });
+        return driveInstance;
     } catch (err) {
         console.error("Google Drive Auth Error (OAuth2):", err.message);
         throw err;
@@ -32,9 +38,10 @@ const ensureFolderPath = async (folderNames) => {
     let currentParentId = FOLDER_ID;
 
     for (const folderName of folderNames) {
-        // Check if folder exists under current parent
+        // Check if folder exists under current parent (with escaping)
+        const escapedName = escapeQuery(folderName);
         const response = await drive.files.list({
-            q: `name = '${folderName}' and '${currentParentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+            q: `name = '${escapedName}' and '${currentParentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
             fields: 'files(id, name)',
             spaces: 'drive',
         });
@@ -54,6 +61,19 @@ const ensureFolderPath = async (folderNames) => {
                 fields: 'id',
             });
             currentParentId = folder.data.id;
+
+            // --- OPTIMIZATION: Make folder public so files inherit permissions ---
+            try {
+                await drive.permissions.create({
+                    fileId: currentParentId,
+                    requestBody: {
+                        role: 'reader',
+                        type: 'anyone',
+                    },
+                });
+            } catch (pErr) {
+                console.warn(`Failed to set folder permissions for ${folderName}:`, pErr.message);
+            }
         }
     }
     return currentParentId;
@@ -62,19 +82,24 @@ const ensureFolderPath = async (folderNames) => {
 /**
  * Google Drive par file upload karne ke liye
  * @param {Object} file - Multer file object
- * @param {Array} folderNames - Path segments for folders
+ * @param {Array} folderNames - Path segments for folders (optional if id provided)
+ * @param {string} folderId - Direct target folder ID (optional)
  */
-const uploadToDrive = async (file, folderNames = []) => {
+const uploadToDrive = async (file, folderNames = [], folderId = null) => {
     try {
         const drive = await getDriveInstance();
         if (!FOLDER_ID || FOLDER_ID === 'your-folder-id-here') {
             throw new Error("GOOGLE_DRIVE_FOLDER_ID is missing in .env or not configured.");
         }
 
-        // Target folder ID resolve karein (Recursive logic)
-        const targetFolderId = folderNames.length > 0 
-            ? await ensureFolderPath(folderNames) 
-            : FOLDER_ID;
+        // Target folder ID resolve karein (Use provided ID or resolve from path)
+        let targetFolderId = folderId;
+        
+        if (!targetFolderId) {
+            targetFolderId = folderNames.length > 0 
+                ? await ensureFolderPath(folderNames) 
+                : FOLDER_ID;
+        }
 
         const fileMetadata = {
             name: file.originalname,
@@ -91,18 +116,13 @@ const uploadToDrive = async (file, folderNames = []) => {
             media: media,
             fields: 'id, webViewLink, webContentLink',
             supportsAllDrives: true,
+            uploadType: 'resumable', // Optimized for 5MB+ files
         });
 
         const fileId = response.data.id;
 
-        // Permissions: Publicly readable
-        await drive.permissions.create({
-            fileId: fileId,
-            requestBody: {
-                role: 'reader',
-                type: 'anyone',
-            },
-        });
+        // Note: No longer calling drive.permissions.create per file here 
+        // to save time, as we handle it at the folder level now.
 
         return {
             id: fileId,
@@ -130,4 +150,101 @@ const deleteFromDrive = async (fileId) => {
     }
 };
 
-module.exports = { uploadToDrive, deleteFromDrive };
+/**
+ * Google Drive par file rename ya move karne ke liye
+ * @param {string} fileId - Google Drive ID
+ * @param {string} newName - Naya title (optional)
+ * @param {Array} newFolderNames - Naya path (optional)
+ */
+const updateDriveFile = async (fileId, newName = null, newFolderNames = null) => {
+    try {
+        const drive = await getDriveInstance();
+        const updateBody = {};
+        if (newName) updateBody.name = newName;
+
+        let moveOptions = {};
+        if (newFolderNames) {
+            // Get current parents to remove them
+            const file = await drive.files.get({ fileId, fields: 'parents' });
+            const previousParents = file.data.parents ? file.data.parents.join(',') : '';
+            
+            const targetFolderId = newFolderNames.length > 0 
+                ? await ensureFolderPath(newFolderNames) 
+                : FOLDER_ID;
+
+            moveOptions = {
+                addParents: targetFolderId,
+                removeParents: previousParents
+            };
+        }
+
+        const response = await drive.files.update({
+            fileId: fileId,
+            requestBody: updateBody,
+            ...moveOptions,
+            fields: 'id, name, parents',
+            supportsAllDrives: true,
+        });
+
+        return response.data;
+    } catch (error) {
+        console.error('Google Drive Sync Update Error:', error);
+        throw error;
+    }
+};
+
+/**
+ * Google Drive par folder ID dhoondhne ke liye (Nahi hai to null return karega)
+ */
+const findFolderIdByPath = async (folderNames) => {
+    try {
+        const drive = await getDriveInstance();
+        let currentParentId = FOLDER_ID;
+
+        for (const folderName of folderNames) {
+            const escapedName = escapeQuery(folderName);
+            const response = await drive.files.list({
+                q: `name = '${escapedName}' and '${currentParentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+                fields: 'files(id)',
+                spaces: 'drive',
+            });
+
+            if (response.data.files && response.data.files.length > 0) {
+                currentParentId = response.data.files[0].id;
+            } else {
+                return null;
+            }
+        }
+        return currentParentId;
+    } catch (error) {
+        console.error('Find Folder ID Error:', error);
+        return null;
+    }
+};
+
+/**
+ * Check if a folder on Drive is empty
+ */
+const isDriveFolderEmpty = async (folderId) => {
+    try {
+        const drive = await getDriveInstance();
+        const response = await drive.files.list({
+            q: `'${folderId}' in parents and trashed = false`,
+            fields: 'files(id)',
+            pageSize: 1
+        });
+        return !response.data.files || response.data.files.length === 0;
+    } catch (error) {
+        console.error('Check Empty Folder Error:', error);
+        return false;
+    }
+};
+
+module.exports = { 
+    uploadToDrive, 
+    deleteFromDrive, 
+    updateDriveFile, 
+    findFolderIdByPath,
+    isDriveFolderEmpty,
+    ensureFolderPath
+};

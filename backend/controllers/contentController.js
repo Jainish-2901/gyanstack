@@ -2,8 +2,11 @@ const cloudinary = require('cloudinary').v2;
 const Content = require('../models/contentModel');
 const Category = require('../models/categoryModel');
 const User = require('../models/userModel'); 
-const { uploadToDrive, deleteFromDrive } = require('../utils/googleDrive');
+const { uploadToDrive, deleteFromDrive, updateDriveFile, findFolderIdByPath, isDriveFolderEmpty } = require('../utils/googleDrive');
 const fs = require('fs');
+const sharp = require('sharp');
+const path = require('path');
+const ffmpeg = require('fluent-ffmpeg');
 
 // Cloudinary Configuration
 cloudinary.config({
@@ -29,18 +32,98 @@ const getPublicIdFromUrl = (url) => {
 };
 
 // Recursive path finder for Categories
+// Recursive path finder for Categories (Returns { names, folderId })
 const getCategoryPath = async (categoryId) => {
-  if (!categoryId || categoryId === 'root') return [];
-  const path = [];
+  // Default to Root Drive Folder ID
+  if (!categoryId || categoryId === 'root') {
+      return { names: [], folderId: process.env.GOOGLE_DRIVE_FOLDER_ID };
+  }
+
+  const pathNames = [];
+  const hierarchyOfCats = [];
   let currentId = categoryId;
   
+  // Build hierarchy from leaf to root
   while (currentId && currentId !== 'root') {
     const cat = await Category.findById(currentId);
     if (!cat) break;
-    path.unshift(cat.name); // Add to beginning
+    pathNames.unshift(cat.name);
+    hierarchyOfCats.unshift(cat);
     currentId = cat.parentId;
   }
-  return path;
+
+  // The actual category we are uploading to
+  const leafCategory = hierarchyOfCats[hierarchyOfCats.length - 1];
+
+  // If the leaf category ALREADY has a Drive ID, we can use it directly! (EXACT MATCH ONLY)
+  if (leafCategory && leafCategory.googleDriveFolderId) {
+    return { names: pathNames, folderId: leafCategory.googleDriveFolderId };
+  }
+
+  // If leaf has no ID, we MUST resolve/ensure path and then cache it
+  if (hierarchyOfCats.length > 0) {
+    try {
+      const { ensureFolderPath } = require('../utils/googleDrive');
+      
+      // Resolve/Create the full folder path in Drive
+      const folderId = await ensureFolderPath(pathNames);
+      
+      // Cache this ID to the leaf category for blazing fast uploads next time
+      leafCategory.googleDriveFolderId = folderId;
+      await leafCategory.save();
+      
+      console.log(`Successfully mapped category "${leafCategory.name}" to Drive ID: ${folderId}`);
+      return { names: pathNames, folderId: folderId };
+    } catch (err) {
+      console.error("Critical Category Path Error:", err.message);
+    }
+  }
+
+  // Fallback: If everything fails, return path names so uploadToDrive can attempt resolution
+  return { names: pathNames, folderId: null };
+};
+
+// Automaticaly delete empty category folder from Drive
+const cleanupEmptyCategoryFolder = async (categoryId) => {
+  try {
+    if (!categoryId || categoryId === 'root') return;
+    
+    console.log(`Checking cleanup for category: ${categoryId}`);
+
+    // 1. Check if any content exists for this category
+    const contentCount = await Content.countDocuments({ categoryId });
+    console.log(`Content count for ${categoryId}: ${contentCount}`);
+    if (contentCount > 0) return;
+
+    // 2. Check if any child categories exist
+    const childCategories = await Category.countDocuments({ parentId: categoryId });
+    console.log(`Child categories count for ${categoryId}: ${childCategories}`);
+    if (childCategories > 0) return;
+
+    // 3. Get folder path names and ID
+    const { names: folderPath, folderId } = await getCategoryPath(categoryId);
+    console.log(`Folder path/ID for cleanup of ${categoryId}:`, folderPath, folderId);
+    
+    if (!folderId || folderId === process.env.GOOGLE_DRIVE_FOLDER_ID) {
+        console.log("Root folder or missing ID, skipping Drive deletion.");
+        return;
+    }
+
+    // 4. Final verify: Is the folder actually empty on Drive too?
+    try {
+      const physicallyEmpty = await isDriveFolderEmpty(folderId);
+      if (physicallyEmpty) {
+        await deleteFromDrive(folderId);
+        console.log(`Successfully deleted empty category folder [${folderPath.join('/')}] ID: ${folderId}`);
+      } else {
+        console.log(`Folder [${folderPath.join('/')}] not deleted because it still contains files or subfolders.`);
+      }
+    } catch (err) {
+      console.warn("Drive cleanup verification failed:", err.message);
+    }
+  } catch (err) {
+    console.error("Cleanup Folder Error:", err.message);
+  }
 };
 // -----------------------
 
@@ -68,29 +151,102 @@ exports.uploadContent = async (req, res) => {
     
     // --- BATCH UPLOAD (Google Drive) ---
     if (req.files && req.files.length > 0) {
-      // Get category path for Drive organization
-      const folderPath = await getCategoryPath(categoryId);
+      const { names: folderPath, folderId: directFolderId } = await getCategoryPath(categoryId);
       
-      for (const file of req.files) {
-        try {
-          const driveData = await uploadToDrive(file, folderPath);
-          const newContent = new Content({
-            title: title || file.originalname,
-            type: file.mimetype,
-            url: driveData.webViewLink,
-            googleDriveId: driveData.id,
-            fileResourceType: 'raw', 
-            categoryId,
-            tags: tagsArray,
-            uploadedBy: req.user.id, 
-          });
-          const savedItem = await newContent.save();
-          uploadedItems.push(savedItem);
-          if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
-        } catch (uploadErr) {
-          console.error("Upload failed for file:", file.originalname, uploadErr);
-          lastError = uploadErr.message;
-        }
+      // Process in smaller chunks for stability (especially with 20MB+ files)
+      const CHUNK_SIZE = 3;
+      for (let i = 0; i < req.files.length; i += CHUNK_SIZE) {
+        const chunk = req.files.slice(i, i + CHUNK_SIZE);
+        
+        const uploadPromises = chunk.map(async (file) => {
+          let currentFilePath = file.path;
+          let isTempFile = false;
+
+          try {
+            // --- IMAGE OPTIMIZATION: Convert to WebP for maximum compression ---
+            if (file.mimetype.startsWith('image/') && !file.mimetype.includes('svg')) {
+              try {
+                const optName = `opt-${path.parse(file.originalname).name}.webp`;
+                const compressedPath = path.join(path.dirname(file.path), optName);
+                
+                await sharp(file.path)
+                  .resize({ width: 1200, withoutEnlargement: true })
+                  .webp({ quality: 75, effort: 6 }) // High compression effort
+                  .toFile(compressedPath);
+                
+                if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+                currentFilePath = compressedPath;
+                file.originalname = optName;
+                file.mimetype = 'image/webp';
+                console.log(`Converted to WebP: ${file.originalname}`);
+              } catch (sharpErr) {
+                console.warn("Sharp optimization failed:", sharpErr.message);
+              }
+            } 
+            // --- VIDEO OPTIMIZATION: Compress using FFmpeg (720p limit) ---
+            else if (file.mimetype.startsWith('video/') && file.size > 10 * 1024 * 1024) { // Only > 10MB
+              try {
+                const optName = `opt-${path.parse(file.originalname).name}.mp4`;
+                const compressedPath = path.join(path.dirname(file.path), optName);
+                
+                await new Promise((resolve, reject) => {
+                  ffmpeg(file.path)
+                    .outputOptions([
+                      '-vf scale=-1:720', // Scale to 720p height
+                      '-vcodec libx264',
+                      '-crf 28', // Good balance balance between quality/size (higher is smaller)
+                      '-preset fast'
+                    ])
+                    .toFormat('mp4')
+                    .on('error', reject)
+                    .on('end', resolve)
+                    .save(compressedPath);
+                });
+
+                if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+                currentFilePath = compressedPath;
+                file.originalname = optName;
+                file.mimetype = 'video/mp4';
+                console.log(`Video compressed: ${file.originalname}`);
+              } catch (ffmpegErr) {
+                console.warn("FFmpeg compression failed:", ffmpegErr.message);
+              }
+            }
+
+            // Upload the optimized file
+            const driveData = await uploadToDrive({ ...file, path: currentFilePath }, folderPath, directFolderId);
+            
+            const filename = file.originalname;
+            const nameWithoutExt = filename.split('.').slice(0, -1).join('.') || filename;
+            
+            const newContent = new Content({
+              title: (req.files.length === 1 && title) ? title : nameWithoutExt,
+              type: file.mimetype,
+              url: driveData.webViewLink,
+              googleDriveId: driveData.id,
+              fileResourceType: 'raw', 
+              categoryId,
+              tags: tagsArray,
+              uploadedBy: req.user.id, 
+            });
+            const savedItem = await newContent.save();
+            
+            // Final cleanup
+            if (fs.existsSync(currentFilePath)) fs.unlinkSync(currentFilePath);
+            
+            return savedItem;
+          } catch (uploadErr) {
+            console.error("Upload failed for file:", file.originalname, uploadErr);
+            if (fs.existsSync(currentFilePath)) fs.unlinkSync(currentFilePath);
+            throw uploadErr;
+          }
+        });
+
+        const results = await Promise.allSettled(uploadPromises);
+        results.forEach(res => {
+          if (res.status === 'fulfilled') uploadedItems.push(res.value);
+          else lastError = res.reason.message || 'Unknown upload error';
+        });
       }
       
       if (uploadedItems.length === 0 && lastError) {
@@ -260,28 +416,31 @@ exports.getMyContent = async (req, res) => {
   }
 };
 
-// 6. Content Update Karna (Admin Only) - (CHANGED)
+// 6. Content Update Karna (Admin Only) - (CHANGED with Drive Sync)
 exports.updateContent = async (req, res) => {
-  const { title, categoryId, tags } = req.body;
-  try {
-    let content = await Content.findById(req.params.id);
-    if (!content) {
-      return res.status(404).json({ message: 'Content not found' });
-    }
-    if (content.uploadedBy.toString() !== req.user.id) {
-      return res.status(401).json({ message: 'User not authorized' });
-    }
-    
-    // Update karne ke liye data object
-    const updateData = {};
-    if (title) updateData.title = title;
-    if (categoryId) updateData.categoryId = categoryId;
-    if (tags) {
-        updateData.tags = tags ? tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
-    }
+    const { title, categoryId, tags, url, textNote } = req.body;
+    try {
+      let content = await Content.findById(req.params.id);
+      if (!content) {
+        return res.status(404).json({ message: 'Content not found' });
+      }
+      if (content.uploadedBy.toString() !== req.user.id) {
+        return res.status(401).json({ message: 'User not authorized' });
+      }
+      
+      // Update karne ke liye data object
+      const updateData = {};
+      if (title) updateData.title = title;
+      if (categoryId) updateData.categoryId = categoryId;
+      if (url) updateData.url = url;
+      if (textNote !== undefined) updateData.textNote = textNote;
+      if (typeof tags === 'string') {
+          updateData.tags = tags.split(',').map(tag => tag.trim()).filter(tag => tag);
+      }
 
-    // --- FILE REPLACE LOGIC (Cloudinary or Drive) ---
+    // --- FILE REPLACE LOGIC ---
     if (req.file) {
+      // Purana file delete karein
       if (content.googleDriveId) {
         await deleteFromDrive(content.googleDriveId);
       } else if (content.url && content.fileResourceType !== 'auto') {
@@ -291,26 +450,99 @@ exports.updateContent = async (req, res) => {
         }
       }
       
-      const folderPath = await getCategoryPath(categoryId || content.categoryId);
-      const driveData = await uploadToDrive(req.file, folderPath);
+      // Naya file upload karein
+      const { names: folderPath, folderId: directFolderId } = await getCategoryPath(categoryId || content.categoryId);
+      
+      let currentFilePath = req.file.path;
+      // Image Optimization (WebP)
+      if (req.file.mimetype.startsWith('image/') && !req.file.mimetype.includes('svg')) {
+        try {
+          const optName = `opt-upd-${path.parse(req.file.originalname).name}.webp`;
+          const optPath = path.join(path.dirname(req.file.path), optName);
+          await sharp(req.file.path)
+            .resize({ width: 1200, withoutEnlargement: true })
+            .webp({ quality: 75, effort: 6 })
+            .toFile(optPath);
+          
+          if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+          currentFilePath = optPath;
+          req.file.originalname = optName;
+          req.file.mimetype = 'image/webp';
+        } catch (err) {
+          console.warn("Update optimization failed:", err.message);
+        }
+      }
+      // Video Optimization (FFmpeg)
+      else if (req.file.mimetype.startsWith('video/') && req.file.size > 10 * 1024 * 1024) {
+        try {
+          const optName = `opt-upd-${path.parse(req.file.originalname).name}.mp4`;
+          const optPath = path.join(path.dirname(req.file.path), optName);
+          await new Promise((resolve, reject) => {
+            ffmpeg(req.file.path)
+              .outputOptions(['-vf scale=-1:720', '-vcodec libx264', '-crf 28', '-preset fast'])
+              .toFormat('mp4')
+              .on('error', reject)
+              .on('end', resolve)
+              .save(optPath);
+          });
+          if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+          currentFilePath = optPath;
+          req.file.originalname = optName;
+          req.file.mimetype = 'video/mp4';
+        } catch (err) {
+          console.warn("Update video optimization failed:", err.message);
+        }
+      }
+
+      const driveData = await uploadToDrive({ ...req.file, path: currentFilePath }, folderPath, directFolderId);
+      
+      // Drive file ko naya name dena agar title specified hai (warna original)
+      if (title && title !== req.file.originalname) {
+        await updateDriveFile(driveData.id, title);
+      }
+
       updateData.url = driveData.webViewLink;
       updateData.googleDriveId = driveData.id;
       updateData.type = req.file.mimetype;
       updateData.fileResourceType = 'raw';
 
-      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      if (fs.existsSync(currentFilePath)) fs.unlinkSync(currentFilePath);
+    } 
+    // --- SYNC WITH DRIVE (Title ya Category change hone par) ---
+    else if (content.googleDriveId) {
+      let syncName = null;
+      let syncPathNames = null;
+      
+      if (title && title !== content.title) syncName = title;
+      if (categoryId && categoryId !== content.categoryId.toString()) {
+        const { names } = await getCategoryPath(categoryId);
+        syncPathNames = names;
+      }
+      
+      if (syncName || syncPathNames) {
+        // Note: updateDriveFile takes path names to resolve ID if needed
+        await updateDriveFile(content.googleDriveId, syncName, syncPathNames);
+      }
     }
+
+    const oldCategoryId = content.categoryId;
 
     content = await Content.findByIdAndUpdate(
       req.params.id,
-      { $set: updateData }, // Sirf updateData object ko set karein
+      { $set: updateData }, 
       { new: true } 
     );
+
+    // Cleanup old category if it changed
+    if (categoryId && categoryId !== oldCategoryId.toString()) {
+      await cleanupEmptyCategoryFolder(oldCategoryId);
+    }
+
     res.json(content);
 
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
+    console.error("Update Error:", err.message);
+    res.status(500).send('Server error while updating content');
   }
 };
 
@@ -336,6 +568,12 @@ exports.deleteContent = async (req, res) => {
     }
     
     await Content.findByIdAndDelete(req.params.id);
+    
+    // Cleanup empty folder after deletion
+    if (content.categoryId) {
+      await cleanupEmptyCategoryFolder(content.categoryId);
+    }
+
     res.json({ message: 'Content removed' });
   } catch (err) {
     console.error(err.message);
@@ -370,6 +608,12 @@ exports.bulkDeleteContent = async (req, res) => {
 
     // Delete from DB
     await Content.deleteMany({ _id: { $in: ids }, uploadedBy: req.user.id });
+    
+    // Cleanup folders for all affected categories
+    const affectedCategoryIds = [...new Set(contents.map(c => c.categoryId))];
+    for (const catId of affectedCategoryIds) {
+      await cleanupEmptyCategoryFolder(catId);
+    }
     
     res.json({ message: `${ids.length} items deleted successfully.` });
   } catch (err) {

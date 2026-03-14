@@ -19,6 +19,7 @@ import AdminDashboard from './pages/admin/AdminDashboard'; // Analytics/Stats
 import EditProfile from './pages/public/EditProfile'; // Account Settings
 import AnnouncementsPage from './pages/admin/AnnouncementsPage';
 import ViewContentRequests from './pages/admin/ViewContentRequests';
+import ContactInquiries from './pages/admin/ContactInquiries';
 
 export default function App() {
   return (
@@ -64,6 +65,12 @@ export default function App() {
           <Route path="/dashboard/requests" element={
             <ProtectedRoute roles={['admin', 'superadmin']}> 
               <ViewContentRequests />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/dashboard/contact" element={
+            <ProtectedRoute roles={['superadmin']}> 
+              <ContactInquiries />
             </ProtectedRoute>
           } />
           

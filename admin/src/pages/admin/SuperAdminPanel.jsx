@@ -17,7 +17,7 @@ const UserCardMobile = ({ user, handleRoleChange, handleUserDelete }) => (
                 <span className={`badge ${user.role === 'superadmin' ? 'bg-danger' : user.role === 'admin' ? 'bg-warning' : 'bg-secondary'}`}>{user.role}</span>
             </div>
             <div className="card-actions">
-                <div className="btn-group w-100 mb-2">
+                <div className="scroll-selection mb-2">
                     <button className="btn btn-sm btn-outline-success" onClick={() => handleRoleChange(user._id, 'student')}>Student</button>
                     <button className="btn btn-sm btn-outline-warning" onClick={() => handleRoleChange(user._id, 'admin')}>Admin</button>
                     <button className="btn btn-sm btn-outline-danger" onClick={() => handleRoleChange(user._id, 'superadmin')} disabled={user.role === 'superadmin'}>SuperAdmin</button>
@@ -46,7 +46,7 @@ const AnnouncementCardMobile = ({ ann, handleAnnouncementStatus, handleEditClick
                     <span className={`badge bg-${statusColor}`}>{ann.status}</span>
                 </div>
                 <div className="card-actions">
-                    <div className="btn-group w-100">
+                    <div className="scroll-selection">
                         <button className="btn btn-sm btn-success" onClick={() => handleAnnouncementStatus(ann._id, 'approved')} disabled={ann.status === 'approved'}>Approve</button>
                         <button className="btn btn-sm btn-warning" onClick={() => handleAnnouncementStatus(ann._id, 'rejected')} disabled={ann.status === 'rejected'}>Reject</button>
                         <button className="btn btn-sm btn-info" onClick={() => handleEditClick(ann)}>Edit</button>
@@ -220,7 +220,7 @@ export default function SuperAdminPanel() {
                         <td><span className={`badge ${user.role === 'superadmin' ? 'bg-danger' : user.role === 'admin' ? 'bg-warning' : 'bg-secondary'}`}>{user.role}</span></td>
                         <td>
                           <div className="d-flex gap-2">
-                            <div className="btn-group">
+                            <div className="scroll-selection">
                               <button className="btn btn-sm btn-outline-success" onClick={() => handleRoleChange(user._id, 'student')}>Student</button>
                               <button className="btn btn-sm btn-outline-warning" onClick={() => handleRoleChange(user._id, 'admin')}>Admin</button>
                               <button className="btn btn-sm btn-outline-danger" onClick={() => handleRoleChange(user._id, 'superadmin')} disabled={user.role === 'superadmin'}>SuperAdmin</button>
@@ -284,7 +284,7 @@ export default function SuperAdminPanel() {
                               </span>
                             </td>
                             <td>
-                              <div className="btn-group">
+                              <div className="scroll-selection">
                                 <button className="btn btn-sm btn-success" onClick={() => handleAnnouncementStatus(ann._id, 'approved')} disabled={ann.status === 'approved'}>Approve</button>
                                 <button className="btn btn-sm btn-warning" onClick={() => handleAnnouncementStatus(ann._id, 'rejected')} disabled={ann.status === 'rejected'}>Reject</button>
                                 <button className="btn btn-sm btn-info" onClick={() => handleEditClick(ann)}>Edit</button>

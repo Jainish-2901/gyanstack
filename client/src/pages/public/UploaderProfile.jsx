@@ -49,11 +49,11 @@ export default function UploaderProfile() {
         <div className="col-lg-4">
           <div className="glass-panel p-4 h-100 text-center">
             <div className="mb-4">
-              <div className="bg-light rounded-circle d-inline-flex align-items-center justify-content-center border border-primary border-3 shadow-md overflow-hidden" style={{ width: '150px', height: '150px' }}>
+              <div className="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center border border-primary border-3 shadow-md overflow-hidden" style={{ width: '150px', height: '150px' }}>
                 {profile.profileImage ? (
                   <img src={profile.profileImage} alt={profile.username} className="w-100 h-100 object-fit-cover" />
                 ) : (
-                  <i className="bi bi-person-circle text-primary" style={{ fontSize: '5rem' }}></i>
+                  <span className="text-white fw-bold" style={{ fontSize: '4rem' }}>{profile.username.charAt(0).toUpperCase()}</span>
                 )}
               </div>
             </div>
