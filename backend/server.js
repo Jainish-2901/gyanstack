@@ -44,34 +44,46 @@ app.use(cors({
 })); 
 app.use(express.json());
 
-// Database Connection
-const MONGO_URI = process.env.MONGO_URI; 
-if (!MONGO_URI) {
-  console.error('FATAL ERROR: MONGO_URI is not defined. Please add it to your environment variables (e.g., in Vercel Dashboard).');
-  // In production, we don't want to crash immediately if possible to see other logs, 
-  // but for DB connection, it's a hard requirement.
-  if (process.env.NODE_ENV === 'production') {
-    // Optional: Log more production-specific debug info here
-  }
-}
-
-mongoose.connect(MONGO_URI, { 
-  family: 4,
-  serverSelectionTimeoutMS: 5000, // 5 seconds ke baad timeout ho jaye agar connection nahi bante
-  socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-})
-  .then(() => console.log('MongoDB connected!'))
-  .catch(err => {
-    console.error('MongoDB connection error:', err);
-    // In production (Vercel), we might want to log this specifically for debugging
-    if (process.env.NODE_ENV === 'production') {
-      console.log('TIP: Check if your IP (or 0.0.0.0/0) is whitelisted in MongoDB Atlas.');
+// Database Connection Utility for Serverless environments
+let cachedConnection = null;
+const connectDB = async () => {
+    if (cachedConnection) return cachedConnection;
+    if (!process.env.MONGO_URI) {
+        throw new Error('MONGO_URI is missing in environment variables');
     }
-  });
+    
+    // Create new connection if none cached
+    try {
+        const conn = await mongoose.connect(process.env.MONGO_URI, {
+            family: 4,
+            serverSelectionTimeoutMS: 8000,
+        });
+        cachedConnection = conn;
+        console.log('MongoDB connection established successfully');
+        return conn;
+    } catch (err) {
+        console.error('MongoDB Initial Connection Error:', err.message);
+        throw err;
+    }
+};
+
+// Middleware to ensure DB connection is ready before handling requests
+app.use(async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (err) {
+        res.status(500).json({ 
+            success: false,
+            message: 'Database connection failure',
+            error: process.env.NODE_ENV === 'production' ? 'Internal Connection Error' : err.message 
+        });
+    }
+});
 
 // Test Route
 app.get('/', (req, res) => {
-  res.send('Hello from GyanStack Backend!');
+  res.send('GyanStack Backend API is running... Status: OK');
 });
 
 // --- API Routes ko Use Karein ---

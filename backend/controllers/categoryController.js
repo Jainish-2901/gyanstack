@@ -2,19 +2,21 @@ const Category = require('../models/categoryModel'); // Apne model ka path check
 const { updateDriveFile } = require('../utils/googleDrive');
 
 // --- NAYA HELPER FUNCTION ---
-// Sabhi nested categories ko fetch karne ke liye
-const fetchNestedCategories = async (parentId) => {
+// --- Sabhi nested categories ko fetch karne ke liye (Optimized for Vercel) ---
+const fetchNestedCategories = async (parentId, depth = 0) => {
+  // Infinite recursion safety check
+  if (depth > 12) return [];
+
   // parentId 'root' ya ek valid ID ho sakta hai
-  const categories = await Category.find({ parentId }).sort({ order: 1 });
+  const categories = await Category.find({ parentId: parentId.toString() }).sort({ order: 1 });
   
   let categoryList = [];
   
   for (let category of categories) {
-    // toObject() zaroori hai taaki hum 'children' add kar sakein
     const categoryObj = category.toObject();
     
-    // Recursive call
-    const children = await fetchNestedCategories(categoryObj._id);
+    // Recursive call to get children with depth increment
+    const children = await fetchNestedCategories(categoryObj._id.toString(), depth + 1);
     if (children.length > 0) {
       categoryObj.children = children;
     }
@@ -148,11 +150,18 @@ exports.deleteCategory = async (req, res) => {
 // 5. Sabhi Nested Categories Lena (AdminPanel Map ke liye)
 exports.getAllNestedCategories = async (req, res) => {
   try {
+    if (!Category) {
+        throw new Error('Category model is not registered properly');
+    }
     const categories = await fetchNestedCategories('root');
     res.json({ categories });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error (getAllNestedCategories)');
+    console.error("CRITICAL Nested Categories Error:", err);
+    res.status(500).json({ 
+        success: false,
+        message: 'Server Error while fetching nested categories',
+        error: process.env.NODE_ENV === 'production' ? 'Recursive Fetch Failure' : err.message
+    });
   }
 };
 // -----------------------------

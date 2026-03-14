@@ -13,10 +13,16 @@ cloudinary.config({
 // 10. Public Statistics Lena (Home Page ke liye)
 exports.getPublicStats = async (req, res) => {
   try {
-    const contentCount = await Content.countDocuments();
-    const studentCount = await User.countDocuments();
+    // Check if models are available (avoid potential race conditions in serverless)
+    if (!Content || !User) {
+        throw new Error('Database models were not initialized correctly');
+    }
+
+    const contentCount = await Content.countDocuments() || 0;
+    const studentCount = await User.countDocuments() || 0;
     
     // Aggregation for total views
+    let totalViews = 0;
     const aggregationStats = await Content.aggregate([
       { 
         $group: { 
@@ -25,7 +31,10 @@ exports.getPublicStats = async (req, res) => {
         } 
       }
     ]);
-    const totalViews = aggregationStats.length > 0 ? aggregationStats[0].totalViews : 0;
+    
+    if (aggregationStats && aggregationStats.length > 0) {
+        totalViews = aggregationStats[0].totalViews || 0;
+    }
 
     res.json({
       contentCount: contentCount + '+',
@@ -33,8 +42,12 @@ exports.getPublicStats = async (req, res) => {
       viewsCount: totalViews + '+'
     });
   } catch (err) {
-    console.error("Public Stats Error:", err.message);
-    res.status(500).json({ message: 'Server error while fetching stats' });
+    console.error("CRITICAL Public Stats Error:", err);
+    res.status(500).json({ 
+        success: false,
+        message: 'Server error while fetching stats',
+        debug: process.env.NODE_ENV === 'production' ? 'Aggregation or Query Failure' : err.message
+    });
   }
 };
 const sendEmail = require('../services/mailService');
