@@ -6,23 +6,24 @@ const PWAInstallPrompt = () => {
 
     useEffect(() => {
         const handler = (e) => {
-            // Prevent Chrome 67 and earlier from automatically showing the prompt
             e.preventDefault();
-            // Stash the event so it can be triggered later.
             setDeferredPrompt(e);
-            // Show the install button
             setIsVisible(true);
         };
 
         window.addEventListener('beforeinstallprompt', handler);
 
-        // Listen for internal triggers from other components
+        // Listen for internal triggers from other components (like Home.jsx button)
         const triggerHandler = () => {
-            if (deferredPrompt) handleInstallClick();
+            if (deferredPrompt) {
+                handleInstallClick();
+            } else {
+                // If no native prompt, show instructions
+                setIsVisible(true);
+            }
         };
         window.addEventListener('trigger-pwa-install', triggerHandler);
 
-        // Check if app is already installed
         if (window.matchMedia('(display-mode: standalone)').matches) {
             setIsVisible(false);
         }
@@ -34,21 +35,20 @@ const PWAInstallPrompt = () => {
     }, [deferredPrompt]);
 
     const handleInstallClick = async () => {
-        if (!deferredPrompt) return;
-
-        // Show the install prompt
-        deferredPrompt.prompt();
-
-        // Wait for the user to respond to the prompt
-        const { outcome } = await deferredPrompt.userChoice;
-
-        if (outcome === 'accepted') {
-            console.log('User accepted the PWA install prompt');
-        } else {
-            console.log('User dismissed the PWA install prompt');
+        if (!deferredPrompt) {
+            // Provide feedback if native prompt is missing
+            alert("To install GyanStack:\n\n1. On Mobile: Tap 'Share' or browser menu then 'Add to Home Screen'.\n2. On Desktop: Look for the 'Install' icon in your address bar.");
+            return;
         }
 
-        // We've used the prompt, and can't use it again
+        // Show the native install prompt
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        
+        if (outcome === 'accepted') {
+            console.log('App install accepted');
+        }
+        
         setDeferredPrompt(null);
         setIsVisible(false);
     };

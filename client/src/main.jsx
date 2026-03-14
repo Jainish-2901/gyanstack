@@ -15,7 +15,7 @@ import './App.css';
 // PWA: Service Worker Registration (Only in Production)
 import { registerSW } from 'virtual:pwa-register';
 
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
+if ('serviceWorker' in navigator) {
   registerSW({
     onNeedRefresh() {
        if (confirm('New content available. Reload?')) {

@@ -12,8 +12,8 @@ export default defineConfig({
       filename: 'sw.js', // Output will be public/sw.js 
       registerType: 'autoUpdate',
       devOptions: {
-        enabled: false, // Disabled in dev to stop Workbox precache warnings
-        type: 'module', // Essential for using imports in SW
+        enabled: true, // Enabled for local testing of PWA features
+        type: 'module',
         navigateFallbackAllowlist: [/^index.html$/] 
       },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg', 'logo.png'],

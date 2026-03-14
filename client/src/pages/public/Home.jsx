@@ -337,8 +337,11 @@ export default function Home() {
           <h2 className="display-6 fw-bold" style={{ color: 'var(--text-primary)' }}>
             Why Students Choose GyanStack
           </h2>
+          <p className="text-muted">High-quality resources tailored for BCA & MCA excellence.</p>
         </div>
-        <div className="row justify-content-center">
+        
+        {/* Type 1: Core Platform Excellence */}
+        <div className="row justify-content-center mb-5">
           <FeatureCard
             icon="bi-lightning-charge-fill"
             title="Exam Time Saver"
@@ -352,6 +355,27 @@ export default function Home() {
             colorClass="bg-gradient-2"
           />
           <FeatureCard
+            icon="bi-shield-check"
+            title="Quality Verified"
+            text="Every note and assignment is reviewed by our top contributors for accuracy and relevance."
+            colorClass="bg-gradient-4"
+          />
+          <FeatureCard
+            icon="bi-megaphone-fill"
+            title="Ad-Free Forever"
+            text="Focus entirely on your studies. No annoying popups or video ads to distract you from success."
+            colorClass="bg-gradient-2"
+          />
+        </div>
+
+        {/* Type 2: Premium Account Benefits */}
+        <div className="text-center mb-5 mt-5 fade-in">
+          <h4 className="fw-bold mb-3"><span className="text-primary"><i className="bi bi-star-fill me-2"></i></span>Unlock Premium Benefits</h4>
+          <p className="text-muted mx-auto" style={{maxWidth: '600px'}}>Join our community to access these exclusive member-only features designed for high-performance learning.</p>
+        </div>
+
+        <div className="row justify-content-center">
+          <FeatureCard
             icon="bi-bookmark-star-fill"
             title="Save & Organize"
             text="Bookmark your favorite topics into your personalized dashboard for easy access."
@@ -364,22 +388,10 @@ export default function Home() {
             colorClass="bg-gradient-3"
           />
           <FeatureCard
-            icon="bi-shield-check"
-            title="Quality Verified"
-            text="Every note and assignment is reviewed by our top contributors for accuracy and relevance."
-            colorClass="bg-gradient-4"
-          />
-          <FeatureCard
             icon="bi-bell-fill"
             title="Instant Alerts"
             text="Get notified on your device immediately when new important notes are uploaded."
             colorClass="bg-gradient-1"
-          />
-          <FeatureCard
-            icon="bi-megaphone-fill"
-            title="Ad-Free Forever"
-            text="Focus entirely on your studies. No annoying popups or video ads to distract you from success."
-            colorClass="bg-gradient-2"
           />
           <FeatureCard
             icon="bi-people-fill"
@@ -388,7 +400,6 @@ export default function Home() {
             colorClass="bg-gradient-3"
           />
         </div>
-        {/* Button removed from here and moved to Explore Hub header above */}
       </section>
 
       {/* --- NEW SECTION: Categorized Content --- */}
@@ -447,7 +458,7 @@ export default function Home() {
         <div className="container">
           <div className="row align-items-center g-5">
             <div className="col-lg-6 text-center text-lg-start">
-              <div className="badge bg-primary px-3 py-2 rounded-pill mb-3 fw-bold">📱 NEW: OFFLINE ACCESS</div>
+              <div className="badge bg-primary px-3 py-2 rounded-pill mb-3 fw-bold">📱 NEW: Application ACCESS</div>
               <h2 className="display-5 fw-bold mb-4">Study Anywhere with our <span className="text-primary">Native App</span></h2>
               <p className="lead text-muted mb-4">
                 Don't let poor internet slow you down. Install our Web App on your Phone or Desktop to access your saved notes, even when you're offline!
@@ -464,7 +475,7 @@ export default function Home() {
                 </div>
                 <div className="col-sm-6">
                   <div className="d-flex align-items-center gap-3">
-                    <i className="bi bi-cloud-slash-fill fs-2 text-info"></i>
+                    <i className="bi bi-globe2 fs-2 text-info"></i>
                     <div>
                       <h6 className="fw-bold mb-0">Stay Updated</h6>
                       <small className="text-muted">Internet is required</small>

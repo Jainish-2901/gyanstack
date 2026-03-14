@@ -9,6 +9,20 @@ const NotificationBell = ({ user }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
+    // Only lock scroll on mobile devices where the notification is centered (modal-style)
+    const isMobile = window.innerWidth <= 490;
+    
+    if (isOpen && isMobile) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
     if (!user) return;
     const fetchAnnouncements = async () => {
       setLoading(true);
@@ -67,7 +81,14 @@ const NotificationBell = ({ user }) => {
       </a>
       
       {isOpen && (
-        <ul className="dropdown-menu dropdown-menu-end shadow-lg show position-absolute glass-panel border-0" style={{ minWidth: '320px', maxHeight: '400px', overflowY: 'auto', right: 0, top: '120%', zIndex: 1050 }}>
+        <>
+          {/* Mobile Overlay for Centered Notification (<= 490px) */}
+          <div 
+            className="notification-overlay d-md-none" 
+            onClick={() => setIsOpen(false)}
+          ></div>
+
+          <ul className="dropdown-menu dropdown-menu-end shadow-lg show position-absolute glass-panel border-0" style={{ minWidth: '320px', maxHeight: '400px', overflowY: 'auto', right: 0, top: '120%', zIndex: 2100 }}>
           <li className='dropdown-header fw-bold border-bottom d-flex justify-content-between align-items-center bg-transparent'>
             <span className="text-primary font-weight-bold">Announcements ({unreadCount} New)</span>
             <button className="btn-close" style={{fontSize: '0.6rem'}} onClick={() => setIsOpen(false)}></button>
@@ -88,6 +109,7 @@ const NotificationBell = ({ user }) => {
           ))}
           <li><Link onClick={() => setIsOpen(false)} className="dropdown-item text-center small text-primary fw-bold py-3 bg-transparent" to="/announcements">View All Notifications</Link></li>
         </ul>
+        </>
       )}
     </div>
   );
