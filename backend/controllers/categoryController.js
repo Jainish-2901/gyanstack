@@ -1,6 +1,17 @@
 const Category = require('../models/categoryModel'); // Apne model ka path check karein
 const { updateDriveFile } = require('../utils/googleDrive');
 
+// --- RECURSIVE CHECK HELPER ---
+const isDescendantOf = async (targetParentId, categoryId) => {
+  if (targetParentId === categoryId) return true;
+  if (!targetParentId || targetParentId === 'root') return false;
+
+  const parent = await Category.findById(targetParentId);
+  if (!parent || !parent.parentId || parent.parentId === 'root') return false;
+  
+  return await isDescendantOf(parent.parentId, categoryId);
+};
+
 // --- NAYA HELPER FUNCTION ---
 // --- Sabhi nested categories ko fetch karne ke liye (Optimized for Vercel) ---
 const fetchNestedCategories = async (parentId, depth = 0) => {
@@ -76,39 +87,53 @@ exports.getCategories = async (req, res) => {
 // --- YEH NAYA FUNCTION HAI ---
 // 3. Category Update Karna (Naam)
 exports.updateCategory = async (req, res) => {
-  const { name } = req.body;
+  const { name, parentId } = req.body;
   try {
     let category = await Category.findById(req.params.id);
     if (!category) {
       return res.status(404).json({ message: 'Category not found' });
     }
-    
-    // Check karein ki naya naam duplicate na ho
-    const existingCategory = await Category.findOne({ 
-      name, 
-      parentId: category.parentId, 
-      _id: { $ne: req.params.id } // Khud ko chhodkar
-    });
-    if (existingCategory) {
-      return res.status(400).json({ message: 'Another category with this name already exists at this level.' });
+
+    // --- PARENT UPDATED (MOVE LOGIC) ---
+    if (parentId && parentId !== category.parentId) {
+      // Infinite recursion safety: check if parentId is a descendant of current category
+      const isRecursive = await isDescendantOf(parentId, req.params.id);
+      if (isRecursive) {
+        return res.status(400).json({ message: 'Cannot move a category into itself or its own sub-categories.' });
+      }
+      
+      // Update order to end of new parent list
+      const count = await Category.countDocuments({ parentId });
+      category.order = count;
+      category.parentId = parentId;
+    }
+
+    const oldName = category.name;
+    if (name) {
+      // Check for duplicate name in same level
+      const existingCategory = await Category.findOne({ 
+        name, 
+        parentId: category.parentId, 
+        _id: { $ne: req.params.id }
+      });
+      if (existingCategory) {
+        return res.status(400).json({ message: 'Another category with this name already exists at this level.' });
+      }
+      category.name = name;
     }
     
-    const oldName = category.name;
-    category.name = name;
     await category.save();
 
-    // --- SYNC RENAME TO DRIVE ---
-    if (category.googleDriveFolderId && oldName !== name) {
+    // drive sync...
+    if (category.googleDriveFolderId && name && oldName !== name) {
       try {
         await updateDriveFile(category.googleDriveFolderId, name);
-        console.log(`Renamed Drive folder from ${oldName} to ${name}`);
       } catch (driveErr) {
-        console.error("Failed to rename Drive folder:", driveErr.message);
+        console.error("Drive Rename Failed:", driveErr.message);
       }
     }
 
     res.json(category);
-
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error (updateCategory)');
@@ -130,11 +155,14 @@ exports.deleteCategory = async (req, res) => {
       return res.status(400).json({ message: 'Cannot delete. This category has sub-categories.' });
     }
     
-    // TODO: Check karein ki is category mein koi content to nahi hai
-    // const contentCount = await Content.countDocuments({ categoryId: req.params.id });
-    // if (contentCount > 0) {
-    //   return res.status(400).json({ message: 'Cannot delete. This category has content in it.' });
-    // }
+    // Check karein ki is category mein koi content to nahi hai
+    if (!Content) {
+        var Content = require('../models/contentModel');
+    }
+    const contentCount = await Content.countDocuments({ categoryId: req.params.id });
+    if (contentCount > 0) {
+      return res.status(400).json({ message: 'Cannot delete. This category has linked content. Please move or delete content first.' });
+    }
     
     await Category.findByIdAndDelete(req.params.id);
     res.json({ message: 'Category removed' });
@@ -171,29 +199,33 @@ exports.getAllNestedCategories = async (req, res) => {
 // 6. Categories Reorder Karna
 exports.reorderCategories = async (req, res) => {
   try {
-    // Frontend se naye order wali list aayegi
     const { orderedCategories } = req.body;
 
     if (!orderedCategories || !Array.isArray(orderedCategories)) {
       return res.status(400).json({ message: 'Invalid data format' });
     }
 
-    // Ek saath multiple updates karne ke liye
+    const mongoose = require('mongoose');
+
+    // Mongoose raw bulkWrite doesn't always cast _id strings to ObjectIds
     const bulkOps = orderedCategories.map(item => ({
       updateOne: {
-        filter: { _id: item._id },
+        filter: { _id: new mongoose.Types.ObjectId(item._id) },
         update: { $set: { order: item.order } }
       }
     }));
 
-    // Database me bulk operation chalayein
     await Category.bulkWrite(bulkOps);
 
     res.status(200).json({ message: 'Categories reordered successfully' });
 
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error during reorder');
+    console.error("CRITICAL Reorder Error:", err);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server Error during reorder',
+      error: process.env.NODE_ENV === 'production' ? err.message : err.stack 
+    });
   }
 };
 // -----------------------------

@@ -153,100 +153,84 @@ exports.uploadContent = async (req, res) => {
     if (req.files && req.files.length > 0) {
       const { names: folderPath, folderId: directFolderId } = await getCategoryPath(categoryId);
       
-      // Process in smaller chunks for stability (especially with 20MB+ files)
-      const CHUNK_SIZE = 3;
-      for (let i = 0; i < req.files.length; i += CHUNK_SIZE) {
-        const chunk = req.files.slice(i, i + CHUNK_SIZE);
-        
-        const uploadPromises = chunk.map(async (file) => {
-          let currentFilePath = file.path;
-          let isTempFile = false;
+      // Sequential processing is MUCH more stable for server resources (FFmpeg/Sharp)
+      // and avoids Google Drive rate limit issues.
+      for (const file of req.files) {
+        let currentFilePath = file.path;
 
-          try {
-            // --- IMAGE OPTIMIZATION: Convert to WebP for maximum compression ---
-            if (file.mimetype.startsWith('image/') && !file.mimetype.includes('svg')) {
-              try {
-                const optName = `opt-${path.parse(file.originalname).name}.webp`;
-                const compressedPath = path.join(path.dirname(file.path), optName);
-                
-                await sharp(file.path)
-                  .resize({ width: 1200, withoutEnlargement: true })
-                  .webp({ quality: 75, effort: 6 }) // High compression effort
-                  .toFile(compressedPath);
-                
-                if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
-                currentFilePath = compressedPath;
-                file.originalname = optName;
-                file.mimetype = 'image/webp';
-                console.log(`Converted to WebP: ${file.originalname}`);
-              } catch (sharpErr) {
-                console.warn("Sharp optimization failed:", sharpErr.message);
-              }
-            } 
-            // --- VIDEO OPTIMIZATION: Compress using FFmpeg (720p limit) ---
-            else if (file.mimetype.startsWith('video/') && file.size > 10 * 1024 * 1024) { // Only > 10MB
-              try {
-                const optName = `opt-${path.parse(file.originalname).name}.mp4`;
-                const compressedPath = path.join(path.dirname(file.path), optName);
-                
-                await new Promise((resolve, reject) => {
-                  ffmpeg(file.path)
-                    .outputOptions([
-                      '-vf scale=-1:720', // Scale to 720p height
-                      '-vcodec libx264',
-                      '-crf 28', // Good balance balance between quality/size (higher is smaller)
-                      '-preset fast'
-                    ])
-                    .toFormat('mp4')
-                    .on('error', reject)
-                    .on('end', resolve)
-                    .save(compressedPath);
-                });
-
-                if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
-                currentFilePath = compressedPath;
-                file.originalname = optName;
-                file.mimetype = 'video/mp4';
-                console.log(`Video compressed: ${file.originalname}`);
-              } catch (ffmpegErr) {
-                console.warn("FFmpeg compression failed:", ffmpegErr.message);
-              }
+        try {
+          // --- IMAGE OPTIMIZATION ---
+          if (file.mimetype.startsWith('image/') && !file.mimetype.includes('svg')) {
+            try {
+              const optName = `opt-${Date.now()}-${path.parse(file.originalname).name}.webp`;
+              const compressedPath = path.join(path.dirname(file.path), optName);
+              
+              await sharp(file.path)
+                .resize({ width: 1200, withoutEnlargement: true })
+                .webp({ quality: 80, effort: 6 }) 
+                .toFile(compressedPath);
+              
+              if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+              currentFilePath = compressedPath;
+              file.originalname = optName;
+              file.mimetype = 'image/webp';
+            } catch (sharpErr) {
+              console.warn("Sharp optimization failed:", sharpErr.message);
             }
+          } 
+          // --- VIDEO OPTIMIZATION ---
+          else if (file.mimetype.startsWith('video/') && file.size > 15 * 1024 * 1024) { 
+            try {
+              const optName = `opt-${Date.now()}-${path.parse(file.originalname).name}.mp4`;
+              const compressedPath = path.join(path.dirname(file.path), optName);
+              
+              await new Promise((resolve, reject) => {
+                ffmpeg(file.path)
+                  .outputOptions(['-vf scale=-1:720', '-vcodec libx264', '-crf 28', '-preset fast'])
+                  .toFormat('mp4')
+                  .on('error', reject)
+                  .on('end', resolve)
+                  .save(compressedPath);
+              });
 
-            // Upload the optimized file
-            const driveData = await uploadToDrive({ ...file, path: currentFilePath }, folderPath, directFolderId);
-            
-            const filename = file.originalname;
-            const nameWithoutExt = filename.split('.').slice(0, -1).join('.') || filename;
-            
-            const newContent = new Content({
-              title: (req.files.length === 1 && title) ? title : nameWithoutExt,
-              type: file.mimetype,
-              url: driveData.webViewLink,
-              googleDriveId: driveData.id,
-              fileResourceType: 'raw', 
-              categoryId,
-              tags: tagsArray,
-              uploadedBy: req.user.id, 
-            });
-            const savedItem = await newContent.save();
-            
-            // Final cleanup
-            if (fs.existsSync(currentFilePath)) fs.unlinkSync(currentFilePath);
-            
-            return savedItem;
-          } catch (uploadErr) {
-            console.error("Upload failed for file:", file.originalname, uploadErr);
-            if (fs.existsSync(currentFilePath)) fs.unlinkSync(currentFilePath);
-            throw uploadErr;
+              if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+              currentFilePath = compressedPath;
+              file.originalname = optName;
+              file.mimetype = 'video/mp4';
+            } catch (ffmpegErr) {
+              console.warn("FFmpeg compression failed:", ffmpegErr.message);
+            }
           }
-        });
 
-        const results = await Promise.allSettled(uploadPromises);
-        results.forEach(res => {
-          if (res.status === 'fulfilled') uploadedItems.push(res.value);
-          else lastError = res.reason.message || 'Unknown upload error';
-        });
+          // Upload to Drive
+          const driveData = await uploadToDrive({ ...file, path: currentFilePath }, folderPath, directFolderId);
+          
+          const filename = file.originalname;
+          const nameWithoutExt = filename.split('.').slice(0, -1).join('.') || filename;
+          
+          const newContent = new Content({
+            title: (req.files.length === 1 && title) ? title : nameWithoutExt,
+            type: file.mimetype,
+            url: driveData.webViewLink,
+            googleDriveId: driveData.id,
+            fileResourceType: 'raw', 
+            categoryId,
+            tags: tagsArray,
+            uploadedBy: req.user.id, 
+          });
+          
+          const savedItem = await newContent.save();
+          uploadedItems.push(savedItem);
+          
+          // Cleanup
+          if (fs.existsSync(currentFilePath)) fs.unlinkSync(currentFilePath);
+          
+        } catch (uploadErr) {
+          console.error("Upload failed for file:", file.originalname, uploadErr);
+          if (fs.existsSync(currentFilePath)) fs.unlinkSync(currentFilePath);
+          lastError = uploadErr.message || 'File upload failed';
+          // We continue to next file even if one fails
+        }
       }
       
       if (uploadedItems.length === 0 && lastError) {

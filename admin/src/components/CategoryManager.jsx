@@ -4,21 +4,51 @@ import api from '../services/api'; // Path ko wapas fix kiya gaya hai
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 // -----------------------------------------------
 
-// ... (EditCategoryForm component waisa hi rahega) ...
-const EditCategoryForm = ({ category, onSave, onCancel }) => {
+// --- Updated EditCategoryForm with Parent Selection ---
+const EditCategoryForm = ({ category, allCategories, onSave, onCancel }) => {
   const [name, setName] = useState(category.name);
-  const handleSubmit = (e) => { e.preventDefault(); onSave(category._id, name); };
+  const [parentId, setParentId] = useState(category.parentId);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave(category._id, name, parentId);
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="d-flex w-100 p-2">
-      <input type="text" className="form-control form-control-sm" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
-      <button type="submit" className="btn btn-sm btn-success ms-2"><i className="bi bi-check-lg"></i></button>
-      <button type="button" className="btn btn-sm btn-secondary ms-1" onClick={onCancel}><i className="bi bi-x-lg"></i></button>
+    <form onSubmit={handleSubmit} className="p-3 border-bottom bg-light">
+      <div className="mb-2">
+        <label className="form-label small fw-bold">Update Name</label>
+        <input 
+          type="text" 
+          className="form-control form-control-sm" 
+          value={name} 
+          onChange={(e) => setName(e.target.value)} 
+          autoFocus 
+        />
+      </div>
+      <div className="mb-2">
+        <label className="form-label small fw-bold">Move to Parent</label>
+        <select 
+          className="form-select form-select-sm" 
+          value={parentId} 
+          onChange={(e) => setParentId(e.target.value)}
+        >
+          <option value="root">-- Root (Main Category) --</option>
+          {allCategories.filter(c => c._id !== category._id).map(cat => (
+            <option key={cat._id} value={cat._id}>{cat.name}</option>
+          ))}
+        </select>
+      </div>
+      <div className="d-flex gap-2">
+        <button type="submit" className="btn btn-sm btn-success flex-grow-1">Save Changes</button>
+        <button type="button" className="btn btn-sm btn-secondary" onClick={onCancel}>Cancel</button>
+      </div>
     </form>
   );
 };
 
 // --- CategoryItem Component (Ab Draggable) ---
-const CategoryItem = ({ category, index, onSelect, selectedId, onDelete, onUpdate, isSelectOnly }) => {
+const CategoryItem = ({ category, index, allCategories, onSelect, selectedId, onDelete, onUpdate, isSelectOnly }) => {
   const [subCategories, setSubCategories] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -42,8 +72,8 @@ const CategoryItem = ({ category, index, onSelect, selectedId, onDelete, onUpdat
   
   const isSelected = selectedId === category._id;
 
-  const handleSaveEdit = (id, newName) => {
-    onUpdate(id, newName, category.parentId); // ParentID bhi bhejein
+  const handleSaveEdit = (id, newName, newParentId) => {
+    onUpdate(id, newName, newParentId); 
     setIsEditing(false);
   };
   
@@ -70,7 +100,9 @@ const CategoryItem = ({ category, index, onSelect, selectedId, onDelete, onUpdat
     api.patch('/categories/reorder', { orderedCategories: orderedData })
       .catch(err => {
         console.error("Failed to reorder sub-categories", err);
-        // TODO: User ko error dikhayein aur state ko revert karein
+        const msg = err.response?.data?.message || "Failed to save order";
+        alert(`Error: ${msg}. Please refresh page.`);
+        fetchSubCategories(); // Revert state by re-fetching
       });
   };
 
@@ -88,7 +120,12 @@ const CategoryItem = ({ category, index, onSelect, selectedId, onDelete, onUpdat
           }}
         >
           {isEditing ? (
-            <EditCategoryForm category={category} onSave={handleSaveEdit} onCancel={() => setIsEditing(false)} />
+            <EditCategoryForm 
+              category={category} 
+              allCategories={allCategories} 
+              onSave={handleSaveEdit} 
+              onCancel={() => setIsEditing(false)} 
+            />
           ) : (
             <div 
               className={`d-flex justify-content-between align-items-center p-2 ps-3 ${isSelected ? 'bg-primary text-white' : ''}`}
@@ -134,7 +171,8 @@ const CategoryItem = ({ category, index, onSelect, selectedId, onDelete, onUpdat
                           <CategoryItem 
                             key={subCat._id} 
                             category={subCat} 
-                            index={subIndex} // Index zaroori hai
+                            index={subIndex} 
+                            allCategories={allCategories}
                             onSelect={onSelect}
                             selectedId={selectedId}
                             onDelete={onDelete}
@@ -161,10 +199,30 @@ const CategoryItem = ({ category, index, onSelect, selectedId, onDelete, onUpdat
 // --- Updated CategoryManager Component ---
 export default function CategoryManager({ onSelectCategory, isSelectOnly = false }) {
   const [rootCategories, setRootCategories] = useState([]);
+  const [allCategoriesFlattened, setAllCategoriesFlattened] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedCategory, setSelectedCategory] = useState({ _id: 'root', name: 'Root' });
   const [newCatName, setNewCatName] = useState('');
+
+  // Fetch all for dropdown
+  const fetchAllForDropdown = async () => {
+    try {
+      const { data } = await api.get('/categories/all-nested');
+      // Flatten the nested structure for select dropdown
+      const flattened = [];
+      const flatten = (cats) => {
+        cats.forEach(c => {
+          flattened.push({ _id: c._id, name: c.name });
+          if (c.children) flatten(c.children);
+        });
+      };
+      flatten(data.categories);
+      setAllCategoriesFlattened(flattened);
+    } catch (err) {
+      console.error("Failed to fetch flat list", err);
+    }
+  };
 
   // Fetch root categories (Order ke hisaab se)
   const fetchRootCategories = async () => {
@@ -180,7 +238,10 @@ export default function CategoryManager({ onSelectCategory, isSelectOnly = false
     setLoading(false);
   };
 
-  useEffect(() => { fetchRootCategories(); }, []);
+  useEffect(() => { 
+    fetchRootCategories(); 
+    fetchAllForDropdown();
+  }, []);
 
   // Create
   const handleCreateCategory = async (e) => {
@@ -218,18 +279,15 @@ export default function CategoryManager({ onSelectCategory, isSelectOnly = false
   };
 
   // Update
-  const handleUpdateCategory = async (id, newName, parentId) => {
+  const handleUpdateCategory = async (id, newName, newParentId) => {
     setError('');
     if (!newName) return setError('Category name is required.');
     try {
-      await api.put(`/categories/${id}`, { name: newName });
+      await api.put(`/categories/${id}`, { name: newName, parentId: newParentId });
       
-      // TODO: State ko locally update karein, na ki poora fetch
-      if (parentId === 'root') {
-        fetchRootCategories();
-      } else {
-        // Sub-category ko refresh karna thoda complex hai, abhi ke liye skip
-      }
+      // Full refresh ensures tree is correctly updated after move
+      fetchRootCategories();
+      fetchAllForDropdown();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update category.');
     }
@@ -269,7 +327,8 @@ export default function CategoryManager({ onSelectCategory, isSelectOnly = false
     api.patch('/categories/reorder', { orderedCategories: orderedData })
       .catch(err => {
         console.error("Failed to reorder root categories", err);
-        setError("Failed to save new order. Please refresh.");
+        const msg = err.response?.data?.message || "Connection Error";
+        setError(`Failed to save order: ${msg}. Please refresh.`);
         // Error hua to purana state wapas laayein
         fetchRootCategories();
       });
@@ -296,9 +355,10 @@ export default function CategoryManager({ onSelectCategory, isSelectOnly = false
         {/* Step 1: <DragDropContext> */}
         <DragDropContext onDragEnd={onRootDragEnd}>
           <div className="list-group category-tree" style={{ maxHeight: '400px', overflowY: 'auto' }}>
-            {/* Root level (ye draggable nahi hai) */}
+            {/* Root level (consistent styling) */}
             <div 
-              className={`list-group-item list-group-item-action p-2 ps-3 fw-bold ${selectedCategory._id === 'root' ? 'bg-primary text-white' : ''}`}
+              className={`d-flex align-items-center p-2 ps-3 fw-bold rounded-3 mb-2 transition-all ${selectedCategory._id === 'root' ? 'bg-primary text-white shadow-sm' : 'text-secondary hover-bg-light'}`}
+              style={{ cursor: 'pointer' }}
               onClick={() => handleSelect({ _id: 'root', name: 'Root' })}
             >
               <i className="bi bi-diagram-3-fill me-2"></i> Root
@@ -313,7 +373,8 @@ export default function CategoryManager({ onSelectCategory, isSelectOnly = false
                       <CategoryItem 
                         key={category._id} 
                         category={category} 
-                        index={index} // Index zaroori hai
+                        index={index} 
+                        allCategories={allCategoriesFlattened}
                         onSelect={handleSelect}
                         selectedId={selectedCategory._id}
                         onDelete={handleDeleteCategory}

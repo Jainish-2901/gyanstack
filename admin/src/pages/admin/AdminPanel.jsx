@@ -218,6 +218,13 @@ export default function AdminPanel() {
         return;
       }
       
+      // Batch mode validation (Limit: 10 files)
+      if (uploadMode === 'batch' && files.length > 10) {
+        setError('Maximum 10 files allowed per batch for stability.');
+        setUploading(false);
+        return;
+      }
+      
       // Har file ko FormData mein 'files' field ke naam se append karein
       for (let i = 0; i < files.length; i++) {
         formData.append('files', files[i]);
@@ -481,7 +488,7 @@ export default function AdminPanel() {
                   {type === 'file' && (
                     <div className="mb-3">
                       <label htmlFor="files" className="form-label fw-bold">
-                        {uploadMode === 'single' ? 'Step 4: Select Single File' : 'Step 4: Select Multiple Files'}
+                        {uploadMode === 'single' ? 'Step 4: Select Single File' : 'Step 4: Select Multiple Files (Max 10)'}
                       </label>
                       <input 
                         type="file" 

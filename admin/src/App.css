@@ -836,6 +836,17 @@ body {
     left: 0;
   }
 }
+
+@media (max-width: 490px) {
+  .dashboard-sidebar .sidebar-nav-container {
+    flex-grow: 0 !important;
+  }
+  
+  .dashboard-sidebar {
+    width: 260px !important;
+    overflow-y: auto !important;
+  }
+}
 .hover-opacity:hover {
   opacity: 0.8;
 }

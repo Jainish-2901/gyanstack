@@ -71,12 +71,12 @@ const DetailPreview = ({ item }) => {
   const fileType = item.type || '';
   const resourceType = item.fileResourceType || 'raw';
 
-  // 0. Google Drive Preview logic
+  // 0. Google Drive Preview logic (Responsive)
   if (item.googleDriveId) {
     const previewUrl = `https://drive.google.com/file/d/${item.googleDriveId}/preview`;
     return (
-      <div className="shadow-lg rounded overflow-hidden">
-        <div className="ratio ratio-4x3" style={{ minHeight: '500px' }}>
+      <div className="shadow-sm rounded overflow-hidden">
+        <div className="ratio ratio-4x3" style={{ minHeight: '300px', maxHeight: '70vh' }}>
           <iframe 
             src={previewUrl} 
             title={item.title} 
@@ -92,9 +92,13 @@ const DetailPreview = ({ item }) => {
   if (fileType === 'note' || item.textNote) {
     return (
       <div className="card shadow-sm border-0">
-        <div className="card-body">
-          <h4 className="card-title text-muted mb-3">Note Content</h4>
-          <p className="lead" style={{ whiteSpace: 'pre-wrap' }}>{item.textNote || 'No content.'}</p>
+        <div className="card-body p-3 p-md-4">
+          <h5 className="text-secondary fw-bold mb-3 d-flex align-items-center">
+            <i className="bi bi-file-text me-2"></i>Note Content
+          </h5>
+          <div className="content-text" style={{ whiteSpace: 'pre-wrap', fontSize: '1rem', lineHeight: '1.6' }}>
+            {item.textNote || 'No content.'}
+          </div>
         </div>
       </div>
     );
@@ -105,8 +109,8 @@ const DetailPreview = ({ item }) => {
     const embedUrl = getYoutubeEmbedUrl(item.url);
     if (embedUrl) {
       return (
-        <div>
-          <div className="ratio ratio-16x9 shadow-lg rounded">
+        <div className="text-center">
+          <div className="ratio ratio-16x9 shadow rounded bg-dark">
             <iframe
               src={embedUrl}
               title={item.title || "YouTube video player"}
@@ -114,17 +118,19 @@ const DetailPreview = ({ item }) => {
               loading="lazy"
             ></iframe>
           </div>
-          <a href={item.url} target="_blank" rel="noopener noreferrer" className="btn btn-outline-danger mt-3">
-            <i className="bi bi-youtube me-2"></i> Open on YouTube
-          </a>
+          <div className="mt-3">
+            <a href={item.url} target="_blank" rel="noopener noreferrer" className="btn btn-outline-danger btn-sm">
+              <i className="bi bi-youtube me-2"></i> Watch on YouTube
+            </a>
+          </div>
         </div>
       );
     }
     return (
-      <div className="text-center p-5 bg-light rounded shadow-sm">
-        <i className="bi bi-link-45deg display-1 text-primary"></i>
-        <h3 className='mt-3'>External Link</h3>
-        <a href={item.url} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-lg">Open Link in New Tab</a>
+      <div className="text-center p-4 p-md-5 bg-light rounded shadow-sm border">
+        <i className="bi bi-link-45deg display-3 text-primary mb-3 d-block"></i>
+        <h4 className='fw-bold mb-3'>External Resource</h4>
+        <a href={item.url} target="_blank" rel="noopener noreferrer" className="btn btn-primary px-4 rounded-pill">Open Link</a>
       </div>
     );
   }
@@ -132,8 +138,8 @@ const DetailPreview = ({ item }) => {
   // 3. Image Type
   if (resourceType === 'image' || fileType.includes('image')) {
     return (
-      <div className="text-center">
-        <img src={item.url} className="img-fluid rounded shadow-lg" alt={item.title} style={{ maxHeight: '80vh' }} />
+      <div className="text-center bg-light p-2 rounded">
+        <img src={item.url} className="img-fluid rounded shadow" alt={item.title} style={{ maxHeight: '75vh' }} />
       </div>
     );
   }
@@ -141,9 +147,9 @@ const DetailPreview = ({ item }) => {
   // 4. Video Type
   if (resourceType === 'video' || fileType.includes('video') || fileType.includes('avi')) {
     return (
-      <div>
-        <div className="ratio ratio-16x9 shadow-lg rounded">
-          <video controls autoPlay>
+      <div className="shadow rounded bg-dark overflow-hidden">
+        <div className="ratio ratio-16x9">
+          <video controls className="w-100">
             <source src={item.url} type={item.type} />
             Your browser does not support the video tag.
           </video>
@@ -155,8 +161,8 @@ const DetailPreview = ({ item }) => {
   // 5. PDF Type
   if (fileType.includes('pdf')) {
     return (
-      <div className="shadow-lg rounded overflow-hidden">
-        <div className="ratio ratio-4x3">
+      <div className="shadow-sm rounded overflow-hidden border">
+        <div className="ratio ratio-4x3" style={{ minHeight: '400px', maxHeight: '80vh' }}>
           <iframe
             src={item.url}
             title={item.title || "PDF document"}
@@ -168,26 +174,28 @@ const DetailPreview = ({ item }) => {
     );
   }
 
-  // 6. Fallback for all other files (DOCX, PPTX, ZIP, etc. or unknown)
+  // 6. Fallback (DOCX, ZIP, etc.)
   if (item.url && fileType !== 'note' && fileType !== 'link') {
     const iconClass = getIcon(item.type);
     return (
-      <div className="text-center p-5 glass-panel border shadow-sm">
+      <div className="text-center p-4 p-md-5 glass-panel border shadow-sm">
         <div className="mb-4">
-          <i className={`bi ${iconClass} display-1`}></i>
+          <div className="bg-primary bg-opacity-10 rounded-circle d-inline-flex p-4">
+            <i className={`bi ${iconClass} display-4`}></i>
+          </div>
         </div>
-        <h3 className='fw-bold mb-3'>{cleanTitle(item.title)}</h3>
-        <div className="alert alert-info d-inline-block px-4 mb-0">
-          <i className="bi bi-info-circle me-2"></i> This resource is ready for download.
+        <h4 className='fw-bold mb-2'>{cleanTitle(item.title)}</h4>
+        <div className="alert alert-info d-inline-block px-4 mb-0 rounded-pill small">
+          <i className="bi bi-info-circle me-2"></i> Ready for download
         </div>
       </div>
     );
   }
 
   return (
-    <div className="alert alert-warning text-center">
+    <div className="alert alert-warning text-center rounded-3">
       <i className="bi bi-exclamation-triangle-fill me-2"></i>
-      Preview is not available for this specific content.
+      Preview not available.
     </div>
   );
 };
@@ -308,97 +316,112 @@ export default function ContentDetailPage() {
   }
 
   return (
-    <div className="container my-5 fade-in">
+    <div className="container my-4 my-md-5 mx-auto fade-in">
       <div className="row justify-content-center">
-        <div className="col-lg-10">
+        <div className="col-lg-10 col-xl-9">
 
-          <button onClick={handleGoBack} className="btn btn-outline-secondary mb-3">
+          <button onClick={handleGoBack} className="btn btn-outline-secondary mb-4 shadow-sm btn-sm px-3">
             <i className="bi bi-arrow-left me-2"></i> Go Back
           </button>
 
-          <h1 className="display-4 fw-bold mb-3">{cleanTitle(item.title)}</h1>
+          <header className="mb-4">
+            <h1 className="fw-bold mb-3 text-break fs-2 fs-md-1 lh-sm">{cleanTitle(item.title)}</h1>
+            
+            <div className="d-flex flex-wrap align-items-center gap-2 text-muted small mb-3">
+              <div className="bg-light px-3 py-1 rounded-pill d-flex align-items-center">
+                <i className="bi bi-person-circle me-2 text-primary"></i>
+                <span>By: </span>
+                <Link to={`/uploader/${item.uploadedBy?._id}`} className="ms-1 text-primary text-decoration-none fw-bold">
+                  {item.uploadedBy?.username || 'Admin'}
+                </Link>
+              </div>
+              <div className="bg-light px-3 py-1 rounded-pill">
+                <i className="bi bi-calendar-check me-2"></i>
+                {new Date(item.createdAt).toLocaleDateString()}
+              </div>
+            </div>
 
-          <div className="d-flex flex-wrap align-items-center text-muted mb-4">
-            <span className="me-3">
-              <i className="bi bi-person-fill me-1"></i> Uploaded by: 
-              <Link to={`/uploader/${item.uploadedBy?._id}`} className="ms-1 text-primary text-decoration-none fw-bold hover-underline">
-                {item.uploadedBy?.username || 'Admin'}
-              </Link>
-            </span>
-            <span className="me-3"><i className="bi bi-eye-fill me-1"></i> {item.viewsCount} Views</span>
-            <span className="me-3"><i className="bi bi-heart-fill me-1"></i> {likeCount} Likes</span>
-            <span className="me-3"><i className="bi bi-download me-1"></i> {downloadsCount} Downloads</span>
-            <span className="me-3"><i className="bi bi-calendar-event me-1"></i> On: {new Date(item.createdAt).toLocaleDateString()}</span>
-          </div>
+            <div className="d-flex flex-wrap gap-3 mb-2">
+              <div className="d-flex align-items-center"><i className="bi bi-eye-fill me-2 text-info"></i>{item.viewsCount} Views</div>
+              <div className="d-flex align-items-center"><i className="bi bi-heart-fill me-2 text-danger"></i>{likeCount} Likes</div>
+              <div className="d-flex align-items-center"><i className="bi bi-cloud-download-fill me-2 text-success"></i>{downloadsCount} Downloads</div>
+            </div>
+          </header>
 
-          <div className="mb-4">
+          <div className="mb-4 d-flex flex-wrap gap-2">
             {item.tags?.map(tag => (
-              <span key={tag} className="badge bg-secondary me-1 fs-6">{tag}</span>
+              <span key={tag} className="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill fw-medium">
+                #{tag}
+              </span>
             ))}
           </div>
 
-          <div className="mb-4">
+          <div className="mb-4 glass-panel overflow-hidden shadow-sm">
             <DetailPreview item={item} />
           </div>
 
-          {/* 5. Action Buttons (Like, Save & Download) */}
-          <div className="d-flex gap-3 mb-5">
-            <button
-              className={`btn btn-lg ${isLiked ? 'btn-danger' : 'btn-outline-danger'}`}
-              onClick={handleLike}
-              disabled={!user}
-            >
-              <i className={`bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'}`}></i>
-              {isLiked ? ' Liked' : ' Like'}
-            </button>
-
-            {/* --- SAVE BUTTON AB API SE CONNECTED HAI --- */}
-            <button
-              className={`btn btn-lg ${isSaved ? 'btn-success' : 'btn-outline-success'}`}
-              onClick={handleSave}
-              disabled={!user}
-            >
-              <i className={`bi ${isSaved ? 'bi-bookmark-fill' : 'bi-bookmark'}`}></i>
-              {isSaved ? ' Saved' : ' Save'}
-            </button>
-            {/* ------------------------------------------- */}
-            
-            <ShareButton 
-              title={item.title} 
-              url={window.location.pathname} 
-              className="btn btn-lg btn-outline-primary"
-            />
-
-            {/* --- UNIVERSAL DOWNLOAD BUTTON (FOR ALL FILES) --- */}
-            {item.url && item.type !== 'note' && item.type !== 'link' && (
+          {/* Action Buttons Section */}
+          <div className="row g-3 mb-5">
+            <div className="col-12 col-sm-6 col-md-3">
               <button
-                onClick={handleDownload}
-                className="btn btn-lg btn-info shadow-sm px-5 rounded-pill fw-bold text-white"
+                className={`btn w-100 py-3 d-flex align-items-center justify-content-center h-100 ${isLiked ? 'btn-danger' : 'btn-outline-danger'}`}
+                onClick={handleLike}
+                disabled={!user}
               >
-                <i className="bi bi-cloud-arrow-down-fill me-2 fs-4"></i>
-                Download Now
+                <i className={`bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'} fs-5 me-2`}></i>
+                {isLiked ? 'Liked' : 'Like'}
               </button>
+            </div>
+
+            <div className="col-12 col-sm-6 col-md-3">
+              <button
+                className={`btn w-100 py-3 d-flex align-items-center justify-content-center h-100 ${isSaved ? 'btn-success' : 'btn-outline-success'}`}
+                onClick={handleSave}
+                disabled={!user}
+              >
+                <i className={`bi ${isSaved ? 'bi-bookmark-fill' : 'bi-bookmark'} fs-5 me-2`}></i>
+                {isSaved ? 'Saved' : 'Save'}
+              </button>
+            </div>
+
+            <div className="col-12 col-sm-6 col-md-3">
+              <ShareButton 
+                title={item.title} 
+                url={window.location.pathname} 
+                className="btn btn-outline-primary w-100 py-3 d-flex align-items-center justify-content-center h-100"
+              />
+            </div>
+
+            {item.url && item.type !== 'note' && item.type !== 'link' && (
+              <div className="col-12 col-md-3">
+                <button
+                  onClick={handleDownload}
+                  className="btn btn-info w-100 py-3 shadow-sm rounded-pill fw-bold text-white d-flex align-items-center justify-content-center"
+                >
+                  <i className="bi bi-cloud-arrow-down-fill me-2 fs-4"></i>
+                  Download
+                </button>
+              </div>
             )}
-            {/* ----------------------------------------------- */}
           </div>
 
-          {/* 6. RELATED RESOURCES SECTION */}
+          {/* RELATED RESOURCES SECTION */}
           {relatedItems.length > 0 && (
-            <div className="mt-5 pt-5 border-top">
+            <section className="mt-5 pt-5 border-top">
               <div className="d-flex align-items-center mb-4">
                 <div className="bg-primary bg-opacity-10 p-2 rounded-3 me-3">
                   <i className="bi bi-collection-fill text-primary fs-4"></i>
                 </div>
-                <h3 className="fw-bold mb-0">Related Resources</h3>
+                <h3 className="fw-bold mb-0">Recommended for You</h3>
               </div>
-              <div className="row g-4">
+              <div className="row g-3 g-md-4">
                 {relatedItems.map(rel => (
-                  <div key={rel._id} className="col-6 col-md-6 col-lg-3">
+                  <div key={rel._id} className="col-6 col-md-4 col-lg-3">
                     <ContentCard item={rel} />
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
           )}
 
         </div>

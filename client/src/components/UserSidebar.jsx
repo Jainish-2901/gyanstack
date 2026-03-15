@@ -29,7 +29,7 @@ export default function UserSidebar({ show, onMobileClose }) {
                 </button>
             </div>
 
-            <div className="flex-grow-1 overflow-y-auto py-3">
+            <div className="sidebar-nav-container flex-grow-1 overflow-y-auto py-3">
                 <div className="px-4 mb-3">
                     <small className="text-muted fw-bold text-uppercase tracking-wider">Student Portal</small>
                 </div>
@@ -56,18 +56,25 @@ export default function UserSidebar({ show, onMobileClose }) {
 
             <div className="p-3 border-top border-opacity-10">
                 <div className="glass-panel p-3 d-flex align-items-center">
-                    <div className="rounded-circle overflow-hidden shadow-sm border border-primary border-2 bg-primary me-3 d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
-                        {user?.profileImage ? (
-                            <img src={user.profileImage} alt="Profile" className="w-100 h-100 object-fit-cover" />
-                        ) : (
-                            <span className="text-white fw-bold">{user?.username.charAt(0).toUpperCase()}</span>
-                        )}
-                    </div>
-                    <div className="flex-grow-1 overflow-hidden">
-                        <h6 className="mb-0 text-truncate small">{user?.username}</h6>
-                        <small className="text-muted text-uppercase" style={{ fontSize: '0.65rem' }}>{user?.role}</small>
-                    </div>
-                    <button className="btn btn-link text-danger p-0 ms-2" onClick={logout} title="Logout">
+                    <Link 
+                        to="/settings" 
+                        onClick={onMobileClose} 
+                        className="d-flex align-items-center flex-grow-1 text-decoration-none text-reset overflow-hidden hover-opacity transition-all"
+                        style={{ cursor: 'pointer' }}
+                    >
+                        <div className="rounded-circle overflow-hidden shadow-sm border border-primary border-2 bg-primary me-3 d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '40px', height: '40px' }}>
+                            {user?.profileImage ? (
+                                <img src={user.profileImage} alt="Profile" className="w-100 h-100 object-fit-cover" />
+                            ) : (
+                                <span className="text-white fw-bold">{user?.username.charAt(0).toUpperCase()}</span>
+                            )}
+                        </div>
+                        <div className="flex-grow-1 overflow-hidden">
+                            <h6 className="mb-0 text-truncate small fw-bold">{user?.username}</h6>
+                            <small className="text-muted text-uppercase" style={{ fontSize: '0.65rem' }}>{user?.role}</small>
+                        </div>
+                    </Link>
+                    <button className="btn btn-link text-danger p-0 ms-2" onClick={logout} title="Logout" id="client-logout-btn">
                         <i className="bi bi-box-arrow-right fs-5"></i>
                     </button>
                 </div>

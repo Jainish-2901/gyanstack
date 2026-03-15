@@ -26,14 +26,21 @@ function CategoryItem({ category, onSelect, activeCategoryId }) {
   const handleClick = (e) => {
     e.stopPropagation();
     onSelect(category._id, category.name); 
+    // Also toggle sub-categories when clicking the name
+    if (hasChildren) {
+      setIsOpen(!isOpen);
+    }
   };
   
   // FIX 5: children se check karein
   const hasChildren = category.children && category.children.length > 0;
   const isActive = activeCategoryId === category._id;
   
-  // Naye feature: Click karne par Category filter ho, lekin Content collapse na ho
-  
+  const handleToggle = (e) => {
+    e.stopPropagation();
+    setIsOpen(!isOpen);
+  };
+
   return (
     <div className="list-group-item list-group-item-action p-0 border-0">
       <div 
@@ -42,11 +49,9 @@ function CategoryItem({ category, onSelect, activeCategoryId }) {
         style={{ cursor: 'pointer' }}
       >
         <span>
-          {/* Toggle Icon ab sirf visual hai, click event hataya gaya */}
           <i 
              className={`bi ${isOpen ? 'bi-folder2-open' : 'bi-folder'} me-2`}
-             // FIX 6: Click karne par toggle ho, lekin selection ko disturb na kare
-             onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
+             onClick={handleToggle}
           ></i>
           {category.name}
         </span>
@@ -54,7 +59,7 @@ function CategoryItem({ category, onSelect, activeCategoryId }) {
         {hasChildren && (
             <i 
               className={`bi ${isOpen ? 'bi-chevron-down' : 'bi-chevron-right'}`}
-              onClick={(e) => { e.stopPropagation(); handleToggle(); }}
+              onClick={handleToggle}
             ></i>
         )}
       </div>

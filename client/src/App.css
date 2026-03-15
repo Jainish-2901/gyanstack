@@ -1150,6 +1150,11 @@ body {
     box-shadow: 10px 0 30px rgba(0, 0, 0, 0.1);
   }
 
+  .dashboard-sidebar .sidebar-nav-container {
+    flex-grow: 0 !important;
+    overflow-y: visible !important;
+  }
+
   .dashboard-sidebar.show {
     transform: translateX(0);
   }
@@ -1200,8 +1205,7 @@ body {
   /* Center the Notification dropdown specifically for small phones */
   .notification-dropdown .dropdown-menu.show {
     position: fixed !important;
-    top: calc(50% + 120px) !important;
-    /* Shifted further down to avoid any overlap */
+    top: 50% !important;
     left: 50% !important;
     right: auto !important;
     transform: translate(-50%, -50%) !important;
@@ -1312,7 +1316,9 @@ body {
   .notification-dropdown .dropdown-menu.show {
     width: calc(100% - 1.5rem) !important;
     max-width: 320px !important;
-    top: calc(50% + 100px) !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
     border-radius: 1.25rem !important;
   }
 
