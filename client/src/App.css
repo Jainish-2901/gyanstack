@@ -488,10 +488,19 @@ body {
   position: relative;
   border-radius: 2rem;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border: 1.5px solid var(--glass-border);
   background: var(--glass-bg);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.fancy-search:focus-within {
+  background: var(--surface-color);
+  border-color: var(--primary);
+  box-shadow: 0 15px 45px rgba(99, 102, 241, 0.15);
+  transform: translateY(-2px);
 }
 
 .fancy-search input,
@@ -525,8 +534,24 @@ body {
 
 .fancy-search .btn {
   border-radius: 0 2rem 2rem 0;
-  padding: 0 2rem;
+  padding: 0 2.5rem;
   margin: 0;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  border: none;
+  font-weight: 700;
+  color: white !important;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: -5px 0 15px rgba(0, 0, 0, 0.05);
+}
+
+.fancy-search .btn:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1);
+  box-shadow: -5px 0 20px rgba(99, 102, 241, 0.2);
+}
+
+.fancy-search .btn:active {
+  transform: scale(0.95);
 }
 
 /* Categories Sidebar */

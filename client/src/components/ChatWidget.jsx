@@ -104,6 +104,12 @@ export default function ChatWidget() {
                 localStorage.setItem('gyanstack_guest_count', newCount.toString());
             }
 
+            // Handle success action from AI
+            if (data.action?.type === 'request_success') {
+                setSelections(null);
+                // The AI reply will already contain the success text
+            }
+
         } catch (err) {
             const errorMsg = err.response?.data?.message || 'Sorry, I am having trouble connecting right now.';
             setChatHistory(curr => [...curr, { role: 'assistant', content: errorMsg }]);
@@ -116,15 +122,53 @@ export default function ChatWidget() {
 
     const handleSelectOption = (path, label) => {
         setSelections(null);
+
+        // Safety: If path is missing, inform the user humbly
+        if (!path || path === 'null' || path === 'undefined') {
+            setChatHistory(curr => [
+                ...curr,
+                { role: 'user', content: label },
+                { role: 'assistant', content: `I'm sorry, but I don't have a valid link for **${label}** right now. Would you like me to submit a content request for it? 🛡️` }
+            ]);
+            return;
+        }
+
+        // If it's a category or broad path, we stay in chat to show more details
+        if (path.includes('category=') || path.startsWith('/browse')) {
+            const userMsg = { role: 'user', content: label };
+            setChatHistory(curr => [...curr, userMsg]);
+            
+            setLoading(true);
+            api.post('/ai/chat', {
+                message: label,
+                chatHistory: [...chatHistory, userMsg].slice(-10)
+            }).then(({ data }) => {
+                setChatHistory(curr => [...curr, { role: 'assistant', content: data.reply }]);
+                if (data.action?.type === 'selections') setSelections(data.action.options);
+                if (data.action?.type === 'navigate') {
+                   setTimeout(() => { setIsOpen(false); navigate(data.action.path); }, 1200);
+                }
+            }).catch(err => {
+                const errorMsg = err.response?.data?.message || 'Sorry, let me try that again.';
+                setChatHistory(curr => [...curr, { role: 'assistant', content: errorMsg }]);
+            }).finally(() => {
+                setLoading(false);
+                setMessage('');
+            });
+            return;
+        }
+
+        // For direct content/pages, navigate instantly with a confirmation
         setChatHistory(curr => [
             ...curr,
             { role: 'user', content: label },
-            { role: 'assistant', content: `Taking you to **${label}** now! 🚀\n\n👉 [Click here if not redirected](${path})` }
+            { role: 'assistant', content: `Opening **${label}** for you... 🚀` }
         ]);
+        
         setTimeout(() => {
             setIsOpen(false);
             navigate(path);
-        }, 900);
+        }, 800);
     };
 
     return (
@@ -245,23 +289,59 @@ export default function ChatWidget() {
 
             <style>{`
                 .chat-widget-container { position: fixed; right: 25px; bottom: 25px; z-index: 9999; }
-                .chat-window { position: absolute; bottom: 80px; right: 0; width: 350px; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.3) !important; animation: slideUp 0.3s ease-out; }
+                .chat-window { 
+                    position: absolute; bottom: 80px; right: 0; width: 350px; 
+                    border-radius: 20px; overflow: hidden; display: flex; 
+                    flex-direction: column; background: var(--glass-bg); 
+                    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+                    border: 1px solid var(--glass-border) !important; 
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                    animation: slideUp 0.3s ease-out; 
+                }
                 .ai-avatar { width: 40px; height: 40px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #6366f1; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
                 .chat-toggle-btn { width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color: white; border: none; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
                 .chat-toggle-btn:hover { transform: scale(1.1) rotate(5deg); box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4); }
                 .chat-toggle-btn.active { transform: rotate(90deg); }
                 .notification-badge { position: absolute; top: 0; right: 0; width: 22px; height: 22px; border: 2px solid white; border-radius: 50%; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; animation: pulse 2s infinite; }
+                
                 .message-bubble { font-size: 0.9rem; line-height: 1.5; word-wrap: break-word; position: relative; }
-                .message-bubble.bg-primary { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important; }
-                .selection-pill { transition: all 0.2s ease; border: 1px solid #6366f1; color: #6366f1; background: white; white-space: nowrap; }
-                .selection-pill:hover { background: #6366f1; color: white; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2); }
-                .typing-indicator span { display: inline-block; width: 6px; height: 6px; background-color: #6366f1; border-radius: 50%; margin-right: 3px; animation: typing 1.4s infinite ease-in-out both; }
+                .message-bubble.bg-primary { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important; color: white !important; }
+                
+                /* Dark Mode Compatibility for Bubbles */
+                .message-bubble.bg-light { 
+                    background: var(--surface-color) !important; 
+                    color: var(--text-primary) !important;
+                    border: 1px solid var(--glass-border);
+                }
+                
+                .selection-pill { 
+                    transition: all 0.2s ease; 
+                    border: 1px solid var(--primary); 
+                    color: var(--primary); 
+                    background: transparent; 
+                    white-space: nowrap; 
+                }
+                .selection-pill:hover { background: var(--primary); color: white; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2); }
+                
+                .chat-input-area { background: var(--glass-bg); border-top: 1px solid var(--glass-border) !important; }
+                .chat-input-area .form-control { 
+                    background: var(--surface-color) !important; 
+                    color: var(--text-primary) !important;
+                    border: 1px solid var(--glass-border) !important;
+                }
+                .chat-input-area .form-control::placeholder { color: var(--text-muted); opacity: 0.7; }
+
+                .typing-indicator span { display: inline-block; width: 6px; height: 6px; background-color: var(--primary); border-radius: 50%; margin-right: 3px; animation: typing 1.4s infinite ease-in-out both; }
                 .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
                 .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+                
                 @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
                 @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
                 @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); } 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); } }
-                @media (max-width: 576px) { .chat-window { width: calc(100vw - 40px); right: -10px; bottom: 75px; } }
+                
+                @media (max-width: 576px) { 
+                    .chat-window { width: calc(100vw - 40px); right: -10px; bottom: 75px; } 
+                }
             `}</style>
         </div>
     );

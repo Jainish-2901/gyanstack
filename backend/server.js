@@ -4,9 +4,35 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const rateLimit = require('express-rate-limit'); // NAYA IMPORT
 const announcementRoutes = require('./routes/announcementRoutes'); // <-- NAYA IMPORT
 
 dotenv.config();
+
+// --- RATE LIMITERS (Protective Shields) ---
+// 1. General API Limiter (100 requests/15min)
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { message: "Too many requests from this IP, please try again after 15 minutes." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// 2. Auth Limiter (Brute-force protection: 10 attempts/15min)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { message: "Too many login/signup attempts. Please wait 15 minutes." },
+});
+
+// 3. AI Assistant Limiter (Cost & Abuse Control: 20 requests/15min)
+const aiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { message: "AI daily limit reached for this session. Please try again later." },
+});
+// ------------------------------------------
 
 // --- REGISTER ALL MODELS FIRST (To avoid MissingSchemaError) ---
 require('./models/userModel');
@@ -27,8 +53,6 @@ const allowedOrigins = [
   'https://gyanstack-admin.vercel.app',
   'http://localhost:5173',
   'http://localhost:5174',
-  'http://localhost:5175',
-  'http://localhost:5176'
 ];
 
 app.use(cors({
@@ -43,44 +67,44 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
-})); 
+}));
 app.use(express.json());
 
 // Database Connection Utility for Serverless environments
 let cachedConnection = null;
 const connectDB = async () => {
-    if (cachedConnection) return cachedConnection;
-    if (!process.env.MONGO_URI) {
-        throw new Error('MONGO_URI is missing in environment variables');
-    }
-    
-    // Create new connection if none cached
-    try {
-        const conn = await mongoose.connect(process.env.MONGO_URI, {
-            family: 4,
-            serverSelectionTimeoutMS: 8000,
-        });
-        cachedConnection = conn;
-        console.log('MongoDB connection established successfully');
-        return conn;
-    } catch (err) {
-        console.error('MongoDB Initial Connection Error:', err.message);
-        throw err;
-    }
+  if (cachedConnection) return cachedConnection;
+  if (!process.env.MONGO_URI) {
+    throw new Error('MONGO_URI is missing in environment variables');
+  }
+
+  // Create new connection if none cached
+  try {
+    const conn = await mongoose.connect(process.env.MONGO_URI, {
+      family: 4,
+      serverSelectionTimeoutMS: 8000,
+    });
+    cachedConnection = conn;
+    console.log('MongoDB connection established successfully');
+    return conn;
+  } catch (err) {
+    console.error('MongoDB Initial Connection Error:', err.message);
+    throw err;
+  }
 };
 
 // Middleware to ensure DB connection is ready before handling requests
 app.use(async (req, res, next) => {
-    try {
-        await connectDB();
-        next();
-    } catch (err) {
-        res.status(500).json({ 
-            success: false,
-            message: 'Database connection failure',
-            error: process.env.NODE_ENV === 'production' ? 'Internal Connection Error' : err.message 
-        });
-    }
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: 'Database connection failure',
+      error: process.env.NODE_ENV === 'production' ? 'Internal Connection Error' : err.message
+    });
+  }
 });
 
 // Test Route
@@ -89,15 +113,16 @@ app.get('/', (req, res) => {
 });
 
 // --- API Routes ko Use Karein ---
-app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api', apiLimiter); // Global Shield
+app.use('/api/auth', authLimiter, require('./routes/authRoutes')); // Brute-force Shield
+app.use('/api/ai', aiLimiter, require('./routes/aiRoutes')); // AI Cost Shield
+
 app.use('/api/content', require('./routes/contentRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/requests', require('./routes/requestRoutes'));
-// --- FIX YAHIN HAI (Typo tha) ---
-app.use('/api/admin', require('./routes/adminRoutes')); 
-app.use('/api/announcements', announcementRoutes); 
+app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/announcements', announcementRoutes);
 app.use('/api/contact', require('./routes/contactRoutes'));
-app.use('/api/ai', require('./routes/aiRoutes'));
 // ---------------------------------
 
 // --- Global Error Handler ---
@@ -115,9 +140,9 @@ if (process.env.NODE_ENV !== 'production') {
   const server = app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
   });
-  
+
   // High timeout for large file uploads (10 minutes)
-  server.timeout = 600000; 
+  server.timeout = 600000;
 }
 
 // Vercel deployment ke liye app ko export karna zaroori hai

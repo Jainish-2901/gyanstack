@@ -15,25 +15,25 @@ exports.getPublicStats = async (req, res) => {
   try {
     // Check if models are available (avoid potential race conditions in serverless)
     if (!Content || !User) {
-        throw new Error('Database models were not initialized correctly');
+      throw new Error('Database models were not initialized correctly');
     }
 
     const contentCount = await Content.countDocuments() || 0;
     const studentCount = await User.countDocuments() || 0;
-    
+
     // Aggregation for total views
     let totalViews = 0;
     const aggregationStats = await Content.aggregate([
-      { 
-        $group: { 
-          _id: null, 
+      {
+        $group: {
+          _id: null,
           totalViews: { $sum: '$viewsCount' }
-        } 
+        }
       }
     ]);
-    
+
     if (aggregationStats && aggregationStats.length > 0) {
-        totalViews = aggregationStats[0].totalViews || 0;
+      totalViews = aggregationStats[0].totalViews || 0;
     }
 
     res.json({
@@ -43,10 +43,10 @@ exports.getPublicStats = async (req, res) => {
     });
   } catch (err) {
     console.error("CRITICAL Public Stats Error:", err);
-    res.status(500).json({ 
-        success: false,
-        message: 'Server error while fetching stats',
-        debug: process.env.NODE_ENV === 'production' ? 'Aggregation or Query Failure' : err.message
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching stats',
+      debug: process.env.NODE_ENV === 'production' ? 'Aggregation or Query Failure' : err.message
     });
   }
 };
@@ -137,29 +137,30 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-// ** googleLogin controller **
+// ** googleLogin controller with Cloudinary Capture **
 exports.googleLogin = async (req, res) => {
-  const { email, username, googleId, profileImage } = req.body;
+  const { email, username, googleId, profileImage: googlePhotoUrl } = req.body;
   
   try {
-    // 1. Check if user already exists by googleId
-    let user = await User.findOne({ googleId });
-    
-    // 2. If not found by googleId, check by email (Account Linking)
-    if (!user) {
-      user = await User.findOne({ email });
-      if (user) {
-        // Link Google Account to existing email account
-        user.googleId = googleId;
-        if (!user.profileImage) user.profileImage = profileImage;
-        await user.save({ validateBeforeSave: false });
-      }
+    // 1. PROMPT: Check for valid email first
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Google account must have a valid email to continue.' });
     }
 
-    // 3. If still not found, create NEW user
-    if (!user) {
-      // Create unique username if collides
-      let finalUsername = username.replace(/\s+/g, '').toLowerCase();
+    // 2. Find or Create User
+    let user = await User.findOne({ email });
+
+    if (user) {
+      // Link Google ID if missing
+      if (!user.googleId) {
+        user.googleId = googleId;
+        await user.save({ validateBeforeSave: false });
+      }
+    } else {
+      // Create NEW user
+      const safeUsername = (username || email.split('@')[0] || 'user').replace(/\s+/g, '').toLowerCase();
+      let finalUsername = safeUsername;
+      
       const existingUser = await User.findOne({ username: finalUsername });
       if (existingUser) {
         finalUsername = `${finalUsername}${Math.floor(Math.random() * 1000)}`;
@@ -169,13 +170,31 @@ exports.googleLogin = async (req, res) => {
         username: finalUsername,
         email,
         googleId,
-        profileImage: profileImage || '',
         role: 'student'
       });
       await user.save({ validateBeforeSave: false });
     }
 
-    // 4. Generate Token & Send Response
+    // 3. CAPTURE Profile Image: If user doesn't have a Cloudinary image, upload the Google one
+    if (googlePhotoUrl && (!user.profileImage || !user.profileImage.includes('cloudinary'))) {
+        try {
+            const highResUrl = googlePhotoUrl.replace('=s96-c', '=s400-c'); // Get better quality
+            const result = await cloudinary.uploader.upload(highResUrl, {
+                folder: 'gyanstack_profiles',
+                width: 250,
+                height: 250,
+                crop: 'fill',
+                gravity: 'face'
+            });
+            user.profileImage = result.secure_url;
+            await user.save({ validateBeforeSave: false });
+            console.log("Captured Google profile image into Cloudinary");
+        } catch (uploadErr) {
+            console.warn("Failed to capture Google photo, using default/existing:", uploadErr.message);
+        }
+    }
+
+    // 4. Generate Token & Send FULL User Info
     const token = generateToken(user._id);
     res.status(200).json({
       token,
@@ -187,12 +206,17 @@ exports.googleLogin = async (req, res) => {
         role: user.role,
         profileImage: user.profileImage || '',
         googleId: user.googleId || null,
+        createdAt: user.createdAt,
+        savedContentCount: user.savedContent ? user.savedContent.length : 0
       },
     });
 
   } catch (err) {
-    console.error("Google Login Backend Error:", err.message);
-    res.status(500).json({ message: 'Google login failed on server.' });
+    console.error("CRITICAL Google Login Error:", err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Google login failed on server. ' + err.message 
+    });
   }
 };
 
@@ -219,9 +243,9 @@ exports.forgotPassword = async (req, res) => {
     console.error(err.message);
     const user = await User.findOne({ email });
     if (user) {
-        user.resetPasswordOtp = undefined;
-        user.resetPasswordExpire = undefined;
-        await user.save({ validateBeforeSave: false });
+      user.resetPasswordOtp = undefined;
+      user.resetPasswordExpire = undefined;
+      await user.save({ validateBeforeSave: false });
     }
     res.status(500).send('Email could not be sent');
   }
@@ -300,68 +324,68 @@ exports.updateUserProfile = async (req, res) => {
     }
 
     if (username !== user.username) {
-        const usernameExists = await User.findOne({ username, _id: { $ne: user._id } });
-        if (usernameExists) return res.status(400).json({ message: 'Username is already taken' });
-        user.username = username;
+      const usernameExists = await User.findOne({ username, _id: { $ne: user._id } });
+      if (usernameExists) return res.status(400).json({ message: 'Username is already taken' });
+      user.username = username;
     }
     if (phone !== user.phone) {
-        const phoneExists = await User.findOne({ phone, _id: { $ne: user._id } });
-        if (phoneExists) return res.status(400).json({ message: 'Phone number is already taken' });
-        user.phone = phone;
+      const phoneExists = await User.findOne({ phone, _id: { $ne: user._id } });
+      if (phoneExists) return res.status(400).json({ message: 'Phone number is already taken' });
+      user.phone = phone;
     }
 
     // --- HANDLE PROFILE IMAGE REMOVAL ---
     if (removeProfileImage === 'true' && user.profileImage) {
-        try {
-            const parts = user.profileImage.split('/');
-            const fileName = parts[parts.length - 1].split('.')[0];
-            const publicId = `gyanstack_profiles/${fileName}`;
-            await cloudinary.uploader.destroy(publicId);
-            user.profileImage = null; // Profile photo ko null karke hatayein
-            console.log(`Cloudinary image removed: ${publicId}`);
-        } catch (err) {
-            console.warn("Cloudinary removal failed:", err.message);
-        }
+      try {
+        const parts = user.profileImage.split('/');
+        const fileName = parts[parts.length - 1].split('.')[0];
+        const publicId = `gyanstack_profiles/${fileName}`;
+        await cloudinary.uploader.destroy(publicId);
+        user.profileImage = null; // Profile photo ko null karke hatayein
+        console.log(`Cloudinary image removed: ${publicId}`);
+      } catch (err) {
+        console.warn("Cloudinary removal failed:", err.message);
+      }
     }
 
     // --- HANDLE NEW IMAGE UPLOAD ---
     if (req.file) {
-        try {
-            // Agar purana image hai to pehle use hatayein
-            if (user.profileImage) {
-                const parts = user.profileImage.split('/');
-                const fileName = parts[parts.length - 1].split('.')[0];
-                const publicId = `gyanstack_profiles/${fileName}`;
-                await cloudinary.uploader.destroy(publicId);
-            }
-            
-            const result = await cloudinary.uploader.upload(req.file.path, {
-                folder: 'gyanstack_profiles',
-                width: 250,
-                height: 250,
-                crop: 'fill',
-                gravity: 'face'
-            });
-            user.profileImage = result.secure_url;
-            if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-        } catch (uploadErr) {
-            console.error("Profile Image Upload Error:", uploadErr);
+      try {
+        // Agar purana image hai to pehle use hatayein
+        if (user.profileImage) {
+          const parts = user.profileImage.split('/');
+          const fileName = parts[parts.length - 1].split('.')[0];
+          const publicId = `gyanstack_profiles/${fileName}`;
+          await cloudinary.uploader.destroy(publicId);
         }
+
+        const result = await cloudinary.uploader.upload(req.file.path, {
+          folder: 'gyanstack_profiles',
+          width: 250,
+          height: 250,
+          crop: 'fill',
+          gravity: 'face'
+        });
+        user.profileImage = result.secure_url;
+        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      } catch (uploadErr) {
+        console.error("Profile Image Upload Error:", uploadErr);
+      }
     }
     const updatedUser = await user.save({ validateBeforeSave: false });
     const token = generateToken(user._id);
     res.json({
-        token,
-        user: {
-            id: updatedUser._id,
-            username: updatedUser.username,
-            email: updatedUser.email,
-            phone: updatedUser.phone,
-            role: updatedUser.role,
-            profileImage: updatedUser.profileImage || '',
-            googleId: updatedUser.googleId || null,
-            createdAt: updatedUser.createdAt
-        },
+      token,
+      user: {
+        id: updatedUser._id,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        phone: updatedUser.phone,
+        role: updatedUser.role,
+        profileImage: updatedUser.profileImage || '',
+        googleId: updatedUser.googleId || null,
+        createdAt: updatedUser.createdAt
+      },
     });
   } catch (err) {
     console.error(err.message);
@@ -411,11 +435,11 @@ exports.toggleSaveContent = async (req, res) => {
       content.savedBy.push(userId);
       content.savesCount += 1;
     }
-    await user.save({ validateBeforeSave: false }); 
+    await user.save({ validateBeforeSave: false });
     await content.save();
-    res.status(200).json({ 
-        isSaved: !isSavedOnUser,
-        savesCount: content.savesCount
+    res.status(200).json({
+      isSaved: !isSavedOnUser,
+      savesCount: content.savesCount
     });
   } catch (err) {
     console.error(err.message);

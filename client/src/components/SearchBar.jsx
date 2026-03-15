@@ -21,8 +21,8 @@ export default function SearchBar({ onSearch }) {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-        <button className="btn btn-primary btn-lg" type="submit">
-          Search
+        <button className="btn btn-primary btn-lg d-flex align-items-center gap-2" type="submit">
+          <i className="bi bi-search"></i>
         </button>
       </div>
     </form>
