@@ -408,6 +408,7 @@ export default function AdminPanel() {
                         id="files" 
                         onChange={handleFileChange} 
                         multiple={uploadMode === 'batch'} 
+                        accept=".zip,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.avi,.sifz,.XLS,.odt,image/*,video/*"
                         required
                       />
                       {files && files.length > 0 && (

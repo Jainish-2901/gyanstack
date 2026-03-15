@@ -146,6 +146,7 @@ export default function EditContentModal({ item, onClose, onUpdate, categories }
                         type="file" 
                         className="form-control form-control-sm" 
                         id="editFile" 
+                        accept=".zip,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.avi,.sifz,.XLS,.odt,image/*,video/*"
                         onChange={(e) => setFile(e.target.files[0])} 
                       />
                       <div className="form-text x-small mt-2">

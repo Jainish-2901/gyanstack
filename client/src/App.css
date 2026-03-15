@@ -494,25 +494,33 @@ body {
   backdrop-filter: blur(10px);
 }
 
-.fancy-search input {
+.fancy-search input,
+.fancy-search .form-control {
   padding: 1.2rem 1.5rem;
   border: none !important;
-  background: transparent;
+  background: transparent !important;
   font-size: 1.1rem;
   font-weight: 500;
   color: var(--text-primary);
+  box-shadow: none !important;
 }
 
-.fancy-search input:focus {
+.fancy-search input:focus,
+.fancy-search .form-control:focus {
   outline: none !important;
   box-shadow: none !important;
   border: none !important;
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.4) !important;
 }
 
-[data-bs-theme="dark"] .fancy-search input:focus {
-  background: rgba(0, 0, 0, 0.2);
-  color: white;
+[data-bs-theme="dark"] .fancy-search input,
+[data-bs-theme="dark"] .fancy-search .form-control {
+  color: white !important;
+}
+
+[data-bs-theme="dark"] .fancy-search input:focus,
+[data-bs-theme="dark"] .fancy-search .form-control:focus {
+  background: rgba(0, 0, 0, 0.2) !important;
 }
 
 .fancy-search .btn {
@@ -772,9 +780,12 @@ body {
     font-size: 1.75rem !important;
   }
 
-  .fancy-search input {
+  .fancy-search input,
+  .fancy-search .form-control {
     font-size: 0.95rem;
-    padding: 1rem;
+    padding: 1rem 1.25rem;
+    border: none !important;
+    background: transparent !important;
   }
 
   .fancy-footer {
