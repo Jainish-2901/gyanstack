@@ -25,12 +25,13 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="container fade-in" style={{ maxWidth: '450px' }}>
-      <div className="card shadow-sm border-0 rounded-3">
-        <div className="card-body p-4 p-sm-5">
-          <h2 className="card-title text-center mb-4 fw-bold fs-4">
-            {step === 1 ? 'Forgot Password' : 'Reset Password'}
-          </h2>
+    <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light px-3 py-5">
+      <div className="container fade-in" style={{ maxWidth: '450px' }}>
+        <div className="glass-panel border-0 rounded-4 overflow-hidden shadow-lg">
+          <div className="card-body p-4 p-sm-5">
+            <h2 className="card-title text-center mb-4 fw-bold fs-4 text-primary">
+              {step === 1 ? 'Forgot Password' : 'Reset Password'}
+            </h2>
 
           {step === 1 && (
             <>
@@ -63,6 +64,7 @@ export default function ForgotPassword() {
           
           <div className="text-center mt-4">
             <small><Link to="/login">Back to Login</Link></small>
+          </div>
           </div>
         </div>
       </div>

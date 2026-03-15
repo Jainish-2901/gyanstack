@@ -118,6 +118,32 @@ body {
   background: rgba(79, 70, 229, 0.6);
 }
 
+/* --- GLOBAL FORM STYLES: Explicit Borders --- */
+.form-control, .form-select, input[type="text"], input[type="email"], input[type="password"], input[type="url"], input[type="tel"], input[type="number"], textarea, select {
+  border: 1.5px solid #ced4da !important;
+  transition: all 0.2s ease-in-out;
+}
+
+[data-bs-theme="dark"] .form-control, 
+[data-bs-theme="dark"] .form-select, 
+[data-bs-theme="dark"] input[type="text"], 
+[data-bs-theme="dark"] input[type="email"], 
+[data-bs-theme="dark"] input[type="password"], 
+[data-bs-theme="dark"] input[type="url"], 
+[data-bs-theme="dark"] input[type="tel"], 
+[data-bs-theme="dark"] input[type="number"], 
+[data-bs-theme="dark"] textarea, 
+[data-bs-theme="dark"] select {
+  border: 1.5px solid #475569 !important;
+}
+
+.form-control:focus, .form-select:focus, input:focus, textarea:focus, select:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25) !important;
+  outline: none;
+}
+/* ------------------------------------------- */
+
 /* Base App Container */
 .App {
   background-color: transparent !important;
