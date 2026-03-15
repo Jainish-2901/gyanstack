@@ -95,6 +95,26 @@ const uploadToDrive = async (file, folderNames = [], folderId = null) => {
         // Target folder ID resolve karein (Use provided ID or resolve from path)
         let targetFolderId = folderId;
         
+        // --- NAYA: Folder ID Validation ---
+        // Agar folder ID diya gaya hai, to check karein ki woh abhi bhi Drive par hai
+        if (targetFolderId) {
+            try {
+                await drive.files.get({ 
+                    fileId: targetFolderId, 
+                    fields: 'id, trashed',
+                    supportsAllDrives: true 
+                });
+            } catch (err) {
+                // Agar folder nahi mil raha (404), to use null kar dein taake recalibrate ho sake
+                if (err.status === 404 || (err.response && err.response.status === 404)) {
+                    console.warn(`Folder ID ${targetFolderId} not found on Drive. Falling back to path assurance...`);
+                    targetFolderId = null;
+                } else {
+                    throw err; // Koi aur error hai to aage bhej dein
+                }
+            }
+        }
+        
         if (!targetFolderId) {
             targetFolderId = folderNames.length > 0 
                 ? await ensureFolderPath(folderNames) 
@@ -128,6 +148,7 @@ const uploadToDrive = async (file, folderNames = [], folderId = null) => {
             id: fileId,
             webViewLink: response.data.webViewLink,
             webContentLink: response.data.webContentLink,
+            parentFolderId: targetFolderId // Return the ID used
         };
     } catch (error) {
         console.error('Google Drive Upload Error:', error);

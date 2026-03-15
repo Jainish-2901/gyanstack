@@ -218,6 +218,13 @@ exports.uploadContent = async (req, res) => {
           const driveData = await uploadToDrive({ ...file, path: currentFilePath }, folderPath, directFolderId);
           console.log(`Drive upload success: ${driveData.id}`);
           
+          // --- NAYA: Sync Folder ID if it was recalibrated ---
+          if (driveData.parentFolderId && driveData.parentFolderId !== directFolderId) {
+            console.log("Syncing new folder ID to Category:", driveData.parentFolderId);
+            await Category.findByIdAndUpdate(categoryId, { googleDriveFolderId: driveData.parentFolderId });
+          }
+          // ----------------------------------------------------
+          
           const filename = file.originalname;
           const nameWithoutExt = filename.split('.').slice(0, -1).join('.') || filename;
           
