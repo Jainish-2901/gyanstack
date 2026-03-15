@@ -105,6 +105,7 @@ export default function AdminPanel() {
   
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0); // For progress bar
+  const [statusPhase, setStatusPhase] = useState(''); // '', 'uploading', 'processing', 'saving'
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -201,6 +202,7 @@ export default function AdminPanel() {
     }
     setUploading(true);
     setUploadProgress(0);
+    setStatusPhase('uploading');
     setError('');
     setSuccess('');
     const formData = new FormData();
@@ -238,12 +240,15 @@ export default function AdminPanel() {
     
     try {
       const { data } = await api.post('/content', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress: (progressEvent) => {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
           setUploadProgress(percentCompleted);
+          if (percentCompleted === 100) {
+            setStatusPhase('processing');
+          }
         }
       });
+      setStatusPhase(''); 
       setSuccess(data.message || 'Content uploaded successfully!');
       
       // Form reset karein
@@ -527,15 +532,23 @@ export default function AdminPanel() {
                     {uploading && (
                       <div className="mb-2">
                         <div className="d-flex justify-content-between mb-1 small fw-bold">
-                          <span>{uploadProgress < 100 ? 'Uploading to Server...' : 'Processing on Cloud...'}</span>
-                          <span>{uploadProgress}%</span>
+                          <span className="text-primary">
+                            <i className={`bi ${statusPhase === 'uploading' ? 'bi-cloud-arrow-up' : 'bi-gear-wide-connected'} me-1 animate-pulse`}></i>
+                            {statusPhase === 'uploading' && `Uploading to Server (${uploadProgress}%)`}
+                            {statusPhase === 'processing' && 'Optimizing & Securing on Drive...'}
+                          </span>
                         </div>
-                        <div className="progress" style={{ height: '8px' }}>
+                        <div className="progress overflow-visible" style={{ height: '10px' }}>
                           <div 
-                            className={`progress-bar progress-bar-striped progress-bar-animated ${uploadProgress === 100 ? 'bg-success' : 'bg-primary'}`} 
+                            className={`progress-bar progress-bar-striped progress-bar-animated shadow-sm ${statusPhase === 'processing' ? 'bg-success' : 'bg-primary'}`} 
                             role="progressbar" 
-                            style={{ width: `${uploadProgress}%` }}
+                            style={{ width: `${uploadProgress}%`, transition: 'width 0.3s ease' }}
                           ></div>
+                        </div>
+                        <div className="mt-2 x-small text-muted text-center italic">
+                          {statusPhase === 'processing' && (
+                            <span><i className="bi bi-info-circle me-1"></i> Large files might take 20-30 seconds to compress and sync.</span>
+                          )}
                         </div>
                       </div>
                     )}

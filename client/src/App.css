@@ -496,7 +496,7 @@ body {
 
 .fancy-search input {
   padding: 1.2rem 1.5rem;
-  border: none;
+  border: none !important;
   background: transparent;
   font-size: 1.1rem;
   font-weight: 500;
@@ -504,8 +504,9 @@ body {
 }
 
 .fancy-search input:focus {
-  outline: none;
-  box-shadow: none;
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
   background: rgba(255, 255, 255, 0.5);
 }
 

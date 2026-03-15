@@ -34,9 +34,17 @@ const getPublicIdFromUrl = (url) => {
 // Recursive path finder for Categories
 // Recursive path finder for Categories (Returns { names, folderId })
 const getCategoryPath = async (categoryId) => {
+  const mongoose = require('mongoose');
+
   // Default to Root Drive Folder ID
   if (!categoryId || categoryId === 'root') {
       return { names: [], folderId: process.env.GOOGLE_DRIVE_FOLDER_ID };
+  }
+
+  // VALIDATION: Ensure categoryId is a valid ObjectId
+  if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+    console.warn(`Invalid Category ID provided: ${categoryId}. Falling back to root.`);
+    return { names: [], folderId: process.env.GOOGLE_DRIVE_FOLDER_ID };
   }
 
   const pathNames = [];
@@ -45,6 +53,8 @@ const getCategoryPath = async (categoryId) => {
   
   // Build hierarchy from leaf to root
   while (currentId && currentId !== 'root') {
+    if (!mongoose.Types.ObjectId.isValid(currentId)) break;
+
     const cat = await Category.findById(currentId);
     if (!cat) break;
     pathNames.unshift(cat.name);
@@ -53,33 +63,30 @@ const getCategoryPath = async (categoryId) => {
   }
 
   // The actual category we are uploading to
-  const leafCategory = hierarchyOfCats[hierarchyOfCats.length - 1];
+  const leafCategory = hierarchyOfCats.length > 0 ? hierarchyOfCats[hierarchyOfCats.length - 1] : null;
 
-  // If the leaf category ALREADY has a Drive ID, we can use it directly! (EXACT MATCH ONLY)
+  // If the leaf category ALREADY has a Drive ID, we can use it directly!
   if (leafCategory && leafCategory.googleDriveFolderId) {
     return { names: pathNames, folderId: leafCategory.googleDriveFolderId };
   }
 
   // If leaf has no ID, we MUST resolve/ensure path and then cache it
-  if (hierarchyOfCats.length > 0) {
+  if (leafCategory && hierarchyOfCats.length > 0) {
     try {
       const { ensureFolderPath } = require('../utils/googleDrive');
       
-      // Resolve/Create the full folder path in Drive
       const folderId = await ensureFolderPath(pathNames);
       
-      // Cache this ID to the leaf category for blazing fast uploads next time
+      // Cache this ID
       leafCategory.googleDriveFolderId = folderId;
       await leafCategory.save();
       
-      console.log(`Successfully mapped category "${leafCategory.name}" to Drive ID: ${folderId}`);
       return { names: pathNames, folderId: folderId };
     } catch (err) {
       console.error("Critical Category Path Error:", err.message);
     }
   }
 
-  // Fallback: If everything fails, return path names so uploadToDrive can attempt resolution
   return { names: pathNames, folderId: null };
 };
 
@@ -129,6 +136,10 @@ const cleanupEmptyCategoryFolder = async (categoryId) => {
 
 // 1. Naya Content Upload Karna (Google Drive)
 exports.uploadContent = async (req, res) => {
+  console.log("--- START UPLOAD REQUEST ---");
+  console.log("Body:", req.body);
+  console.log("Files:", req.files ? req.files.map(f => f.originalname) : "No files");
+  
   try {
     let { title, type, link, textNote, categoryId, tags } = req.body;
     
@@ -203,7 +214,9 @@ exports.uploadContent = async (req, res) => {
           }
 
           // Upload to Drive
+          console.log(`Uploading file ${file.originalname} to Drive...`);
           const driveData = await uploadToDrive({ ...file, path: currentFilePath }, folderPath, directFolderId);
+          console.log(`Drive upload success: ${driveData.id}`);
           
           const filename = file.originalname;
           const nameWithoutExt = filename.split('.').slice(0, -1).join('.') || filename;
@@ -220,16 +233,16 @@ exports.uploadContent = async (req, res) => {
           });
           
           const savedItem = await newContent.save();
+          console.log(`Database entry created for: ${savedItem.title}`);
           uploadedItems.push(savedItem);
           
           // Cleanup
           if (fs.existsSync(currentFilePath)) fs.unlinkSync(currentFilePath);
           
         } catch (uploadErr) {
-          console.error("Upload failed for file:", file.originalname, uploadErr);
-          if (fs.existsSync(currentFilePath)) fs.unlinkSync(currentFilePath);
-          lastError = uploadErr.message || 'File upload failed';
-          // We continue to next file even if one fails
+          console.error(`ERROR uploading file ${file.originalname}:`, uploadErr);
+          if (fs.existsSync(file.path)) try { fs.unlinkSync(file.path); } catch(e) {}
+          lastError = uploadErr.message || 'File upload failed during processing';
         }
       }
       
@@ -252,7 +265,7 @@ exports.uploadContent = async (req, res) => {
       }
       
       const newContent = new Content({
-        title,
+        title: title || "Untitled Note/Link",
         type: finalFileType,
         url: fileUrl,
         fileResourceType: fileResourceType, 
@@ -261,27 +274,35 @@ exports.uploadContent = async (req, res) => {
         tags: tagsArray,
         uploadedBy: req.user.id, 
       });
-      uploadedItems.push(await newContent.save());
+      console.log("Saving individual item to DB...");
+      const saved = await newContent.save();
+      console.log("Save success:", saved._id);
+      uploadedItems.push(saved);
     }
     // --- END BATCH UPLOAD LOGIC ---
 
     if (uploadedItems.length === 0) {
-        console.error("No items uploaded. lastError:", lastError);
+        console.error("CRITICAL: No items uploaded. lastError:", lastError);
         return res.status(400).json({ 
-          message: lastError ? `Upload failed: ${lastError}` : 'No valid content or file received for upload.' 
+          success: false,
+          message: lastError ? `Upload Failed: ${lastError}` : 'No valid files received or all files failed.' 
         });
     }
 
-    // FIX: Batch upload ke liye saaf success message
+    // Success reporting
     const message = uploadedItems.length > 1 
-                    ? `${uploadedItems.length} files uploaded successfully!` 
-                    : `Content uploaded successfully!`;
+                    ? `${uploadedItems.length} files processed and uploaded successfully!` 
+                    : `Content uploaded and optimized successfully!`;
     
-    res.status(201).json({ message, content: uploadedItems }); 
+    res.status(201).json({ success: true, message, content: uploadedItems }); 
 
   } catch (err) {
-    console.error("Upload Error:", err.message);
-    res.status(500).send('Server error (Controller)');
+    console.error("FATAL Upload Error:", err);
+    res.status(500).json({ 
+        success: false, 
+        message: 'Internal Server Error during upload processing',
+        error: process.env.NODE_ENV === 'production' ? 'Upload Worker Failure' : err.message
+    });
   }
 };
 

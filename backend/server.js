@@ -26,7 +26,9 @@ const allowedOrigins = [
   'https://gyanstack.vercel.app',
   'https://gyanstack-admin.vercel.app',
   'http://localhost:5173',
-  'http://localhost:5174'
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'http://localhost:5176'
 ];
 
 app.use(cors({
@@ -97,6 +99,16 @@ app.use('/api/announcements', announcementRoutes);
 app.use('/api/contact', require('./routes/contactRoutes'));
 app.use('/api/ai', require('./routes/aiRoutes'));
 // ---------------------------------
+
+// --- Global Error Handler ---
+app.use((err, req, res, next) => {
+  console.error("GLOBAL ERROR HANDLER:", err.stack);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Internal Server Error",
+    error: process.env.NODE_ENV === 'production' ? null : err.stack
+  });
+});
 
 // Server ko start karein (Sirf local development ke liye zaroori hai)
 if (process.env.NODE_ENV !== 'production') {
