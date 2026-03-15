@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../../services/api';
 import ContentCard from '../../components/ContentCard';
 import LoadingScreen from '../../components/LoadingScreen';
+import NotFound from './NotFound';
 
 export default function UploaderProfile() {
   const { id } = useParams();
@@ -84,15 +85,7 @@ export default function UploaderProfile() {
   // Early returns AFTER all hooks
   if (loading) return <LoadingScreen text="Loading profile..." />;
   if (error) {
-    return (
-      <div className="container text-center my-5">
-        <div className="glass-panel p-5">
-          <i className="bi bi-exclamation-triangle display-1 text-warning mb-4"></i>
-          <h2 className="fw-bold">{error}</h2>
-          <Link to="/" className="btn btn-primary mt-4 px-4 py-2 rounded-pill">Explore Library</Link>
-        </div>
-      </div>
-    );
+    return <NotFound />;
   }
 
   return (

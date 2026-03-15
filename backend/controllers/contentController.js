@@ -16,7 +16,7 @@ cloudinary.config({
 });
 
 // --- HELPER FUNCTIONS ---
-const getPublicIdFromUrl = (url) => {
+exports.getPublicIdFromUrl = (url) => {
   if (!url) return null;
   try {
     const parts = url.split('/');
@@ -587,13 +587,25 @@ exports.deleteContent = async (req, res) => {
       return res.status(401).json({ message: 'User not authorized' });
     }
     
-    // --- DELETE LOGIC (Cloudinary or Drive) ---
-    if (content.googleDriveId) {
-      await deleteFromDrive(content.googleDriveId);
-    } else if (content.url && content.fileResourceType !== 'auto') {
-      const publicId = getPublicIdFromUrl(content.url);
+    // --- DELETE LOGIC (Google Drive) ---
+    let driveIdToDelete = content.googleDriveId;
+
+    // Aggressive check for external links that might have missed the ID in DB
+    if (!driveIdToDelete && content.url && content.url.includes('drive.google.com')) {
+      const match = content.url.match(/[-\w]{25,}/);
+      if (match) driveIdToDelete = match[0];
+    }
+
+    if (driveIdToDelete) {
+      await deleteFromDrive(driveIdToDelete);
+    } 
+    // Fallback for any standard uploads that were on Cloudinary
+    else if (content.url && content.fileResourceType !== 'auto') {
+      const publicId = exports.getPublicIdFromUrl(content.url);
       if (publicId) {
-        await cloudinary.uploader.destroy(publicId, { resource_type: content.fileResourceType || 'raw' });
+        try {
+          await cloudinary.uploader.destroy(publicId, { resource_type: content.fileResourceType || 'raw' });
+        } catch (e) { console.error("Cloudinary cleanup failed", e.message); }
       }
     }
     
@@ -626,12 +638,20 @@ exports.bulkDeleteContent = async (req, res) => {
       if (content.uploadedBy.toString() !== req.user.id) continue;
 
       // DELETE LOGIC (Same as single delete)
-      if (content.googleDriveId) {
-        await deleteFromDrive(content.googleDriveId);
+      let driveIdToDelete = content.googleDriveId;
+      if (!driveIdToDelete && content.url && content.url.includes('drive.google.com')) {
+        const match = content.url.match(/[-\w]{25,}/);
+        if (match) driveIdToDelete = match[0];
+      }
+
+      if (driveIdToDelete) {
+        await deleteFromDrive(driveIdToDelete);
       } else if (content.url && content.fileResourceType !== 'auto') {
-        const publicId = getPublicIdFromUrl(content.url);
+        const publicId = exports.getPublicIdFromUrl(content.url);
         if (publicId) {
-          await cloudinary.uploader.destroy(publicId, { resource_type: content.fileResourceType || 'raw' });
+          try {
+            await cloudinary.uploader.destroy(publicId, { resource_type: content.fileResourceType || 'raw' });
+          } catch (e) { console.error("Cloudinary bulk cleanup failed", e.message); }
         }
       }
     }

@@ -8,58 +8,86 @@ import CategoryManager from '../../components/CategoryManager'; // Sahi import p
 // -------------------
 
 // --- 1. HELPER COMPONENT: Content Card for Mobile View ---
+const SITE_URL = import.meta.env.VITE_SITE_URL || 'http://localhost:5173';
+
 const ContentCardMobile = ({ item, categoryMap, handleEditClick, handleDelete, isSelected, onToggleSelect }) => (
-  <div className={`card mb-2 border-0 rounded-3 overflow-hidden transition-all ${isSelected ? 'border-primary' : 'border-light'}`} style={{
+  <div className={`card mb-2 border-0 rounded-3 overflow-hidden transition-all w-100 ${isSelected ? 'border-primary' : 'border-light'}`} style={{
     boxShadow: isSelected ? '0 4px 6px -1px rgba(99, 102, 241, 0.1)' : 'none',
     backgroundColor: isSelected ? 'rgba(99, 102, 241, 0.02)' : '#fff',
     border: '1px solid',
     borderColor: isSelected ? '#6366f1' : '#f1f1f1'
   }}>
-    <div className="card-body p-2 d-flex gap-2">
-      {/* Selection Column */}
-      <div className="d-flex align-items-center ps-1">
-        <input
-          type="checkbox"
-          className="form-check-input flex-shrink-0 m-0 cursor-pointer"
-          style={{ width: '18px', height: '18px', borderRadius: '4px' }}
-          checked={isSelected}
-          onChange={() => onToggleSelect(item._id)}
-        />
+    <div className="card-body p-3">
+      {/* 1. Header Row: Title (Full Space) */}
+      <div className="mb-3">
+        <div className="fw-bold text-dark" style={{ 
+          fontSize: '1.05rem', 
+          lineHeight: '1.3',
+          wordBreak: 'break-word',
+          overflowWrap: 'break-word',
+          display: 'block'
+        }}>
+          {item.title}
+        </div>
       </div>
 
-      {/* Content Column */}
-      <div className="flex-grow-1 min-w-0">
-        <div className="d-flex justify-content-between align-items-start mb-1">
-          <div className="fw-bold text-dark text-truncate" style={{ fontSize: '0.9rem' }}>{item.title}</div>
+      <div className="d-flex gap-3">
+        {/* 2. Left Side: checkbox */}
+        <div className="d-flex align-items-start pt-1">
+          <input
+            type="checkbox"
+            className="form-check-input flex-shrink-0 m-0 cursor-pointer"
+            style={{ width: '20px', height: '20px', borderRadius: '4px' }}
+            checked={isSelected}
+            onChange={() => onToggleSelect(item._id)}
+          />
         </div>
-        <div className="d-flex flex-wrap align-items-center gap-1 mb-1" style={{ fontSize: '0.75rem', color: '#64748b' }}>
-          <span className="badge bg-light text-dark fw-normal border-0 p-0">{item.type}</span>
-          <span className="text-muted opacity-50">|</span>
-          <span className="text-truncate" style={{maxWidth: '120px'}}>{categoryMap[item.categoryId] || 'Uncategorized'}</span>
+
+        {/* 3. Right Side: Metadata & Actions */}
+        <div className="flex-grow-1 min-w-0">
+          <div className="mb-3" style={{ fontSize: '0.85rem', color: '#64748b' }}>
+            <span className="badge bg-light text-dark fw-normal border-0 p-0 me-2">{item.type}</span>
+            <div className="mt-1 d-flex align-items-center gap-1">
+              <i className="bi bi-folder2 text-primary"></i>
+              <span className="fw-medium text-break" style={{ wordBreak: 'break-word' }}>
+                {categoryMap[item.categoryId] || 'Uncategorized'}
+              </span>
+            </div>
+          </div>
+          
+          <div className="d-flex align-items-center gap-3 text-muted mb-3" style={{ fontSize: '0.8rem' }}>
+            <span><i className="bi bi-eye me-1"></i>{item.viewsCount}</span>
+            <span><i className="bi bi-heart me-1"></i>{item.likesCount}</span>
+          </div>
+
+            <a
+              href={`${SITE_URL}/content/${item._id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-sm btn-outline-info border-0 p-0 rounded-circle d-flex align-items-center justify-content-center"
+              title="View Details"
+              style={{ width: '36px', height: '36px' }}
+            >
+              <i className="bi bi-eye" style={{ fontSize: '1rem' }}></i>
+            </a>
+            <button
+              className="btn btn-sm btn-outline-warning border-0 p-0 rounded-circle d-flex align-items-center justify-content-center"
+              onClick={() => handleEditClick(item)}
+              title="Edit"
+              style={{ width: '36px', height: '36px' }}
+            >
+              <i className="bi bi-pencil-square" style={{ fontSize: '1rem' }}></i>
+            </button>
+            <button
+              className="btn btn-sm btn-outline-danger border-0 p-0 rounded-circle d-flex align-items-center justify-content-center"
+              onClick={() => handleDelete(item._id)}
+              title="Delete"
+              style={{ width: '36px', height: '36px' }}
+            >
+              <i className="bi bi-trash3" style={{ fontSize: '1rem' }}></i>
+            </button>
+          </div>
         </div>
-        <div className="d-flex align-items-center gap-2 text-muted mb-1" style={{ fontSize: '0.75rem' }}>
-          <span><i className="bi bi-eye me-1"></i>{item.viewsCount}</span>
-          <span><i className="bi bi-heart me-1"></i>{item.likesCount}</span>
-        </div>
-        <div className="card-actions d-flex gap-1">
-          <button
-            className="btn btn-sm btn-outline-warning border-0 p-0 rounded-circle d-flex align-items-center justify-content-center"
-            onClick={() => handleEditClick(item)}
-            title="Edit"
-            style={{ width: '28px', height: '28px' }}
-          >
-            <i className="bi bi-pencil-square" style={{ fontSize: '0.85rem' }}></i>
-          </button>
-          <button
-            className="btn btn-sm btn-outline-danger border-0 p-0 rounded-circle d-flex align-items-center justify-content-center"
-            onClick={() => handleDelete(item._id)}
-            title="Delete"
-            style={{ width: '28px', height: '28px' }}
-          >
-            <i className="bi bi-trash3" style={{ fontSize: '0.85rem' }}></i>
-          </button>
-        </div>
-      </div>
     </div>
   </div>
 );
@@ -295,7 +323,7 @@ export default function AdminPanel() {
   return (
     // --- DASHBOARD LAYOUT MEIN WRAP KAREIN ---
     <>
-      <div className="container-fluid fade-in px-2 px-md-3 ps-lg-0 pe-lg-0 overflow-x-hidden" style={{ overflowX: 'hidden' }}>
+      <div className="container-fluid fade-in px-3 px-md-4 overflow-x-hidden" style={{ overflowX: 'hidden' }}>
         <h3 className="fw-bold mb-4 text-primary text-break">Content Manager</h3>
 
         {error && <div className="alert alert-danger" onClick={() => setError('')}>{error}</div>}
@@ -353,7 +381,7 @@ export default function AdminPanel() {
             }
         `}} />
 
-        <div className="row gx-lg-2 gy-4 align-items-start justify-content-center min-vh-md-75 mobile-vertical-center admin-row">
+        <div className="row gx-0 gx-lg-2 gy-4 align-items-start justify-content-center min-vh-md-75 admin-row mx-0">
           {/* Left Column: Upload Form */}
           <div className="col-lg-8 col-md-12 pe-lg-2" style={{ minWidth: 0 }}>
             <div className="card border-0 rounded-3 mb-4">
@@ -603,7 +631,7 @@ export default function AdminPanel() {
         </div>
 
         {/* Content Management Table */}
-        <div className="row mt-4">
+        <div className="row mt-4 mb-5 mx-0 gx-0">
           <div className="col-12">
             <div className="card border-0 rounded-3 overflow-hidden">
               <div className="card-header border-0 bg-transparent px-3 pb-3">
@@ -641,7 +669,7 @@ export default function AdminPanel() {
 
                   {/* Right Side: Search Bar */}
                   <div className="col-12 col-md-6 text-md-end pe-md-4">
-                    <div className="stylish-search-group d-flex align-items-center ms-md-auto" style={{ maxWidth: '100%' }}>
+                    <div className="stylish-search-group d-flex align-items-center ms-md-auto" style={{ maxWidth: '400px', width: '100%' }}>
                       <i className="bi bi-search text-primary ms-1 me-2"></i>
                       <input
                         type="text"
@@ -723,15 +751,33 @@ export default function AdminPanel() {
                                   onChange={() => toggleSelect(item._id)}
                                 />
                               </td>
-                              <td>{item.title}</td>
+                              <td style={{ maxWidth: '300px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                                <div style={{ 
+                                  fontWeight: '500',
+                                  whiteSpace: 'normal'
+                                }}>
+                                  {item.title}
+                                </div>
+                              </td>
                               <td><span className="badge bg-secondary">{item.type}</span></td>
 
                               <td>
-                                {categoryMap[item.categoryId] || <span className='text-danger'>Unknown</span>}
+                                <span className="fw-medium text-dark">
+                                  {categoryMap[item.categoryId] || <span className='text-danger'>Unknown</span>}
+                                </span>
                               </td>
 
                               <td>
-                                <div className="d-flex gap-1">
+                                <div className="d-flex gap-2">
+                                  <a
+                                    href={`${SITE_URL}/content/${item._id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="btn btn-sm btn-outline-info border-0 px-2"
+                                    title="View Live"
+                                  >
+                                    <i className="bi bi-eye fs-5"></i>
+                                  </a>
                                   <button
                                     className="btn btn-sm btn-outline-warning border-0 px-2"
                                     onClick={() => handleEditClick(item)}

@@ -127,10 +127,20 @@ exports.deleteUser = async (req, res) => {
     // Protection: Dusre SuperAdmin ko delete karne se pehle sochna chahiye
     // Lekin abhi ke liye simplicity ke liye hum allow kar dete hain (unless special logic needed)
 
-    // 1. User ka content delete karein (Optional, but recommended)
+    // 1. User ka content fetch karein physical files delete karne ke liye
+    const userContents = await Content.find({ uploadedBy: user._id });
+    const { deleteFromDrive } = require('../utils/googleDrive');
+
+    for (const content of userContents) {
+      if (content.googleDriveId) {
+        await deleteFromDrive(content.googleDriveId);
+      }
+    }
+
+    // 2. User ka content DB se delete karein
     await Content.deleteMany({ uploadedBy: user._id });
 
-    // 2. User ko delete karein
+    // 3. User ko delete karein
     await User.findByIdAndDelete(req.params.id);
 
     res.json({ message: 'User and their content deleted successfully' });

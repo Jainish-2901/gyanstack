@@ -817,6 +817,7 @@ body {
   flex-direction: column;
   min-height: 100vh;
   transition: all 0.3s ease;
+  overflow-x: hidden;
 }
 
 .dashboard-header {
@@ -913,13 +914,6 @@ body {
         min-height: auto;
         padding-top: 1rem;
         padding-bottom: 2rem;
-    }
-    
-    .admin-row {
-        margin-right: -0.25rem;
-        margin-left: -0.25rem;
-        max-width: 100%;
-        width: 100%;
     }
     
     .glass-card {

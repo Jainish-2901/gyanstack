@@ -24,6 +24,7 @@ import ContentDetailPage from './pages/public/ContentDetailPage';
 import AnnouncementsPage from './pages/public/AnnouncementsPage';
 import UploaderProfile from './pages/public/UploaderProfile';
 import MyInquiries from './pages/public/MyInquiries';
+import NotFound from './pages/public/NotFound';
 import ChatWidget from './components/ChatWidget'; 
 import 'bootstrap/dist/css/bootstrap.min.css';
 
@@ -48,13 +49,7 @@ export default function App() {
           <Route path="/uploader/:id" element={<UploaderProfile />} />
           
           {/* 404 in Public Layout */}
-          <Route path="*" element={
-            <div className='text-center py-5'>
-              <h1 className='display-1 fw-bold'>404</h1>
-              <p className='lead'>Page Not Found</p>
-              <Link to="/" className="btn btn-primary mt-3">Go back home</Link>
-            </div>
-          } />
+          <Route path="*" element={<NotFound />} />
         </Route>
 
         {/* 2. User Dashboard Pages (Sidebar + Profile Header) */}

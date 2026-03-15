@@ -6,6 +6,7 @@ import LoadingScreen from '../../components/LoadingScreen';
 import { useAuth } from '../../context/AuthContext';
 import ShareButton from '../../components/ShareButton';
 import ContentCard from '../../components/ContentCard';
+import NotFound from './NotFound';
 // ---------------------------------------------
 
 // --- Helper Functions ---
@@ -306,19 +307,13 @@ export default function ContentDetailPage() {
   if (loading) return <LoadingScreen text="Loading content..." />;
 
   if (!item) {
-    return (
-      <div className="container text-center mt-5">
-        <h2 className="text-danger">Content Not Found</h2>
-        <p className='lead'>The requested resource could not be loaded or does not exist.</p>
-        <Link to="/" className="btn btn-primary mt-3">Go Back Home</Link>
-      </div>
-    );
+    return <NotFound />;
   }
 
   return (
     <div className="container my-4 my-md-5 mx-auto fade-in">
       <div className="row justify-content-center">
-        <div className="col-lg-10 col-xl-9">
+        <div className="col-12">
 
           <button onClick={handleGoBack} className="btn btn-outline-secondary mb-4 shadow-sm btn-sm px-3">
             <i className="bi bi-arrow-left me-2"></i> Go Back

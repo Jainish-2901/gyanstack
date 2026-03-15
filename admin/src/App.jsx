@@ -18,6 +18,7 @@ import ContactInquiries from './pages/admin/ContactInquiries';
 import ManageUsers from './pages/admin/ManageUsers';
 import ManageAnnouncements from './pages/admin/ManageAnnouncements';
 import MyAnnouncements from './pages/admin/MyAnnouncements';
+import NotFound from './pages/admin/NotFound';
 
 export default function App() {
   return (
@@ -66,18 +67,14 @@ export default function App() {
                   } />
 
                   {/* 404 inside Dashboard */}
-                  <Route path="*" element={
-                    <div className='text-center py-5'>
-                      <h1 className='display-1 fw-bold text-primary'>404</h1>
-                      <p className='lead'>Dashboard section not found</p>
-                      <Link to="/dashboard/admin" className="btn btn-primary rounded-pill">Go to Dashboard</Link>
-                    </div>
-                  } />
+                  <Route path="*" element={<NotFound />} />
                 </Routes>
               </AdminLayout>
             </ProtectedRoute>
           } 
         />
+        {/* 3. GLOBAL Catch-all 404 */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
   );
