@@ -3,6 +3,61 @@ import api from '../../services/api';
 import LoadingScreen from '../../components/LoadingScreen';
 // -------------------
 
+// --- 1. HELPER COMPONENT: Request Card for Mobile View ---
+const RequestCardMobile = ({ req, updateStatus }) => (
+  <div className="card mb-2 border border-light rounded-3 shadow-none overflow-hidden transition-all bg-white">
+    <div className="card-body p-2 px-3">
+      <div className="d-flex justify-content-between align-items-center mb-1">
+        <div className="fw-bold text-dark text-truncate" style={{ fontSize: '0.9rem' }}>{req.topic}</div>
+        <span className={`badge rounded-pill ${
+          req.status === 'fulfilled' ? 'bg-success bg-opacity-10 text-success' : 'bg-warning bg-opacity-10 text-warning'
+        }`} style={{ fontSize: '0.65rem', padding: '4px 8px' }}>
+          {req.status === 'fulfilled' ? 'Fulfilled' : 'Pending'}
+        </span>
+      </div>
+      
+      <div className="d-flex align-items-center gap-2 mb-2">
+        <div className="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '24px', height: '24px' }}>
+          <i className="bi bi-person-fill" style={{ fontSize: '0.75rem' }}></i>
+        </div>
+        <div className="min-w-0">
+          <p className="mb-0 fw-medium text-dark text-truncate" style={{ fontSize: '0.8rem' }}>{req.requestedBy?.username || 'Unknown'}</p>
+        </div>
+        <div className="ms-auto text-muted" style={{ fontSize: '0.7rem' }}>
+          {new Date(req.createdAt).toLocaleDateString()}
+        </div>
+      </div>
+
+      <div className="bg-light rounded p-2 mb-2" style={{ fontSize: '0.75rem' }}>
+        <p className="mb-0 text-secondary" style={{ display: '-webkit-box', WebkitLineClamp: '2', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+          {req.message || <span className="fst-italic opacity-50">No message provided.</span>}
+        </p>
+      </div>
+
+      <div className="d-flex gap-2 align-items-center">
+        {req.status === 'pending' ? (
+          <button 
+            onClick={() => updateStatus(req._id, 'fulfilled')}
+            className="btn btn-sm btn-primary py-1 px-3 rounded-pill fw-bold w-100"
+            style={{ fontSize: '0.75rem' }}
+          >
+            <i className="bi bi-check-circle me-1"></i>Mark Fulfilled
+          </button>
+        ) : (
+          <button 
+            onClick={() => updateStatus(req._id, 'pending')}
+            className="btn btn-sm btn-outline-warning py-1 px-3 rounded-pill fw-bold w-100"
+            style={{ fontSize: '0.75rem' }}
+          >
+            <i className="bi bi-arrow-counterclockwise me-1"></i>Reopen
+          </button>
+        )}
+      </div>
+    </div>
+  </div>
+);
+
+
 export default function ViewContentRequests() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,38 +97,38 @@ export default function ViewContentRequests() {
   if (loading) return <LoadingScreen text="Fetching user requests..." />;
 
   return (
-    <>
-      <div className="container-fluid animate-fade-in">
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <div>
-            <h2 className="fw-bold text-primary mb-1">Content Requests</h2>
-            <p className="text-muted small">Manage and fulfill user requested topics</p>
-          </div>
-          <button onClick={fetchRequests} className="btn btn-outline-primary btn-sm rounded-pill px-3">
-            <i className="bi bi-arrow-clockwise me-1"></i> Refresh
-          </button>
+    <div className="container-fluid fade-in px-1 px-md-3 overflow-x-hidden" style={{ overflowX: 'hidden' }}>
+      <div className="d-flex justify-content-between align-items-center mb-3 px-1">
+        <div>
+          <h5 className="fw-bold text-primary mb-0">Content Requests</h5>
+          <p className="text-muted d-none d-md-block small mb-0">Manage and fulfill user requested topics</p>
         </div>
+        <button onClick={fetchRequests} className="btn btn-outline-primary btn-sm rounded-circle border-0 d-flex align-items-center justify-content-center" style={{ width: '32px', height: '32px' }}>
+          <i className="bi bi-arrow-clockwise fs-5"></i>
+        </button>
+      </div>
 
         {error && (
-          <div className="alert alert-danger border-0 shadow-sm rounded-4 d-flex align-items-center">
-            <i className="bi bi-exclamation-octagon-fill fs-4 me-3"></i>
-            <div>{error}</div>
+          <div className="alert alert-danger border-0 rounded-4 d-flex align-items-center mx-1">
+            <i className="bi bi-exclamation-octagon-fill me-2"></i>
+            <div className="small">{error}</div>
           </div>
         )}
 
         {!loading && requests.length === 0 && (
-          <div className="glass-panel p-5 text-center mt-4 border-0 shadow-sm rounded-4 bg-white">
+          <div className="p-5 text-center mt-4 border-0 rounded-4 bg-white mx-1">
             <i className="bi bi-chat-dots display-1 text-primary opacity-25 mb-4 d-block"></i>
-            <h4 className="fw-bold">No Requests Found</h4>
-            <p className="text-muted">Users haven't requested any specific content yet.</p>
+            <h5 className="fw-bold">No Requests Found</h5>
+            <p className="text-muted small">Users haven't requested any specific content yet.</p>
           </div>
         )}
 
         {requests.length > 0 && (
-          <div className="glass-panel p-0 border-0 shadow-sm overflow-hidden rounded-4 bg-white">
-            <div className="table-responsive">
+          <div className="p-0 border-0 overflow-hidden rounded-4">
+            {/* DESKTOP VIEW: Table */}
+            <div className="table-responsive d-none d-lg-block bg-white shadow-sm rounded-4">
               <table className="table table-hover align-middle mb-0">
-                <thead className="bg-primary bg-opacity-10">
+                <thead className="bg-primary bg-opacity-10 border-0">
                   <tr>
                     <th className="ps-4 py-3 border-0 text-primary small fw-bold text-uppercase">Requested By</th>
                     <th className="py-3 border-0 text-primary small fw-bold text-uppercase">Topic</th>
@@ -93,7 +148,6 @@ export default function ViewContentRequests() {
                           <div>
                             <p className="mb-0 fw-bold">{req.requestedBy?.username || 'Unknown User'}</p>
                             <small className="text-muted d-block" style={{ fontSize: '0.75rem' }}>{req.requestedBy?.email}</small>
-                            <small className="text-muted d-block" style={{ fontSize: '0.75rem' }}>{req.requestedBy?.phone || 'No Phone'}</small>
                           </div>
                         </div>
                       </td>
@@ -112,38 +166,31 @@ export default function ViewContentRequests() {
                         <span className={`badge rounded-pill px-3 py-2 ${
                           req.status === 'fulfilled' ? 'bg-success bg-opacity-10 text-success' : 'bg-warning bg-opacity-10 text-warning'
                         }`}>
-                          {req.status === 'fulfilled' ? (
-                            <><i className="bi bi-check-circle-fill me-1"></i> Fulfilled</>
-                          ) : (
-                            <><i className="bi bi-clock-history me-1"></i> Pending</>
-                          )}
+                          {req.status === 'fulfilled' ? 'Fulfilled' : 'Pending'}
                         </span>
                       </td>
                       <td className="pe-4 py-3 text-end">
-                        {req.status === 'pending' ? (
-                          <button 
-                            onClick={() => updateStatus(req._id, 'fulfilled')}
-                            className="btn btn-sm btn-primary rounded-pill px-3 py-1"
-                          >
-                            Mark Fulfilled
-                          </button>
-                        ) : (
-                          <button 
-                            onClick={() => updateStatus(req._id, 'pending')}
-                            className="btn btn-sm btn-outline-warning rounded-pill px-3 py-1"
-                          >
-                            Reopen
-                          </button>
-                        )}
+                        <button 
+                          onClick={() => updateStatus(req._id, req.status === 'pending' ? 'fulfilled' : 'pending')}
+                          className={`btn btn-sm rounded-pill px-3 py-1 ${req.status === 'pending' ? 'btn-primary' : 'btn-outline-warning'}`}
+                        >
+                          {req.status === 'pending' ? 'Mark Fulfilled' : 'Reopen'}
+                        </button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+
+            {/* MOBILE VIEW: Cards */}
+            <div className="d-lg-none px-1 pb-4">
+              {requests.map((req) => (
+                <RequestCardMobile key={req._id} req={req} updateStatus={updateStatus} />
+              ))}
+            </div>
           </div>
         )}
-      </div>
-    </>
+    </div>
   );
 }

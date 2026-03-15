@@ -27,7 +27,7 @@ ChartJS.register(
 // Chhota helper component (Stat Card)
 const StatCard = ({ title, value, icon, colorClass }) => (
   <div className="col-md-4 col-sm-6">
-    <div className="card shadow-lg border-0 h-100 rounded-lg">
+    <div className="card border-0 h-100 rounded-lg">
       <div className="card-body d-flex align-items-center">
         <div className={`fs-1 ${colorClass} me-3`}>
           <i className={`bi ${icon}`}></i>
@@ -115,11 +115,11 @@ export default function AdminDashboard() {
 
   // --- DASHBOARD LAYOUT MEIN WRAP KAREIN ---
   return (
-    <>
+    <div className="container-fluid fade-in px-0 overflow-x-hidden">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h3 className="fw-bold text-primary mb-0">
+        <h4 className="fw-bold text-primary mb-0">
           Analytics Dashboard
-        </h3>
+        </h4>
         
         {/* --- NAYA FILTER DROPDOWN --- */}
         <div className="filter-select">
@@ -141,7 +141,7 @@ export default function AdminDashboard() {
       </div>
       
       {/* Stat Cards */}
-      <div className="row g-4 mb-4">
+      <div className="row g-3 mb-4">
         {/* Note: Total Uploads aur Total Users hamesha All Time data hi dikhayenge, isliye yahaan date filter ka impact kam hai. */}
         <StatCard title="Total Uploads" value={stats.totalUploads} icon="bi-cloud-arrow-up-fill" colorClass="text-primary" />
         <StatCard title="Total Users" value={stats.totalUsers} icon="bi-people-fill" colorClass="text-success" />
@@ -154,9 +154,9 @@ export default function AdminDashboard() {
       
       {/* Charts */}
       {chartData && (
-        <div className="row g-4">
+        <div className="row gx-lg-2 gy-4">
           <div className="col-lg-8">
-            <div className="card shadow-lg border-0 rounded-lg">
+            <div className="card border-0 rounded-lg">
               <div className="card-body">
                 <h5 className="card-title">{chartData.datasets[0].label}</h5>
                 <Bar 
@@ -168,9 +168,9 @@ export default function AdminDashboard() {
           </div>
           <div className="col-lg-4">
             {/* Doughnut Chart ke liye naya data object banaayein */}
-            <div className="card shadow-lg border-0 rounded-lg">
+            <div className="card border-0 rounded-lg">
               <div className="card-body">
-                <h5 className="card-title">Engagement Split (Excluding Views)</h5>
+                <h6 className="card-title fw-bold">Engagement Split (Excluding Views)</h6>
                 <Doughnut 
                   data={{
                     labels: ['Likes', 'Saves', 'Downloads'],
@@ -194,7 +194,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-
-    </>
+    </div>
   );
 }

@@ -8,7 +8,7 @@ const AnnouncementCardMobile = ({ ann, handleAnnouncementStatus, handleEditClick
     const statusColor = ann.status === 'approved' ? 'success' : ann.status === 'rejected' ? 'danger' : 'warning text-dark';
     
     return (
-        <div className="card shadow-sm mb-3 border-0 rounded-lg">
+        <div className="card mb-3 border-0 rounded-lg">
             <div className="card-body">
                 <div className="data-item fw-bold text-dark mb-1" data-label="Title">{ann.title}</div>
                 <div className="data-item small mb-2" data-label="Requested By">{ann.requestedBy?.username || 'System'}</div>
@@ -112,9 +112,9 @@ export default function ManageAnnouncements() {
   if (loading) return <LoadingScreen text="Loading Announcements..." />;
 
   return (
-    <>
+    <div className="container-fluid fade-in px-0 overflow-x-hidden">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h3 className="fw-bold text-danger mb-0">Manage All Announcements</h3>
+        <h4 className="fw-bold text-danger mb-0">Manage All Announcements</h4>
         <button className="btn btn-sm btn-outline-primary" onClick={fetchAnnouncements}>
             <i className="bi bi-arrow-clockwise me-1"></i> Refresh
         </button>
@@ -124,9 +124,9 @@ export default function ManageAnnouncements() {
       {success && <div className="alert alert-success" onClick={() => setSuccess('')}>{success}</div>}
 
       {/* --- QUICK ANNOUNCEMENT SECTION (SHIFTED HERE) --- */}
-      <div className="card shadow-lg border-0 rounded-4 mb-5 bg-primary bg-opacity-10">
-        <div className="card-body p-4 p-md-5 text-center">
-            <div className="mx-auto bg-white rounded-circle shadow-sm mb-3 d-flex align-items-center justify-content-center" style={{ width: '60px', height: '60px' }}>
+      <div className="card border-0 rounded-4 mb-5 bg-primary bg-opacity-10">
+        <div className="card-body p-4 p-md-4 text-center">
+            <div className="mx-auto bg-white rounded-circle mb-3 d-flex align-items-center justify-content-center" style={{ width: '60px', height: '60px' }}>
                 <i className="bi bi-megaphone-fill fs-3 text-primary"></i>
             </div>
             <h4 className="fw-bold text-dark mb-2">Quick Announcement</h4>
@@ -134,7 +134,7 @@ export default function ManageAnnouncements() {
                 Directly share updates, news, or alerts with all GyanStack users instantly.
             </p>
             
-            <form onSubmit={handleAnnouncementSubmit} className="text-start bg-white p-4 rounded-4 shadow-sm">
+            <form onSubmit={handleAnnouncementSubmit} className="text-start bg-white p-4 rounded-4">
                 <div className="row g-3">
                     <div className="col-md-5">
                         <div className="form-floating">
@@ -149,7 +149,7 @@ export default function ManageAnnouncements() {
                         </div>
                     </div>
                     <div className="col-12 mt-3">
-                        <button type="submit" className="btn btn-primary btn-lg w-100 fw-bold rounded-pill shadow-sm" disabled={annLoading}>
+                        <button type="submit" className="btn btn-primary btn-lg w-100 fw-bold rounded-pill" disabled={annLoading}>
                             {annLoading ? (
                                 <><span className="spinner-border spinner-border-sm me-2"></span>Publishing...</>
                             ) : (
@@ -163,9 +163,9 @@ export default function ManageAnnouncements() {
       </div>
 
       <div className="d-flex justify-content-between align-items-center mb-3 px-2">
-        <h5 className="fw-bold text-secondary mb-0">Management History</h5>
+        <h6 className="fw-bold text-secondary mb-0">Management History</h6>
       </div>
-      <div className="card shadow-lg border-0 rounded-lg">
+      <div className="card border-0 rounded-lg">
         <div className="card-body p-0 responsive-card-view">
           {announcements.length === 0 ? (
             <p className='text-muted p-4 text-center'>No announcements found.</p>
@@ -231,6 +231,6 @@ export default function ManageAnnouncements() {
           onUpdate={handleUpdateAnn}
         />
       )}
-    </>
+    </div>
   );
 }

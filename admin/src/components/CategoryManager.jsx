@@ -40,8 +40,12 @@ const EditCategoryForm = ({ category, allCategories, onSave, onCancel }) => {
         </select>
       </div>
       <div className="d-flex gap-2">
-        <button type="submit" className="btn btn-sm btn-success flex-grow-1">Save Changes</button>
-        <button type="button" className="btn btn-sm btn-secondary" onClick={onCancel}>Cancel</button>
+        <button type="submit" className="btn btn-sm btn-success flex-grow-1 d-flex align-items-center justify-content-center">
+            <i className="bi bi-check-lg me-1"></i> Save
+        </button>
+        <button type="button" className="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center" onClick={onCancel}>
+            <i className="bi bi-x-lg"></i>
+        </button>
       </div>
     </form>
   );
@@ -132,10 +136,10 @@ const CategoryItem = ({ category, index, allCategories, onSelect, selectedId, on
               style={{ cursor: 'pointer' }}
               onClick={() => onSelect(category)}
             >
-              <span>
+              <span className="flex-grow-1 text-break pe-2">
                 {/* Drag Handle */}
                 {!isSelectOnly && (
-                  <i className="bi bi-grip-vertical me-2" {...provided.dragHandleProps}></i>
+                  <i className="bi bi-grip-vertical me-2 d-none d-md-inline-block" {...provided.dragHandleProps}></i>
                 )}
                 <i 
                   className={`bi ${isOpen ? 'bi-chevron-down' : 'bi-chevron-right'} me-2`}
@@ -161,7 +165,7 @@ const CategoryItem = ({ category, index, allCategories, onSelect, selectedId, on
           {isOpen && (
             // Step 1: <DragDropContext> (Nested)
             <DragDropContext onDragEnd={onSubDragEnd}>
-              <div className="list-group ps-4 border-start ms-3">
+              <div className="list-group ps-2 ps-md-4 border-start ms-2 ms-md-3 overflow-hidden">
                 {/* Step 2: <Droppable> (Nested) */}
                 <Droppable droppableId={category._id} type="SUB_CATEGORY">
                   {(provided) => (
@@ -344,8 +348,10 @@ export default function CategoryManager({ onSelectCategory, isSelectOnly = false
             <form onSubmit={handleCreateCategory} className="mb-3">
               <label className="form-label small">Creating in: <span className="fw-bold">{selectedCategory.name}</span></label>
               <div className="input-group">
-                <input type="text" className="form-control" placeholder="New Category Name" value={newCatName} onChange={(e) => setNewCatName(e.target.value)} />
-                <button className="btn btn-primary" type="submit">+</button>
+                <input type="text" className="form-control" placeholder="New Category Name..." value={newCatName} onChange={(e) => setNewCatName(e.target.value)} />
+                <button className="btn btn-primary px-3" type="submit">
+                    <i className="bi bi-plus-lg fw-bold"></i>
+                </button>
               </div>
             </form>
           </>
@@ -353,11 +359,11 @@ export default function CategoryManager({ onSelectCategory, isSelectOnly = false
         
         {/* --- YAHAN DRAG-AND-DROP ADD HUA HAI --- */}
         {/* Step 1: <DragDropContext> */}
-        <DragDropContext onDragEnd={onRootDragEnd}>
-          <div className="list-group category-tree" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+        <DragDropContext onRootDragEnd={onRootDragEnd}>
+          <div className="list-group category-tree" style={{ maxHeight: '450px', overflowY: 'auto', overflowX: 'auto', width: '100%' }}>
             {/* Root level (consistent styling) */}
             <div 
-              className={`d-flex align-items-center p-2 ps-3 fw-bold rounded-3 mb-2 transition-all ${selectedCategory._id === 'root' ? 'bg-primary text-white shadow-sm' : 'text-secondary hover-bg-light'}`}
+              className={`d-flex align-items-center p-2 ps-3 fw-bold rounded-3 mb-2 transition-all ${selectedCategory._id === 'root' ? 'bg-primary text-white' : 'text-secondary hover-bg-light'}`}
               style={{ cursor: 'pointer' }}
               onClick={() => handleSelect({ _id: 'root', name: 'Root' })}
             >

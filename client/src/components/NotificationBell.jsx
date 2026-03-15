@@ -27,7 +27,7 @@ const NotificationBell = ({ user }) => {
     const fetchAnnouncements = async () => {
       setLoading(true);
       try {
-        const { data } = await api.get('/announcements?status=approved&limit=5'); 
+        const { data } = await api.get('/announcements?status=approved&limit=5&days=7'); 
         const lastSeenId = localStorage.getItem('lastSeenAnnId');
         
         const items = data.announcements.map((ann) => ({

@@ -49,16 +49,15 @@ export default function ContactInquiries() {
     if (loading) return <LoadingScreen text="Fetching inquiries..." />;
 
     return (
-        <>
-            <div className="container-fluid fade-in">
-                <div className="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <h3 className="fw-bold text-primary mb-1">Contact Inquiries</h3>
-                        <p className="text-muted small">Manage and respond to user messages from the "Get into touch" page.</p>
-                    </div>
-                    <div className="d-flex gap-2">
-                        <select 
-                            className="form-select shadow-sm" 
+        <div className="container-fluid fade-in px-0 overflow-x-hidden">
+            <div className="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h4 className="fw-bold text-primary mb-1">Contact Inquiries</h4>
+                    <p className="text-muted small">Manage and respond to user messages from the "Get into touch" page.</p>
+                </div>
+                <div className="d-flex gap-2">
+                    <select 
+                        className="form-select" 
                             style={{ width: '150px' }}
                             value={filter}
                             onChange={(e) => setFilter(e.target.value)}
@@ -68,13 +67,13 @@ export default function ContactInquiries() {
                             <option value="reviewed">Reviewed</option>
                             <option value="resolved">Resolved</option>
                         </select>
-                        <button className="btn btn-primary shadow-sm" onClick={fetchMessages}>
+                        <button className="btn btn-primary px-3" onClick={fetchMessages}>
                             <i className="bi bi-arrow-clockwise"></i>
                         </button>
                     </div>
                 </div>
 
-                <div className="row g-4">
+                <div className="row gx-lg-2 gy-4">
                     {filteredMessages.length === 0 ? (
                         <div className="col-12 text-center py-5">
                             <i className="bi bi-envelope-open display-1 text-muted opacity-25"></i>
@@ -83,7 +82,7 @@ export default function ContactInquiries() {
                     ) : (
                         filteredMessages.map((msg) => (
                             <div key={msg._id} className="col-lg-6">
-                                <div className="card border-0 shadow-sm rounded-4 h-100 position-relative overflow-hidden inquiry-card">
+                                <div className="card border-0 rounded-4 h-100 position-relative overflow-hidden inquiry-card">
                                     <div className={`status-indicator ${msg.status}`}></div>
                                     <div className="card-body p-4">
                                         <div className="d-flex justify-content-between align-items-start mb-3">
@@ -120,7 +119,7 @@ export default function ContactInquiries() {
                                         </div>
 
                                         <div className="d-flex justify-content-between align-items-center pt-3 border-top">
-                                            <div className="btn-group shadow-sm rounded-pill overflow-hidden">
+                                            <div className="btn-group rounded-pill overflow-hidden">
                                                 <button 
                                                     className={`btn btn-sm ${msg.status === 'pending' ? 'btn-warning' : 'btn-outline-warning'}`}
                                                     onClick={() => handleUpdateStatus(msg._id, 'pending')}
@@ -144,9 +143,8 @@ export default function ContactInquiries() {
                         ))
                     )}
                 </div>
-            </div>
             
-            <style>{`
+            <style dangerouslySetInnerHTML={{ __html: `
                 .status-indicator {
                     position: absolute;
                     top: 0;
@@ -173,9 +171,9 @@ export default function ContactInquiries() {
                     transition: all 0.3s ease;
                 }
                 .inquiry-card:hover {
-                    transform: translateY(-5px);
+                    box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.1);
                 }
-            `}</style>
-        </>
+            ` }} />
+        </div>
     );
 }

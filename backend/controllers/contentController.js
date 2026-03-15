@@ -2,7 +2,7 @@ const cloudinary = require('cloudinary').v2;
 const Content = require('../models/contentModel');
 const Category = require('../models/categoryModel');
 const User = require('../models/userModel'); 
-const { uploadToDrive, deleteFromDrive, updateDriveFile, findFolderIdByPath, isDriveFolderEmpty } = require('../utils/googleDrive');
+const { uploadToDrive, deleteFromDrive, updateDriveFile, findFolderIdByPath, isDriveFolderEmpty, getDriveFileMetadata } = require('../utils/googleDrive');
 const fs = require('fs');
 const sharp = require('sharp');
 const path = require('path');
@@ -257,24 +257,42 @@ exports.uploadContent = async (req, res) => {
         return res.status(400).json({ message: `Upload failed: ${lastError}` });
       }
     } else {
-      // Scenario 2: Single Item (Link or Note)
+      // Scenario 2: Single Item (Link, Note, or External File)
       let fileUrl = '';
-      let finalFileType = type; // Default type 'note' ya 'link'
-      let fileResourceType = 'auto'; // Default type (link/note)
+      let finalFileType = type; 
+      let fileResourceType = 'auto'; 
+      let driveIdForDB = null;
 
-      // Agar single file aayi hai (jo theoretically upload.array me nahi honi chahiye, but safety ke liye)
-      // Note: Hum maan rahe hain ki agar files nahi hain, to yeh link ya note hai.
-
-      if (type === 'link') { 
+      if (type === 'link' || type === 'file') { 
         fileUrl = link; 
+        if (type === 'file') {
+          fileResourceType = 'raw';
+          // --- AUTO-DETECT: Drive Metadata fetching ---
+          const driveIdMatch = link.match(/[-\w]{25,}/); 
+          if (driveIdMatch) {
+            const driveId = driveIdMatch[0];
+            driveIdForDB = driveId;
+            const meta = await getDriveFileMetadata(driveId);
+            if (meta && !meta.trashed) {
+              finalFileType = meta.mimeType;
+              if (!title) title = meta.name ? meta.name.split('.').slice(0, -1).join('.') : meta.name;
+              console.log(`Auto-detected Drive file: ${meta.name} (${meta.mimeType})`);
+            } else {
+              finalFileType = 'application/octet-stream';
+            }
+          } else {
+            finalFileType = 'application/octet-stream';
+          }
+        }
       } else if (type === 'note') {
          // textNote field ko blank chodenge agar link/file type ho
       }
       
       const newContent = new Content({
-        title: title || "Untitled Note/Link",
+        title: title || (type === 'file' ? "External File" : "Untitled Note/Link"),
         type: finalFileType,
         url: fileUrl,
+        googleDriveId: driveIdForDB,
         fileResourceType: fileResourceType, 
         textNote: type === 'note' ? textNote : '', 
         categoryId,

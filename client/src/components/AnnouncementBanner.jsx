@@ -9,8 +9,8 @@ export default function AnnouncementBanner() {
   useEffect(() => {
     const fetchAnnouncements = async () => {
       try {
-        // API call to backend (only approved announcements)
-        const { data } = await api.get('/announcements?status=approved'); 
+        // Showing only approved announcements from last 48 hours (2 days)
+        const { data } = await api.get('/announcements?status=approved&days=2'); 
         // Showing only first 3 announcements for the banner
         setAnnouncements(data.announcements.slice(0, 3)); 
       } catch (error) {

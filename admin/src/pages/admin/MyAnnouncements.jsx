@@ -5,7 +5,7 @@ import EditAnnouncementModal from '../../components/EditAnnouncementModal';
 import { useAuth } from '../../context/AuthContext';
 
 const AnnouncementCardMobile = ({ item, handleAnnEditClick, handleAnnouncementDelete }) => (
-    <div className="card shadow-sm mb-3 border-0 rounded-lg">
+    <div className="card mb-3 border-0 rounded-lg">
         <div className="card-body">
             <div className="data-item fw-bold text-dark mb-1" data-label="Title">{item.title}</div>
             <div className="data-item mb-2" data-label="Status">
@@ -115,8 +115,8 @@ export default function MyAnnouncements() {
   }
 
   return (
-    <div className="fade-in">
-      <h3 className="fw-bold text-primary mb-4">My Announcement Requests</h3>
+    <div className="container-fluid fade-in px-0 overflow-x-hidden">
+      <h4 className="fw-bold text-primary mb-4">My Announcement Requests</h4>
 
       {error && <div className="alert alert-danger">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
@@ -124,7 +124,7 @@ export default function MyAnnouncements() {
       <div className="row g-4">
         {/* Request Form */}
         <div className="col-lg-4">
-          <div className="card shadow-sm border-0 rounded-3">
+          <div className="card border-0 rounded-3">
             <div className="card-body p-4">
               <h5 className="fw-bold mb-3">Request New Announcement</h5>
               <p className="text-muted small">Your request will be visible to students after SuperAdmin approval.</p>
@@ -152,7 +152,7 @@ export default function MyAnnouncements() {
                     required
                   ></textarea>
                 </div>
-                <button type="submit" className="btn btn-primary w-100 fw-bold rounded-pill shadow-sm" disabled={annLoading}>
+                <button type="submit" className="btn btn-primary w-100 fw-bold rounded-pill" disabled={annLoading}>
                   {annLoading ? (
                       <><span className="spinner-border spinner-border-sm me-2"></span>Sending...</>
                   ) : (
@@ -166,7 +166,7 @@ export default function MyAnnouncements() {
 
         {/* List of Requests */}
         <div className="col-lg-8">
-          <div className="card shadow-sm border-0 rounded-3">
+          <div className="card border-0 rounded-3">
             <div className="card-header bg-white py-3">
               <h5 className="fw-bold mb-0">Request History</h5>
             </div>

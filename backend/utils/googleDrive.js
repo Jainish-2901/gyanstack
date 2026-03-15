@@ -261,11 +261,31 @@ const isDriveFolderEmpty = async (folderId) => {
     }
 };
 
+/**
+ * Google Drive se file ki metadata (name, mimeType) lene ke liye
+ * @param {string} fileId - Google Drive file ID
+ */
+const getDriveFileMetadata = async (fileId) => {
+    try {
+        const drive = await getDriveInstance();
+        const response = await drive.files.get({
+            fileId: fileId,
+            fields: 'id, name, mimeType, trashed',
+            supportsAllDrives: true
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Fetch Drive Metadata Error:', error.message);
+        return null;
+    }
+};
+
 module.exports = { 
     uploadToDrive, 
     deleteFromDrive, 
     updateDriveFile, 
     findFolderIdByPath,
     isDriveFolderEmpty,
-    ensureFolderPath
+    ensureFolderPath,
+    getDriveFileMetadata
 };

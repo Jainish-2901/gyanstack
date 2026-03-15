@@ -193,6 +193,16 @@ const StatsSection = ({ stats }) => {
     </div>
   );
 
+  if (isLoading) {
+    return (
+      <section className="py-5">
+        <div className="container px-4 px-md-0">
+          <StatsSkeleton />
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-5 overflow-hidden">
       <div className="container px-4 px-md-0">
@@ -208,17 +218,11 @@ const StatsSection = ({ stats }) => {
 
           {/* Content Layer */}
           <div className="position-relative w-100" style={{ zIndex: 5 }}>
-            {isLoading ? (
-              <div className="w-100">
-                <StatsSkeleton />
-              </div>
-            ) : (
-              <div className="row w-100 text-center align-items-center">
-                <StatItem value={stats.contentCount} label="Premium Resources" icon="bi-journal-bookmark-fill" color="info" />
-                <StatItem value={stats.studentCount} label="Active Students" icon="bi-people-fill" color="success" />
-                <StatItem value={stats.viewsCount} label="Total Views" icon="bi-eye-fill" color="warning" />
-              </div>
-            )}
+            <div className="row w-100 text-center align-items-center">
+              <StatItem value={stats.contentCount} label="Premium Resources" icon="bi-journal-bookmark-fill" color="info" />
+              <StatItem value={stats.studentCount} label="Active Students" icon="bi-people-fill" color="success" />
+              <StatItem value={stats.viewsCount} label="Total Views" icon="bi-eye-fill" color="warning" />
+            </div>
           </div>
         </div>
       </div>

@@ -37,7 +37,7 @@ router.post('/', authMiddleware, adminMiddleware, (req, res, next) => {
     }
     // Agar koi file upload nahi hui, aur yeh 'note' ya 'link' nahi hai, to error dein
     if (!req.files || req.files.length === 0) {
-      if (req.body.type === 'file') {
+      if (req.body.type === 'file' && req.body.uploadMode !== 'external') {
         return res.status(400).json({ message: 'File is required for file type content.' });
       }
     }

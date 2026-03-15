@@ -142,12 +142,20 @@ exports.requestAnnouncement = async (req, res) => {
 // 2. Approved Announcements Fetch Karna (Public)
 exports.getAnnouncements = async (req, res) => {
     try {
-        const { limit, status = 'approved' } = req.query; // 'approved' ya 'pending' filter karein
+        const { limit, status = 'approved', days } = req.query; 
         
         let query = { status: status };
+
+        // --- NEW: Time-based filtering ---
+        if (days) {
+            const dateThreshold = new Date();
+            dateThreshold.setDate(dateThreshold.getDate() - parseInt(days));
+            query.createdAt = { $gte: dateThreshold };
+        }
+        
         let queryBuilder = Announcement.find(query)
             .sort({ createdAt: -1 })
-            .populate('requestedBy', 'username'); // Uploader ka naam bhi lein
+            .populate('requestedBy', 'username'); 
 
         if (limit) {
             queryBuilder = queryBuilder.limit(parseInt(limit));

@@ -9,49 +9,66 @@ import CategoryManager from '../../components/CategoryManager'; // Sahi import p
 
 // --- 1. HELPER COMPONENT: Content Card for Mobile View ---
 const ContentCardMobile = ({ item, categoryMap, handleEditClick, handleDelete, isSelected, onToggleSelect }) => (
-    <div className={`card shadow-sm mb-3 border-0 rounded-lg ${isSelected ? 'border-primary shadow' : ''}`} style={isSelected ? {borderWidth: '2px', borderStyle: 'solid'} : {}}>
-        <div className="card-body">
-            <div className="d-flex justify-content-between align-items-start mb-2">
-                <div className="data-item fw-bold text-primary" data-label="Title">{item.title}</div>
-                <input 
-                    type="checkbox" 
-                    className="form-check-input"
-                    checked={isSelected}
-                    onChange={() => onToggleSelect(item._id)}
-                />
-            </div>
-            <div className="data-item" data-label="Category">
-                {categoryMap[item.categoryId] || <span className='text-danger'>Unknown</span>}
-            </div>
-            <div className="data-item" data-label="Type">
-                <span className="badge bg-secondary">{item.type}</span>
-            </div>
-            <div className="data-item" data-label="Views/Likes">
-                {item.viewsCount} Views / {item.likesCount} Likes
-            </div>
-            <div className="card-actions mt-2">
-                <button 
-                    className="btn btn-sm btn-warning me-2"
-                    onClick={() => handleEditClick(item)} 
-                >
-                    Edit
-                </button>
-                <button 
-                    className="btn btn-sm btn-danger"
-                    onClick={() => handleDelete(item._id)}
-                >
-                    Delete
-                </button>
-            </div>
+  <div className={`card mb-2 border-0 rounded-3 overflow-hidden transition-all ${isSelected ? 'border-primary' : 'border-light'}`} style={{
+    boxShadow: isSelected ? '0 4px 6px -1px rgba(99, 102, 241, 0.1)' : 'none',
+    backgroundColor: isSelected ? 'rgba(99, 102, 241, 0.02)' : '#fff',
+    border: '1px solid',
+    borderColor: isSelected ? '#6366f1' : '#f1f1f1'
+  }}>
+    <div className="card-body p-2 d-flex gap-2">
+      {/* Selection Column */}
+      <div className="d-flex align-items-center ps-1">
+        <input
+          type="checkbox"
+          className="form-check-input flex-shrink-0 m-0 cursor-pointer"
+          style={{ width: '18px', height: '18px', borderRadius: '4px' }}
+          checked={isSelected}
+          onChange={() => onToggleSelect(item._id)}
+        />
+      </div>
+
+      {/* Content Column */}
+      <div className="flex-grow-1 min-w-0">
+        <div className="d-flex justify-content-between align-items-start mb-1">
+          <div className="fw-bold text-dark text-truncate" style={{ fontSize: '0.9rem' }}>{item.title}</div>
         </div>
+        <div className="d-flex flex-wrap align-items-center gap-1 mb-1" style={{ fontSize: '0.75rem', color: '#64748b' }}>
+          <span className="badge bg-light text-dark fw-normal border-0 p-0">{item.type}</span>
+          <span className="text-muted opacity-50">|</span>
+          <span className="text-truncate" style={{maxWidth: '120px'}}>{categoryMap[item.categoryId] || 'Uncategorized'}</span>
+        </div>
+        <div className="d-flex align-items-center gap-2 text-muted mb-1" style={{ fontSize: '0.75rem' }}>
+          <span><i className="bi bi-eye me-1"></i>{item.viewsCount}</span>
+          <span><i className="bi bi-heart me-1"></i>{item.likesCount}</span>
+        </div>
+        <div className="card-actions d-flex gap-1">
+          <button
+            className="btn btn-sm btn-outline-warning border-0 p-0 rounded-circle d-flex align-items-center justify-content-center"
+            onClick={() => handleEditClick(item)}
+            title="Edit"
+            style={{ width: '28px', height: '28px' }}
+          >
+            <i className="bi bi-pencil-square" style={{ fontSize: '0.85rem' }}></i>
+          </button>
+          <button
+            className="btn btn-sm btn-outline-danger border-0 p-0 rounded-circle d-flex align-items-center justify-content-center"
+            onClick={() => handleDelete(item._id)}
+            title="Delete"
+            style={{ width: '28px', height: '28px' }}
+          >
+            <i className="bi bi-trash3" style={{ fontSize: '0.85rem' }}></i>
+          </button>
+        </div>
+      </div>
     </div>
+  </div>
 );
 
 
 
 export default function AdminPanel() {
   const { user } = useAuth();
-  
+
   // States for Upload Form
   const [title, setTitle] = useState('');
   const [type, setType] = useState('note');
@@ -59,17 +76,17 @@ export default function AdminPanel() {
   const [link, setLink] = useState('');
   const [note, setNote] = useState('');
   const [tags, setTags] = useState('');
-  
+
   // Category state
   const [categoryId, setCategoryId] = useState('');
   const [categoryName, setCategoryName] = useState('None Selected');
-  
-  const [uploadMode, setUploadMode] = useState('single'); // 'single' or 'batch'
-  
+
+  const [uploadMode, setUploadMode] = useState('single'); // 'single', 'batch', or 'external'
+
   // --- NAYA STATE: Category Map ---
   const [categoryMap, setCategoryMap] = useState({});
   // ------------------------------
-  
+
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0); // For progress bar
   const [statusPhase, setStatusPhase] = useState(''); // '', 'uploading', 'processing', 'saving'
@@ -81,19 +98,20 @@ export default function AdminPanel() {
   const [loadingContent, setLoadingContent] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [currentItem, setCurrentItem] = useState(null);
-  
-  // --- NAYA STATE: Bulk Selection ---
+
+  // --- NAYA STATE: Bulk Selection & Search ---
   const [selectedIds, setSelectedIds] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   // ----------------------------------
 
   // Fetch content, announcements, AND categories
   const fetchData = async () => {
     setLoadingContent(true);
-    
+
     // --- CHANGE: Ab hum Categories ko bhi fetch karenge (Map banane ke liye) ---
     try {
       const { data: categoryData } = await api.get('/categories/all-nested');
-      
+
       const map = {};
       const buildMap = (categories) => {
         for (const cat of categories) {
@@ -133,12 +151,12 @@ export default function AdminPanel() {
 
   useEffect(() => {
     fetchData();
-  }, []); 
+  }, []);
 
   // --- BATCH UPLOAD CHANGE ---
-  const handleFileChange = (e) => { 
+  const handleFileChange = (e) => {
     // FileList object ko files state mein store karein
-    setFiles(e.target.files); 
+    setFiles(e.target.files);
   };
   // ---------------------------
 
@@ -159,34 +177,35 @@ export default function AdminPanel() {
     formData.append('type', type);
     formData.append('categoryId', categoryId);
     formData.append('tags', tags);
+    formData.append('uploadMode', uploadMode);
 
     // --- BATCH UPLOAD LOGIC ---
-    if (type === 'file' && files && files.length > 0) { 
+    if (type === 'file' && uploadMode !== 'external' && files && files.length > 0) {
       // Single mode validation
       if (uploadMode === 'single' && files.length > 1) {
         setError('Please select only one file for Single Upload mode.');
         setUploading(false);
         return;
       }
-      
+
       // Batch mode validation (Limit: 10 files)
       if (uploadMode === 'batch' && files.length > 10) {
         setError('Maximum 10 files allowed per batch for stability.');
         setUploading(false);
         return;
       }
-      
+
       // Har file ko FormData mein 'files' field ke naam se append karein
       for (let i = 0; i < files.length; i++) {
         formData.append('files', files[i]);
       }
-    } else if (type === 'link') { 
-      formData.append('link', link); 
-    } else if (type === 'note') { 
-      formData.append('textNote', note); 
+    } else if (type === 'link' || (type === 'file' && uploadMode === 'external')) {
+      formData.append('link', link);
+    } else if (type === 'note') {
+      formData.append('textNote', note);
     }
     // --------------------------
-    
+
     try {
       const { data } = await api.post('/content', formData, {
         onUploadProgress: (progressEvent) => {
@@ -197,9 +216,9 @@ export default function AdminPanel() {
           }
         }
       });
-      setStatusPhase(''); 
+      setStatusPhase('');
       setSuccess(data.message || 'Content uploaded successfully!');
-      
+
       // Form reset karein
       setTitle(''); setType('note'); setFiles(null); setLink(''); setNote(''); setTags('');
       setCategoryId(''); setCategoryName('None Selected');
@@ -218,7 +237,7 @@ export default function AdminPanel() {
     try {
       await api.delete(`/content/${id}`);
       setSelectedIds(selectedIds.filter(itemId => itemId !== id));
-      fetchData(); 
+      fetchData();
     } catch (err) {
       setError('Failed to delete content.');
     }
@@ -228,7 +247,7 @@ export default function AdminPanel() {
   const handleBulkDelete = async () => {
     if (!selectedIds.length) return;
     if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} items?`)) return;
-    
+
     try {
       setLoadingContent(true);
       await api.delete('/content/bulk-delete', { data: { ids: selectedIds } });
@@ -241,11 +260,17 @@ export default function AdminPanel() {
     }
   };
 
+  const filteredContent = myContent.filter(item =>
+    item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    categoryMap[item.categoryId]?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.type?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const toggleSelectAll = () => {
-    if (selectedIds.length === myContent.length) {
+    if (selectedIds.length === filteredContent.length) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(myContent.map(item => item._id));
+      setSelectedIds(filteredContent.map(item => item._id));
     }
   };
 
@@ -257,133 +282,202 @@ export default function AdminPanel() {
     }
   };
   // -------------------------------
-  
+
   // Edit Logic
   const handleEditClick = (item) => { setCurrentItem(item); setIsEditing(true); };
   const handleUpdateItem = (updatedItem) => {
     setMyContent(myContent.map(item => item._id === updatedItem._id ? updatedItem : item));
     setSuccess('Content updated successfully!');
   };
-  
+
 
 
   return (
     // --- DASHBOARD LAYOUT MEIN WRAP KAREIN ---
     <>
-      <div className="container-fluid fade-in">
-        <h3 className="fw-bold mb-4 text-primary">Admin Panel</h3>
+      <div className="container-fluid fade-in px-2 px-md-3 ps-lg-0 pe-lg-0 overflow-x-hidden" style={{ overflowX: 'hidden' }}>
+        <h3 className="fw-bold mb-4 text-primary text-break">Content Manager</h3>
 
         {error && <div className="alert alert-danger" onClick={() => setError('')}>{error}</div>}
         {success && <div className="alert alert-success" onClick={() => setSuccess('')}>{success}</div>}
 
-        <div className="row g-4">
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            .stylish-search-group {
+                background: #f1f5f9;
+                border: none;
+                border-radius: 12px;
+                padding: 4px 12px;
+                transition: all 0.2s ease;
+            }
+            .stylish-search-group:focus-within {
+                background: #fff;
+                box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+                transform: translateY(-1px);
+            }
+            .stylish-search-input, 
+            .stylish-search-input:focus, 
+            .stylish-search-input:active {
+                background: transparent !important;
+                border: none !important;
+                outline: none !important;
+                box-shadow: none !important;
+                font-weight: 500;
+                font-size: 0.95rem;
+            }
+            .stylish-search-input::placeholder {
+                color: #94a3b8;
+                font-weight: 400;
+            }
+            .check-all-mobile-box {
+                background: #f1f5f9;
+                border-radius: 10px;
+                padding: 8px 12px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 12px;
+                cursor: pointer;
+                transition: background 0.2s;
+            }
+            .check-all-mobile-box:active {
+                background: #e2e8f0;
+            }
+            .form-check-input {
+                border: 2px solid #cbd5e1 !important;
+                cursor: pointer;
+            }
+            .form-check-input:checked {
+                background-color: #6366f1 !important;
+                border-color: #6366f1 !important;
+            }
+        `}} />
+
+        <div className="row gx-lg-2 gy-4 align-items-start justify-content-center min-vh-md-75 mobile-vertical-center admin-row">
           {/* Left Column: Upload Form */}
-          <div className="col-lg-7">
-            <div className="card shadow-lg border-0 rounded-3 mb-4">
-              <div className="card-body p-4 p-sm-5">
-                  <h3 className="fw-bold mb-4 text-primary">Upload New Content</h3>
-                  
-                  {/* Content Type Selector */}
-                  <div className="mb-4">
-                    <label className="form-label fw-bold">Step 1: Select Type</label>
-                    <div className="d-flex gap-2 flex-wrap">
-                      <button 
-                        type="button" 
-                        className={`btn ${type === 'note' ? 'btn-primary' : 'btn-outline-primary'}`}
-                        onClick={() => setType('note')}
-                      >
-                        <i className="bi bi-card-text me-2"></i>Text Note
-                      </button>
-                      <button 
-                        type="button" 
-                        className={`btn ${type === 'link' ? 'btn-primary' : 'btn-outline-primary'}`}
-                        onClick={() => setType('link')}
-                      >
-                        <i className="bi bi-link-45deg me-2"></i>Link
-                      </button>
-                      <button 
-                        type="button" 
-                        className={`btn ${type === 'file' ? 'btn-primary' : 'btn-outline-primary'}`}
-                        onClick={() => setType('file')}
-                      >
-                        <i className="bi bi-file-earmark-plus me-2"></i>File(s)
-                      </button>
-                    </div>
+          <div className="col-lg-8 col-md-12 pe-lg-2" style={{ minWidth: 0 }}>
+            <div className="card border-0 rounded-3 mb-4">
+              <div className="card-body p-4 p-sm-4">
+                <h4 className="fw-bold mb-4 text-primary">Upload New Content</h4>
+
+                {/* Content Type Selector */}
+                <div className="mb-4">
+                  <label className="form-label fw-bold">Step 1: Select Type</label>
+                  <div className="d-flex gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      className={`btn ${type === 'note' ? 'btn-primary' : 'btn-outline-primary'}`}
+                      onClick={() => setType('note')}
+                    >
+                      <i className="bi bi-card-text me-2"></i>Text Note
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn ${type === 'link' ? 'btn-primary' : 'btn-outline-primary'}`}
+                      onClick={() => setType('link')}
+                    >
+                      <i className="bi bi-link-45deg me-2"></i>Link
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn ${type === 'file' ? 'btn-primary' : 'btn-outline-primary'}`}
+                      onClick={() => setType('file')}
+                    >
+                      <i className="bi bi-file-earmark-plus me-2"></i>File(s)
+                    </button>
                   </div>
+                </div>
 
-                  {/* Mode Selector for Files */}
-                  {type === 'file' && (
-                    <div className="mb-4 p-3 bg-light rounded-3">
-                      <label className="form-label fw-bold d-block mb-3">Step 2: Upload Mode</label>
-                      <div className="btn-group w-100" role="group">
-                        <input 
-                          type="radio" 
-                          className="btn-check" 
-                          name="uploadMode" 
-                          id="modeSingle" 
-                          autoComplete="off" 
-                          checked={uploadMode === 'single'} 
-                          onChange={() => setUploadMode('single')} 
-                        />
-                        <label className="btn btn-outline-primary" htmlFor="modeSingle">
-                          <i className="bi bi-file-earmark me-2"></i>Single File Upload
-                        </label>
+                {/* Mode Selector for Files */}
+                {type === 'file' && (
+                  <div className="mb-4 p-3 bg-light rounded-3">
+                    <label className="form-label fw-bold d-block mb-3">Step 2: Upload Mode</label>
+                    <div className="btn-group w-100" role="group">
+                      <input
+                        type="radio"
+                        className="btn-check"
+                        name="uploadMode"
+                        id="modeSingle"
+                        autoComplete="off"
+                        checked={uploadMode === 'single'}
+                        onChange={() => setUploadMode('single')}
+                      />
+                      <label className="btn btn-outline-primary" htmlFor="modeSingle">
+                        <i className="bi bi-file-earmark me-2"></i>Single File Upload
+                      </label>
 
-                        <input 
-                          type="radio" 
-                          className="btn-check" 
-                          name="uploadMode" 
-                          id="modeBatch" 
-                          autoComplete="off" 
-                          checked={uploadMode === 'batch'} 
-                          onChange={() => setUploadMode('batch')} 
-                        />
-                        <label className="btn btn-outline-primary" htmlFor="modeBatch">
-                          <i className="bi bi-files me-2"></i>Batch Upload (Multiple)
-                        </label>
-                      </div>
-                      <small className="text-muted mt-2 d-block">
-                        {uploadMode === 'single' 
-                          ? 'Upload one file with a custom title.' 
-                          : 'Upload multiple files. Titles will be auto-generated from filenames.'}
-                      </small>
+                       <input
+                        type="radio"
+                        className="btn-check"
+                        name="uploadMode"
+                        id="modeBatch"
+                        autoComplete="off"
+                        checked={uploadMode === 'batch'}
+                        onChange={() => setUploadMode('batch')}
+                      />
+                      <label className="btn btn-outline-primary" htmlFor="modeBatch">
+                        <i className="bi bi-files me-2"></i>Batch Upload
+                      </label>
+
+                      <input
+                        type="radio"
+                        className="btn-check"
+                        name="uploadMode"
+                        id="modeExternal"
+                        autoComplete="off"
+                        checked={uploadMode === 'external'}
+                        onChange={() => setUploadMode('external')}
+                      />
+                      <label className="btn btn-outline-primary" htmlFor="modeExternal">
+                        <i className="bi bi-link-45deg me-2"></i>External Link
+                      </label>
+                    </div>
+                    <small className="text-muted mt-2 d-block">
+                      {uploadMode === 'single'
+                        ? 'Upload one file with a custom title (Max 4.5MB).'
+                        : uploadMode === 'batch'
+                        ? 'Upload multiple files (Max 4.5MB each).'
+                        : 'Manually upload to Google Drive first, then paste the link here. No size limit!'}
+                    </small>
+                  </div>
+                )}
+
+                <hr className="my-4 opacity-10" />
+
+                <form onSubmit={handleUpload}>
+                  {/* Title (Only for Single/Note/Link/External) */}
+                  {(type !== 'file' || uploadMode === 'single' || uploadMode === 'external') && (
+                    <div className="form-floating mb-3">
+                      <input type="text" className="form-control" id="title" placeholder="Content Title" value={title} onChange={(e) => setTitle(e.target.value)} required={uploadMode === 'single' || uploadMode === 'external' || type !== 'file'} />
+                      <label htmlFor="title">Content Title</label>
                     </div>
                   )}
 
-                  <hr className="my-4 opacity-10" />
-
-                  <form onSubmit={handleUpload}>
-                    {/* Title (Only for Single/Note/Link) */}
-                    {(type !== 'file' || uploadMode === 'single') && (
-                      <div className="form-floating mb-3">
-                        <input type="text" className="form-control" id="title" placeholder="Content Title" value={title} onChange={(e) => setTitle(e.target.value)} required={uploadMode === 'single' || type !== 'file'} />
-                        <label htmlFor="title">Content Title</label>
-                      </div>
-                    )}
-                  
                   {/* --- NAYA CATEGORY SELECTOR --- */}
-                  <div className="mb-3">
-                    <label className="form-label fw-bold">Select Category:</label>
-                    <div className="p-3 border rounded">
-                      <p>Selected: <span className="fw-bold text-primary">{categoryName}</span></p>
-                      <CategoryManager 
-                        onSelectCategory={(id, name) => {
-                          setCategoryId(id);
-                          setCategoryName(name);
-                        }} 
-                        isSelectOnly={true} // Isse add/edit buttons hide ho jayenge
-                      />
+                  <div className="mb-4">
+                    <label className="form-label fw-bold">Step 3: Select Category</label>
+                    <div className="p-3 border rounded-3 bg-light overflow-hidden shadow-sm">
+                      <p className="mb-2">Selected: <span className="fw-bold text-primary">{categoryName}</span></p>
+                      <div style={{ maxHeight: '350px', overflowY: 'auto' }}>
+                        <CategoryManager
+                          onSelectCategory={(id, name) => {
+                            setCategoryId(id);
+                            setCategoryName(name);
+                          }}
+                          isSelectOnly={true}
+                        />
+                      </div>
                     </div>
                   </div>
                   {/* ----------------------------- */}
-                  
+
                   {/* Content Type */}
                   <select className="form-select mb-3" value={type} onChange={(e) => setType(e.target.value)}>
                     <option value="note">Text Note</option>
                     <option value="link">Link (YouTube, Website)</option>
                     <option value="file">File (PDF, PPT, DOCX, Video, Images, Zip, etc.)</option>
                   </select>
-                  
+
                   {/* Type ke hisaab se input */}
                   {type === 'note' && (
                     <div className="form-floating mb-3">
@@ -399,42 +493,60 @@ export default function AdminPanel() {
                   )}
                   {type === 'file' && (
                     <div className="mb-3">
-                      <label htmlFor="files" className="form-label fw-bold">
-                        {uploadMode === 'single' ? 'Step 4: Select Single File' : 'Step 4: Select Multiple Files (Max 10)'}
-                      </label>
-                      <input 
-                        type="file" 
-                        className="form-control" 
-                        id="files" 
-                        onChange={handleFileChange} 
-                        multiple={uploadMode === 'batch'} 
-                        accept=".zip,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.avi,.sifz,.XLS,.odt,image/*,video/*"
-                        required
-                      />
-                      {files && files.length > 0 && (
-                        <div className="mt-2 p-3 bg-light rounded border border-success border-opacity-25 overflow-auto" style={{maxHeight: '150px'}}>
-                          <p className="small fw-bold text-success mb-2">
-                             Selected {files.length} file(s):
-                          </p>
-                          <ul className="list-unstyled mb-0 small">
-                            {Array.from(files).map((f, i) => (
-                              <li key={i} className="text-truncate">
-                                <i className="bi bi-check-circle-fill text-success me-2"></i>
-                                {f.name}
-                              </li>
-                            ))}
-                          </ul>
+                      {uploadMode === 'external' ? (
+                        <div className="form-floating mb-3">
+                          <input 
+                            type="url" 
+                            className="form-control" 
+                            id="externalFileLink" 
+                            placeholder="Paste Google Drive Link" 
+                            value={link} 
+                            onChange={(e) => setLink(e.target.value)} 
+                            required 
+                          />
+                          <label htmlFor="externalFileLink">Paste Google Drive Link</label>
+                          <small className="text-muted mt-1 d-block"><i className="bi bi-info-circle me-1"></i> Ensure link is set to "Anyone with the link can view"</small>
                         </div>
+                      ) : (
+                        <>
+                          <label htmlFor="files" className="form-label fw-bold">
+                            {uploadMode === 'single' ? 'Step 4: Select Single File' : 'Step 4: Select Multiple Files (Max 10)'}
+                          </label>
+                          <input
+                            type="file"
+                            className="form-control"
+                            id="files"
+                            onChange={handleFileChange}
+                            multiple={uploadMode === 'batch'}
+                            accept=".zip,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.avi,.sifz,.XLS,.odt,image/*,video/*"
+                            required
+                          />
+                          {files && files.length > 0 && (
+                            <div className="mt-2 p-3 bg-light rounded border border-success border-opacity-25 overflow-auto" style={{ maxHeight: '150px' }}>
+                              <p className="small fw-bold text-success mb-2">
+                                Selected {files.length} file(s):
+                              </p>
+                              <ul className="list-unstyled mb-0 small">
+                                {Array.from(files).map((f, i) => (
+                                  <li key={i} className="text-truncate">
+                                    <i className="bi bi-check-circle-fill text-success me-2"></i>
+                                    {f.name}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   )}
-                  
+
                   {/* Tags */}
                   <div className="form-floating mb-3">
                     <input type="text" className="form-control" id="tags" placeholder="e.g., IMP, Unit-1, Exam" value={tags} onChange={(e) => setTags(e.target.value)} />
                     <label htmlFor="tags">Tags (comma se alag karein, e.g., IMP, Unit-1)</label>
                   </div>
-                  
+
                   {/* Submit Button */}
                   <div className="d-grid gap-2">
                     {uploading && (
@@ -447,9 +559,9 @@ export default function AdminPanel() {
                           </span>
                         </div>
                         <div className="progress overflow-visible" style={{ height: '10px' }}>
-                          <div 
-                            className={`progress-bar progress-bar-striped progress-bar-animated shadow-sm ${statusPhase === 'processing' ? 'bg-success' : 'bg-primary'}`} 
-                            role="progressbar" 
+                          <div
+                            className={`progress-bar progress-bar-striped progress-bar-animated shadow-sm ${statusPhase === 'processing' ? 'bg-success' : 'bg-primary'}`}
+                            role="progressbar"
                             style={{ width: `${uploadProgress}%`, transition: 'width 0.3s ease' }}
                           ></div>
                         </div>
@@ -480,150 +592,197 @@ export default function AdminPanel() {
           </div>
 
           {/* Right Column: Manage Categories & Announcements */}
-          <div className="col-lg-5">
+          <div className="col-lg-4 col-md-12" style={{ minWidth: 0 }}>
             {/* Naya Category Manager (Admin bhi manage kar sakta hai) */}
-            <div className="card shadow-lg border-0 rounded-3 mb-4">
-              <CategoryManager 
+            <div className="card border-0 rounded-3 mb-4">
+              <CategoryManager
                 isSelectOnly={false} // Yahaan poori functionality (add/edit/delete/reorder) dikhegi
               />
             </div>
           </div>
         </div>
-        
+
         {/* Content Management Table */}
-        <div className="card shadow-lg border-0 rounded-3 mt-4">
-          <div className="card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
-            <div className="d-flex align-items-center flex-wrap gap-2">
-              <h3 className="fw-bold mb-0">Manage Your Content</h3>
-              
-              {!loadingContent && myContent.length > 0 && (
-                <div className="ms-md-3 d-flex flex-wrap gap-2">
-                  <span className="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10 py-2 px-3 small">
-                    <i className="bi bi-layers-fill me-1"></i>
-                    {myContent.length} Total
-                  </span>
-                  
-                  {/* Notes Count */}
-                  {myContent.filter(c => c.type === 'note').length > 0 && (
-                    <span className="badge rounded-pill bg-info bg-opacity-10 text-info border border-info border-opacity-10 py-2 px-3 small">
-                      <i className="bi bi-card-text me-1"></i>
+        <div className="row mt-4">
+          <div className="col-12">
+            <div className="card border-0 rounded-3 overflow-hidden">
+              <div className="card-header border-0 bg-transparent px-3 pb-3">
+                <div className="row g-3 align-items-center">
+                  {/* Left Side: Title & Actions */}
+                  <div className="col-12 col-md-6 ps-md-4">
+                    <div className="d-flex flex-wrap align-items-center gap-3">
+                      <h5 className="fw-bold mb-0 text-dark">
+                        <i className="bi bi-stack me-2 text-primary"></i>Manage Your Content
+                      </h5>
+
+                      {/* Desktop Select All */}
+                      <div className="form-check d-none d-lg-block mb-0 ms-2">
+                        <input
+                          type="checkbox"
+                          className="form-check-input cursor-pointer shadow-none"
+                          id="selectAllDesktop"
+                          style={{ width: '18px', height: '18px' }}
+                          checked={filteredContent.length > 0 && selectedIds.length === filteredContent.length}
+                          onChange={toggleSelectAll}
+                        />
+                        <label className="form-check-label small fw-bold text-muted cursor-pointer ms-1" htmlFor="selectAllDesktop">
+                          Select All
+                        </label>
+                      </div>
+
+                      {selectedIds.length > 0 && (
+                        <button className="btn btn-danger btn-sm rounded-3 px-3 py-2 fw-bold shadow-sm animate-pulse" onClick={handleBulkDelete}>
+                          <i className="bi bi-trash3-fill me-2"></i>
+                          Delete {selectedIds.length}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right Side: Search Bar */}
+                  <div className="col-12 col-md-6 text-md-end pe-md-4">
+                    <div className="stylish-search-group d-flex align-items-center ms-md-auto" style={{ maxWidth: '100%' }}>
+                      <i className="bi bi-search text-primary ms-1 me-2"></i>
+                      <input
+                        type="text"
+                        className="form-control stylish-search-input py-2"
+                        placeholder="Search your content..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mobile Check All Section */}
+                <div className="d-lg-none mt-4 px-1">
+                  <div className="check-all-mobile-box shadow-sm" onClick={toggleSelectAll}>
+                    <input
+                      type="checkbox"
+                      className="form-check-input m-0 cursor-pointer"
+                      style={{ width: '22px', height: '22px' }}
+                      checked={filteredContent.length > 0 && selectedIds.length === filteredContent.length}
+                      readOnly
+                    />
+                    <span className="fw-bold text-dark">Select All Content</span>
+                    <span className="badge bg-white text-primary border ms-auto">{filteredContent.length} Items</span>
+                  </div>
+                </div>
+
+                {!loadingContent && myContent.length > 0 && (
+                  <div className="mt-3 d-flex flex-wrap gap-2 px-md-2">
+                    <span className="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10 py-1 px-3 small">
+                      {myContent.length} Total
+                    </span>
+                    <span className="badge rounded-pill bg-info bg-opacity-10 text-info border border-info border-opacity-10 py-1 px-3 small">
                       {myContent.filter(c => c.type === 'note').length} Notes
                     </span>
-                  )}
-                  
-                  {/* Links Count */}
-                  {myContent.filter(c => c.type === 'link').length > 0 && (
-                    <span className="badge rounded-pill bg-success bg-opacity-10 text-success border border-success border-opacity-10 py-2 px-3 small">
-                      <i className="bi bi-link-45deg me-1"></i>
+                    <span className="badge rounded-pill bg-success bg-opacity-10 text-success border border-success border-opacity-10 py-1 px-3 small">
                       {myContent.filter(c => c.type === 'link').length} Links
                     </span>
-                  )}
-                  
-                  {/* Files Count */}
-                  {myContent.filter(c => c.type !== 'note' && c.type !== 'link').length > 0 && (
-                    <span className="badge rounded-pill bg-warning bg-opacity-10 text-warning border border-warning border-opacity-10 py-2 px-3 small">
-                      <i className="bi bi-file-earmark-arrow-up me-1"></i>
+                    <span className="badge rounded-pill bg-warning bg-opacity-10 text-warning border border-warning border-opacity-10 py-1 px-3 small">
                       {myContent.filter(c => c.type !== 'note' && c.type !== 'link').length} Files
                     </span>
-                  )}
-                </div>
-              )}
-            </div>
+                  </div>
+                )}
+              </div>
+              <div className="card-body p-0 responsive-card-view">
+                {loadingContent ? (
+                  <LoadingScreen text="Loading your content..." />
+                ) : myContent.length === 0 ? (
+                  <p className='p-3'>You have not uploaded any content yet.</p>
+                ) : (
+                  <>
+                    {/* DESKTOP VIEW: Table */}
+                    <div className="table-responsive d-none d-lg-block">
+                      <table className="table table-striped table-hover align-middle">
+                        <thead>
+                          <tr>
+                            <th style={{ width: '40px' }}>
+                              <input
+                                type="checkbox"
+                                className="form-check-input"
+                                checked={filteredContent.length > 0 && selectedIds.length === filteredContent.length}
+                                onChange={toggleSelectAll}
+                              />
+                            </th>
+                            <th>Title</th>
+                            <th>Type</th>
+                            <th>Category</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredContent.map(item => (
+                            <tr key={item._id} className={selectedIds.includes(item._id) ? 'table-primary' : ''}>
+                              <td>
+                                <input
+                                  type="checkbox"
+                                  className="form-check-input"
+                                  checked={selectedIds.includes(item._id)}
+                                  onChange={() => toggleSelect(item._id)}
+                                />
+                              </td>
+                              <td>{item.title}</td>
+                              <td><span className="badge bg-secondary">{item.type}</span></td>
 
-            {selectedIds.length > 0 && (
-              <button className="btn btn-danger btn-sm shadow-sm animate-pulse" onClick={handleBulkDelete}>
-                <i className="bi bi-trash-fill me-1"></i>
-                Delete Selected ({selectedIds.length})
-              </button>
-            )}
-          </div>
-          <div className="card-body p-0 responsive-card-view">
-            {loadingContent ? (
-              <LoadingScreen text="Loading your content..." />
-            ) : myContent.length === 0 ? (
-              <p className='p-3'>You have not uploaded any content yet.</p>
-            ) : (
-              <>
-                {/* DESKTOP VIEW: Table */}
-                <div className="table-responsive d-none d-lg-block">
-                  <table className="table table-striped table-hover align-middle">
-                    <thead>
-                      <tr>
-                        <th style={{ width: '40px' }}>
-                          <input 
-                            type="checkbox" 
-                            className="form-check-input"
-                            checked={myContent.length > 0 && selectedIds.length === myContent.length}
-                            onChange={toggleSelectAll}
+                              <td>
+                                {categoryMap[item.categoryId] || <span className='text-danger'>Unknown</span>}
+                              </td>
+
+                              <td>
+                                <div className="d-flex gap-1">
+                                  <button
+                                    className="btn btn-sm btn-outline-warning border-0 px-2"
+                                    onClick={() => handleEditClick(item)}
+                                    title="Edit"
+                                  >
+                                    <i className="bi bi-pencil-square fs-5"></i>
+                                  </button>
+                                  <button
+                                    className="btn btn-sm btn-outline-danger border-0 px-2"
+                                    onClick={() => handleDelete(item._id)}
+                                    title="Delete"
+                                  >
+                                    <i className="bi bi-trash3 fs-5"></i>
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* MOBILE VIEW: Cards */}
+                    <div className="d-lg-none p-3">
+                      {filteredContent.length === 0 ? (
+                        <p className="text-center text-muted py-4">No matching content found.</p>
+                      ) : (
+                        filteredContent.map(item => (
+                          <ContentCardMobile
+                            key={item._id}
+                            item={item}
+                            categoryMap={categoryMap}
+                            handleEditClick={handleEditClick}
+                            handleDelete={handleDelete}
+                            isSelected={selectedIds.includes(item._id)}
+                            onToggleSelect={toggleSelect}
                           />
-                        </th>
-                        <th>Title</th>
-                        <th>Type</th>
-                        <th>Category</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {myContent.map(item => (
-                        <tr key={item._id} className={selectedIds.includes(item._id) ? 'table-primary' : ''}>
-                          <td>
-                            <input 
-                              type="checkbox" 
-                              className="form-check-input"
-                              checked={selectedIds.includes(item._id)}
-                              onChange={() => toggleSelect(item._id)}
-                            />
-                          </td>
-                          <td>{item.title}</td>
-                          <td><span className="badge bg-secondary">{item.type}</span></td>
-                          
-                          <td>
-                            {categoryMap[item.categoryId] || <span className='text-danger'>Unknown</span>}
-                          </td>
-
-                          <td>
-                            <button 
-                              className="btn btn-sm btn-warning me-2"
-                              onClick={() => handleEditClick(item)} 
-                            >
-                              Edit
-                            </button>
-                            <button 
-                              className="btn btn-sm btn-danger"
-                              onClick={() => handleDelete(item._id)}
-                            >
-                              Delete
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                
-                {/* MOBILE VIEW: Cards */}
-                <div className="d-lg-none p-3">
-                  {myContent.map(item => (
-                    <ContentCardMobile 
-                        key={item._id} 
-                        item={item} 
-                        categoryMap={categoryMap}
-                        handleEditClick={handleEditClick}
-                        handleDelete={handleDelete}
-                        isSelected={selectedIds.includes(item._id)}
-                        onToggleSelect={toggleSelect}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
+                        ))
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-        
+
         {/* Modals */}
         {isEditing && currentItem && (
-          <EditContentModal 
-            item={currentItem} 
+          <EditContentModal
+            item={currentItem}
             onClose={() => setIsEditing(false)}
             onUpdate={handleUpdateItem}
             // Modal ko category map pass karein

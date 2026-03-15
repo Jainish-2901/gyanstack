@@ -7,7 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 // Announcement Item Card Component
 const AnnouncementItem = ({ ann }) => {
   return (
-    <div className="card shadow-sm mb-3 border-0 bg-white">
+    <div className="card mb-3 border-0 bg-white">
       <div className="card-body">
         <div className="d-flex justify-content-between align-items-start">
           <div>
@@ -60,16 +60,15 @@ export default function AnnouncementsPage() {
   if (loading) return <LoadingScreen text="Fetching all announcements..." />;
   
   return (
-    <>
-        <div className="container-fluid fade-in">
-        <h3 className="fw-bold mb-4 text-primary">
+    <div className="container-fluid fade-in px-0 overflow-x-hidden">
+        <h4 className="fw-bold mb-4 text-primary">
             System Announcements
-        </h3>
+        </h4>
         
         {error && <div className="alert alert-danger">{error}</div>}
         
         {announcements.length === 0 ? (
-            <div className="alert alert-info border-0 shadow-sm">No public announcements available yet.</div>
+            <div className="alert alert-info border-0">No public announcements available yet.</div>
         ) : (
             <div className="row">
             <div className="col-12">
@@ -82,7 +81,6 @@ export default function AnnouncementsPage() {
             </div>
             </div>
         )}
-        </div>
-    </>
+    </div>
   );
 }
