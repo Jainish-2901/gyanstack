@@ -34,6 +34,11 @@ export default function ManageAnnouncements() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   
+  // Quick Announcement States
+  const [annTitle, setAnnTitle] = useState('');
+  const [annContent, setAnnContent] = useState('');
+  const [annLoading, setAnnLoading] = useState(false);
+
   const [isEditingAnn, setIsEditingAnn] = useState(false);
   const [currentAnn, setCurrentAnn] = useState(null);
 
@@ -52,6 +57,24 @@ export default function ManageAnnouncements() {
   useEffect(() => {
     fetchAnnouncements();
   }, []);
+
+  const handleAnnouncementSubmit = async (e) => {
+    e.preventDefault();
+    setAnnLoading(true);
+    setError('');
+    setSuccess('');
+    try {
+      // SuperAdmin request is auto-approved by backend logic
+      await api.post('/announcements/request', { title: annTitle, content: annContent });
+      setSuccess('Announcement published successfully to all students!');
+      setAnnTitle('');
+      setAnnContent('');
+      fetchAnnouncements(); // List refresh karein
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to publish announcement.');
+    }
+    setAnnLoading(false);
+  };
 
   const handleAnnouncementStatus = async (id, newStatus) => {
     try {
@@ -100,6 +123,48 @@ export default function ManageAnnouncements() {
       {error && <div className="alert alert-danger" onClick={() => setError('')}>{error}</div>}
       {success && <div className="alert alert-success" onClick={() => setSuccess('')}>{success}</div>}
 
+      {/* --- QUICK ANNOUNCEMENT SECTION (SHIFTED HERE) --- */}
+      <div className="card shadow-lg border-0 rounded-4 mb-5 bg-primary bg-opacity-10">
+        <div className="card-body p-4 p-md-5 text-center">
+            <div className="mx-auto bg-white rounded-circle shadow-sm mb-3 d-flex align-items-center justify-content-center" style={{ width: '60px', height: '60px' }}>
+                <i className="bi bi-megaphone-fill fs-3 text-primary"></i>
+            </div>
+            <h4 className="fw-bold text-dark mb-2">Quick Announcement</h4>
+            <p className="text-muted small mb-4 mx-auto" style={{maxWidth: '500px'}}>
+                Directly share updates, news, or alerts with all GyanStack users instantly.
+            </p>
+            
+            <form onSubmit={handleAnnouncementSubmit} className="text-start bg-white p-4 rounded-4 shadow-sm">
+                <div className="row g-3">
+                    <div className="col-md-5">
+                        <div className="form-floating">
+                            <input type="text" className="form-control" id="quickAnnTitle" placeholder="Title" value={annTitle} onChange={(e) => setAnnTitle(e.target.value)} required />
+                            <label htmlFor="quickAnnTitle">Title</label>
+                        </div>
+                    </div>
+                    <div className="col-md-7">
+                       <div className="form-floating">
+                            <textarea className="form-control" id="quickAnnContent" placeholder="Content..." style={{ height: '58px' }} value={annContent} onChange={(e) => setAnnContent(e.target.value)} required></textarea>
+                            <label htmlFor="quickAnnContent">Short Message Content...</label>
+                        </div>
+                    </div>
+                    <div className="col-12 mt-3">
+                        <button type="submit" className="btn btn-primary btn-lg w-100 fw-bold rounded-pill shadow-sm" disabled={annLoading}>
+                            {annLoading ? (
+                                <><span className="spinner-border spinner-border-sm me-2"></span>Publishing...</>
+                            ) : (
+                                <><i className="bi bi-send-fill me-2"></i>Publish New Announcement Now</>
+                            )}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+      </div>
+
+      <div className="d-flex justify-content-between align-items-center mb-3 px-2">
+        <h5 className="fw-bold text-secondary mb-0">Management History</h5>
+      </div>
       <div className="card shadow-lg border-0 rounded-lg">
         <div className="card-body p-0 responsive-card-view">
           {announcements.length === 0 ? (

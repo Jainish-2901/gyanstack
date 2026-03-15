@@ -17,6 +17,7 @@ import ViewContentRequests from './pages/admin/ViewContentRequests';
 import ContactInquiries from './pages/admin/ContactInquiries';
 import ManageUsers from './pages/admin/ManageUsers';
 import ManageAnnouncements from './pages/admin/ManageAnnouncements';
+import MyAnnouncements from './pages/admin/MyAnnouncements';
 
 export default function App() {
   return (
@@ -41,6 +42,11 @@ export default function App() {
                   <Route path="settings" element={<EditProfile />} />
                   <Route path="announcements" element={<AnnouncementsPage />} />
                   <Route path="dashboard/requests" element={<ViewContentRequests />} />
+                  <Route path="dashboard/my-announcements" element={
+                    <ProtectedRoute roles={['admin']}>
+                      <MyAnnouncements />
+                    </ProtectedRoute>
+                  } />
                   
                   {/* Super Admin Restricted Routes */}
                   <Route path="dashboard/contact" element={

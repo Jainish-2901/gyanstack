@@ -4,7 +4,6 @@ import api from '../../services/api'; // Sahi import path
 import { Link } from 'react-router-dom';
 import LoadingScreen from '../../components/LoadingScreen'; // Sahi import path
 import EditContentModal from '../../components/EditContentModal'; // Sahi import path
-import EditAnnouncementModal from '../../components/EditAnnouncementModal'; // Sahi import path
 import CategoryManager from '../../components/CategoryManager'; // Sahi import path
 // -------------------
 
@@ -48,38 +47,6 @@ const ContentCardMobile = ({ item, categoryMap, handleEditClick, handleDelete, i
     </div>
 );
 
-// --- 2. HELPER COMPONENT: Announcement Card for Mobile View ---
-const AnnouncementCardMobile = ({ item, handleAnnEditClick, handleAnnouncementDelete }) => (
-    <div className="card shadow-sm mb-3 border-0 rounded-lg">
-        <div className="card-body">
-            <div className="data-item fw-bold" data-label="Title">{item.title}</div>
-            <div className="data-item" data-label="Status">
-                <span className={`badge ${
-                    item.status === 'approved' ? 'bg-success' :
-                    item.status === 'rejected' ? 'bg-danger' : 'bg-warning'
-                }`}>{item.status}</span>
-            </div>
-            <div className="data-item" data-label="Date">
-                {new Date(item.createdAt).toLocaleDateString()}
-            </div>
-            <div className="card-actions">
-                <button 
-                    className="btn btn-sm btn-warning me-2"
-                    onClick={() => handleAnnEditClick(item)}
-                    disabled={item.status !== 'pending'} 
-                >
-                    Edit
-                </button>
-                <button 
-                    className="btn btn-sm btn-danger"
-                    onClick={() => handleAnnouncementDelete(item._id)}
-                >
-                    Delete
-                </button>
-            </div>
-        </div>
-    </div>
-);
 
 
 export default function AdminPanel() {
@@ -118,20 +85,10 @@ export default function AdminPanel() {
   // --- NAYA STATE: Bulk Selection ---
   const [selectedIds, setSelectedIds] = useState([]);
   // ----------------------------------
-  
-  // States for Announcement
-  const [annTitle, setAnnTitle] = useState('');
-  const [annContent, setAnnContent] = useState('');
-  const [annLoading, setAnnLoading] = useState(false);
-  const [myAnnouncements, setMyAnnouncements] = useState([]);
-  const [loadingAnn, setLoadingAnn] = useState(true);
-  const [isEditingAnn, setIsEditingAnn] = useState(false);
-  const [currentAnn, setCurrentAnn] = useState(null);
 
   // Fetch content, announcements, AND categories
   const fetchData = async () => {
     setLoadingContent(true);
-    setLoadingAnn(true);
     
     // --- CHANGE: Ab hum Categories ko bhi fetch karenge (Map banane ke liye) ---
     try {
@@ -172,14 +129,6 @@ export default function AdminPanel() {
       setError('Failed to fetch your content.');
     }
     setLoadingContent(false);
-    
-    try {
-      const { data: annData } = await api.get('/announcements/my-requests'); 
-      setMyAnnouncements(annData.announcements);
-    } catch (err) {
-      setError('Failed to fetch your announcements.');
-    }
-    setLoadingAnn(false);
   };
 
   useEffect(() => {
@@ -316,48 +265,6 @@ export default function AdminPanel() {
     setSuccess('Content updated successfully!');
   };
   
-  // Announcement Logic
-  const handleAnnouncementSubmit = async (e) => {
-    e.preventDefault();
-    setAnnLoading(true);
-    setError('');
-    setSuccess('');
-    try {
-      await api.post('/announcements/request', { title: annTitle, content: annContent });
-      setSuccess(user.role === 'superadmin' 
-        ? 'Announcement published successfully!' 
-        : 'Announcement request submitted to Super Admin for approval!');
-      setAnnTitle('');
-      setAnnContent('');
-      fetchData(); 
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to submit announcement.');
-    }
-    setAnnLoading(false);
-  };
-  
-  const handleAnnouncementDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this request?')) return;
-    try {
-      await api.delete(`/announcements/${id}`);
-      setSuccess('Announcement request deleted.');
-      fetchData(); 
-    } catch (err) {
-      setError('Failed to delete announcement request.');
-    }
-  };
-
-  const handleAnnEditClick = (announcement) => {
-    setCurrentAnn(announcement);
-    setIsEditingAnn(true);
-  };
-  
-  const handleUpdateAnn = (updatedItem) => {
-    setMyAnnouncements(myAnnouncements.map(ann => 
-      ann._id === updatedItem._id ? updatedItem : ann
-    ));
-    setSuccess('Announcement request updated successfully!');
-  };
 
 
   return (
@@ -579,35 +486,6 @@ export default function AdminPanel() {
                 isSelectOnly={false} // Yahaan poori functionality (add/edit/delete/reorder) dikhegi
               />
             </div>
-
-            {/* Conditional Announcement Form */}
-            <div className="card shadow-lg border-0 rounded-3">
-              <div className="card-body p-4 p-sm-5">
-                <h3 className="fw-bold mb-4 text-primary">
-                  {user.role === 'superadmin' ? 'Quick Announcement' : 'Request Announcement'}
-                </h3>
-                <p>
-                  {user.role === 'superadmin' 
-                    ? 'Directly publish updates to all students.' 
-                    : 'Home page par dikhane ke liye nayi update submit karein.'}
-                </p>
-                <form onSubmit={handleAnnouncementSubmit}>
-                  <div className="form-floating mb-3">
-                    <input type="text" className="form-control" id="annTitle" placeholder="Title" value={annTitle} onChange={(e) => setAnnTitle(e.target.value)} required />
-                    <label htmlFor="annTitle">Title</label>
-                  </div>
-                  <div className="form-floating mb-3">
-                    <textarea className="form-control" id="annContent" placeholder="Content..." style={{ height: '100px' }} value={annContent} onChange={(e) => setAnnContent(e.target.value)} required></textarea>
-                    <label htmlFor="annContent">Content</label>
-                  </div>
-                  <button type="submit" className={`btn ${user.role === 'superadmin' ? 'btn-primary' : 'btn-info'} w-100`} disabled={annLoading}>
-                    {annLoading 
-                      ? (user.role === 'superadmin' ? 'Publishing...' : 'Requesting...') 
-                      : (user.role === 'superadmin' ? 'Publish Now' : 'Request for Approval')}
-                  </button>
-                </form>
-              </div>
-            </div>
           </div>
         </div>
         
@@ -741,77 +619,6 @@ export default function AdminPanel() {
           </div>
         </div>
         
-        {/* My Announcement Requests Table (Only for Admins) */}
-        {user.role !== 'superadmin' && (
-          <div className="card shadow-lg border-0 rounded-3 mt-4">
-            <div className="card-header">
-              <h3 className="fw-bold mb-0">My Announcement Requests</h3>
-            </div>
-            <div className="card-body p-0 responsive-card-view">
-              {loadingAnn ? (
-                <LoadingScreen text="Loading your requests..." />
-              ) : myAnnouncements.length === 0 ? (
-                <p className='p-3'>You have not requested any announcements yet.</p>
-              ) : (
-                <>
-                  {/* DESKTOP VIEW: Table */}
-                  <div className="table-responsive d-none d-lg-block">
-                    <table className="table table-striped table-hover align-middle">
-                      <thead>
-                        <tr>
-                          <th>Title</th>
-                          <th>Status</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {myAnnouncements.map(item => (
-                          <tr key={item._id}>
-                            <td>{item.title}</td>
-                            <td>
-                              <span className={`badge ${
-                                item.status === 'approved' ? 'bg-success' :
-                                item.status === 'rejected' ? 'bg-danger' : 'bg-warning'
-                              }`}>{item.status}</span>
-                            </td>
-                            <td>
-                              <button 
-                                className="btn btn-sm btn-warning me-2"
-                                onClick={() => handleAnnEditClick(item)}
-                                disabled={item.status !== 'pending'} 
-                              >
-                                Edit
-                              </button>
-                              <button 
-                                className="btn btn-sm btn-danger"
-                                onClick={() => handleAnnouncementDelete(item._id)}
-                              >
-                                Delete
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  
-                  {/* MOBILE VIEW: Cards */}
-                  <div className="d-lg-none p-3">
-                      {myAnnouncements.map(item => (
-                          <AnnouncementCardMobile 
-                              key={item._id} 
-                              item={item}
-                              handleAnnEditClick={handleAnnEditClick}
-                              handleAnnouncementDelete={handleAnnouncementDelete}
-                          />
-                      ))}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* Modals */}
         {isEditing && currentItem && (
           <EditContentModal 
@@ -820,14 +627,6 @@ export default function AdminPanel() {
             onUpdate={handleUpdateItem}
             // Modal ko category map pass karein
             categories={categoryMap}
-          />
-        )}
-        
-        {isEditingAnn && currentAnn && (
-          <EditAnnouncementModal
-            item={currentAnn}
-            onClose={() => setIsEditingAnn(false)}
-            onUpdate={handleUpdateAnn}
           />
         )}
       </div>

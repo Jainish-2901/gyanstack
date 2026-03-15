@@ -3,47 +3,106 @@ const Subscription = require('../models/subscriptionModel');
 const User = require('../models/userModel');
 const axios = require('axios');
 
-// --- NAYA HELPER FUNCTION ---
-// Push Notification bhejta hai
-const sendPushNotification = async (title, body) => {
-    // 1. Sabhi FUM Tokens ko database se fetch karein
-    const subscriptions = await Subscription.find().select('fcmToken').exec();
-    const tokens = subscriptions.map(sub => sub.fcmToken);
+// --- NAYA HELPER FUNCTION (FCM v1 Modern) ---
+const { google } = require('googleapis');
 
-    if (tokens.length === 0) {
-        console.log("No users subscribed for push notifications.");
-        return;
-    }
+const getAccessToken = () => {
+    return new Promise((resolve, reject) => {
+        const key = {
+            client_email: process.env.FIREBASE_CLIENT_EMAIL,
+            private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n') // Handle newline escaping
+        };
 
-    // 2. Google's FCM API ko call karein
-    // Note: Yahaan aapko apne Firebase Project ki Server Key ki zaroorat hogi
-    const FIREBASE_SERVER_KEY = process.env.FCM_SERVER_KEY; // Ye .env file me hona chahiye
-    
-    if (!FIREBASE_SERVER_KEY) {
-        console.error("FCM_SERVER_KEY is not defined. Cannot send push notifications.");
-        return;
-    }
+        if (!key.client_email || !key.private_key) {
+            return reject(new Error("Missing FIREBASE_CLIENT_EMAIL or FIREBASE_PRIVATE_KEY in .env"));
+        }
 
-    const message = {
-        notification: {
-            title: title,
-            body: body,
-            icon: "/logo.png" // Corrected path to root logo.png
-        },
-        // 'registration_ids' array of tokens ko target karta hai
-        registration_ids: tokens 
-    };
+        const jwtClient = new google.auth.JWT(
+            key.client_email,
+            null,
+            key.private_key,
+            ['https://www.googleapis.com/auth/firebase.messaging'],
+            null
+        );
 
-    try {
-        await axios.post('https://fcm.googleapis.com/fcm/send', message, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `key=${FIREBASE_SERVER_KEY}`
-            }
+        jwtClient.authorize((err, tokens) => {
+            if (err) return reject(err);
+            resolve(tokens.access_token);
         });
-        console.log(`FCM: Successfully sent notification to ${tokens.length} devices.`);
+    });
+};
+
+// Push Notification bhejta hai (Modern HTTP v1)
+const sendPushNotification = async (title, body) => {
+    try {
+        console.log("FCM v1: Starting push notification process...");
+        
+        const projectId = process.env.FIREBASE_PROJECT_ID || "gyanstack-server";
+        
+        // 1. Fetch all tokens
+        const subscriptions = await Subscription.find().select('fcmToken').exec();
+        const rawTokens = subscriptions.map(sub => sub.fcmToken);
+        const tokens = [...new Set(rawTokens)].filter(t => t);
+
+        if (tokens.length === 0) {
+            console.log("FCM: No users subscribed. Skipping send.");
+            return;
+        }
+
+        // 2. Access Token generate karein
+        const accessToken = await getAccessToken();
+        console.log("FCM: Access Token generated successfully.");
+
+        // 3. Sequential delivery to tokens (v1 sends to individual tokens)
+        // Note: Batch sending deprecated in v1, sequential is safer for reliability
+        let successCount = 0;
+        let failureCount = 0;
+
+        for (const token of tokens) {
+            const message = {
+                message: {
+                    token: token,
+                    notification: {
+                        title: title,
+                        body: body
+                    },
+                    data: {
+                        title: title,
+                        body: body,
+                        url: "/announcements"
+                    },
+                    webpush: {
+                        headers: {
+                            image: "https://gyanstack.vercel.app/logo.png"
+                        },
+                        fcm_options: {
+                            link: "https://gyanstack.vercel.app/announcements"
+                        }
+                    }
+                }
+            };
+
+            try {
+                await axios.post(
+                    `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`,
+                    message,
+                    {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${accessToken}`
+                        }
+                    }
+                );
+                successCount++;
+            } catch (err) {
+                console.warn(`FCM: Failed to send to token ${token.substring(0, 10)}...:`, err.message);
+                failureCount++;
+            }
+        }
+
+        console.log(`FCM Delivery Complete: ${successCount} Success, ${failureCount} Failures.`);
     } catch (error) {
-        console.error("FCM Sending Error:", error.response?.data || error.message);
+        console.error("FCM v1: Fatal Error:", error.message);
     }
 };
 // -----------------------------
@@ -67,7 +126,7 @@ exports.requestAnnouncement = async (req, res) => {
             // Auto-approved announcement ke liye notification bhejien
             const pushTitle = `🚨 New Update: ${title}`;
             const pushBody = content.substring(0, 100) + '... Tap to view.';
-            sendPushNotification(pushTitle, pushBody);
+            await sendPushNotification(pushTitle, pushBody); // Wait for results
         }
 
         res.status(201).json({ 
@@ -149,7 +208,7 @@ exports.updateAnnouncementStatus = async (req, res) => {
         if (status === 'approved') {
             const title = `🚨 New Update: ${updatedAnnouncement.title}`;
             const body = updatedAnnouncement.content.substring(0, 100) + '... Tap to view.';
-            sendPushNotification(title, body); // Helper function call karein
+            await sendPushNotification(title, body); // Helper function call karein
         }
         // --------------------------------------------------
 

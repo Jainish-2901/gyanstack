@@ -52,13 +52,22 @@ const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
 
 // Handle Background Messages
+// NOTE: If the payload has a 'notification' object, the browser shows it automatically.
+// We only manually show it if 'notification' is missing (Data-Only Message).
 onBackgroundMessage(messaging, (payload) => {
   console.log('[sw.js] Background message received:', payload);
   
-  const notificationTitle = payload.notification.title || 'GyanStack Update';
+  if (payload.notification) {
+    // Firebase SDK automatically shows notifications with 'notification' payload.
+    // Manual call here would cause duplication.
+    return;
+  }
+
+  // Handle Data-Only messages (optional fallback)
+  const notificationTitle = payload.data?.title || 'GyanStack Update';
   const notificationOptions = {
-    body: payload.notification.body,
-    icon: '/logo.png', // Logo path from public folder
+    body: payload.data?.body || 'Check the latest updates on GyanStack.',
+    icon: '/logo.png',
     badge: '/pwa-192x192.png',
     data: payload.data
   };

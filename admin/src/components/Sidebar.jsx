@@ -8,7 +8,8 @@ export default function Sidebar({ show, onMobileClose }) {
     const navLinks = [
         { path: '/dashboard/admin', icon: 'bi-grid-1x2-fill', label: 'Admin Analytics', roles: ['admin', 'superadmin'] },
         { path: '/admin-panel', icon: 'bi-file-earmark-text-fill', label: 'Content Manager', roles: ['admin', 'superadmin'] },
-        { path: '/announcements', icon: 'bi-megaphone-fill', label: 'Announcements', roles: ['admin', 'superadmin'] },
+        { path: '/dashboard/my-announcements', icon: 'bi-megaphone-fill', label: 'My Announcements', roles: ['admin'] },
+        { path: '/announcements', icon: 'bi-megaphone-fill', label: 'View Announcements', roles: ['admin', 'superadmin'] },
         { path: '/dashboard/requests', icon: 'bi-chat-left-dots-fill', label: 'User Requests', roles: ['admin', 'superadmin'] },
         { path: '/dashboard/users', icon: 'bi-people-fill', label: 'Manage Users', roles: ['superadmin'] },
         { path: '/dashboard/announcements-manage', icon: 'bi-bell-fill', label: 'All Announcements', roles: ['superadmin'] },
