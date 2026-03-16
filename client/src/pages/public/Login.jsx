@@ -48,17 +48,14 @@ export default function Login() {
         console.log("Attempting Google Sign-In via Popup...");
         const result = await signInWithPopup(auth, googleProvider);
         const { user: firebaseUser } = result;
-        console.log("Firebase Auth success:", firebaseUser.email);
 
         // Send to our MERN backend
-        console.log("Sending to backend Login...");
         const { data } = await api.post('/auth/google-login', {
             email: firebaseUser.email,
             username: firebaseUser.displayName,
             googleId: firebaseUser.uid,
             profileImage: firebaseUser.photoURL
         });
-        console.log("Backend response received:", !!data.token);
 
         const loggedInUser = await login(null, null, data); 
 
