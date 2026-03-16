@@ -8,7 +8,6 @@ const rateLimit = require('express-rate-limit'); // NAYA IMPORT
 const announcementRoutes = require('./routes/announcementRoutes'); // <-- NAYA IMPORT
 
 dotenv.config();
-mongoose.set('bufferCommands', false); // Global: fail fast on DB issues
 
 // --- RATE LIMITERS (Protective Shields) ---
 // 1. General API Limiter (100 requests/15min)
@@ -73,46 +72,56 @@ app.use(express.json());
 
 // Database Connection Utility
 let cachedConnection = null;
+let connectionPromise = null;
+
 const connectDB = async () => {
-  if (cachedConnection && mongoose.connection.readyState === 1) return cachedConnection;
+  // If already connected, return immediately
+  if (mongoose.connection.readyState === 1) return mongoose.connection;
   
+  // If a connection attempt is already in progress, wait for it
+  if (connectionPromise) return connectionPromise;
+
   if (!process.env.MONGO_URI) {
     throw new Error('MONGO_URI is missing in environment variables');
   }
 
-  try {
-    // Hardened connection options for resilience
-    const conn = await mongoose.connect(process.env.MONGO_URI, {
-      serverSelectionTimeoutMS: 15000, 
-      connectTimeoutMS: 20000,         
-      socketTimeoutMS: 45000,          
-      family: 4,                       
-      bufferCommands: false,           // Disable buffering to fail fast on DB issues
-    });
-    
-    cachedConnection = conn;
-    console.log('MongoDB connection established successfully');
-    
-    // Watchdog for connection health (Added Listeners only once)
-    if (mongoose.connection.listenerCount('error') === 0) {
-        mongoose.connection.on('error', (err) => {
-          console.error('MongoDB Runtime Error:', err);
-          cachedConnection = null;
-        });
-    }
+  connectionPromise = (async () => {
+    try {
+      console.log('Attempting to connect to MongoDB...');
+      const conn = await mongoose.connect(process.env.MONGO_URI, {
+        serverSelectionTimeoutMS: 15000, 
+        connectTimeoutMS: 20000,         
+        socketTimeoutMS: 45000,          
+        family: 4,                       
+        bufferCommands: true, // Re-enable buffering for startup stability
+      });
+      
+      console.log('MongoDB connection established successfully');
+      
+      // Watchdog for connection health
+      if (mongoose.connection.listenerCount('error') === 0) {
+          mongoose.connection.on('error', (err) => {
+            console.error('MongoDB Runtime Error:', err);
+            cachedConnection = null;
+          });
+      }
 
-    if (mongoose.connection.listenerCount('disconnected') === 0) {
-        mongoose.connection.on('disconnected', () => {
-          console.warn('MongoDB Disconnected. Reconnect pending...');
-          cachedConnection = null;
-        });
-    }
+      if (mongoose.connection.listenerCount('disconnected') === 0) {
+          mongoose.connection.on('disconnected', () => {
+            console.warn('MongoDB Disconnected. Reconnect pending...');
+            cachedConnection = null;
+          });
+      }
 
-    return conn;
-  } catch (err) {
-    console.error('MongoDB Initial Connection Error:', err.message);
-    throw err;
-  }
+      return conn;
+    } catch (err) {
+      console.error('MongoDB Connection Error:', err.message);
+      connectionPromise = null; // Reset on failure so we can try again
+      throw err;
+    }
+  })();
+
+  return await connectionPromise;
 };
 
 // Middleware to ensure DB connection is ready before handling requests

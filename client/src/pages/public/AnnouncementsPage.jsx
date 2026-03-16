@@ -92,6 +92,13 @@ export default function AnnouncementsPage() {
   
   return (
     <div className="container my-5 fade-in">
+      {/* Back Button */}
+      <div className="mb-4">
+        <Link to="/" className="btn btn-light btn-sm rounded-pill px-3 shadow-sm text-primary fw-bold transition-all hover-translate-x-left">
+          <i className="bi bi-arrow-left me-2"></i> Back to Home
+        </Link>
+      </div>
+
       <h3 className="fw-bold mb-4 text-primary">
         All System Announcements
       </h3>

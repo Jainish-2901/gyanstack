@@ -1407,11 +1407,43 @@ body {
   .fancy-footer .d-flex.gap-3 {
     gap: 0.5rem !important;
   }
+
+  /* Announcement Card Mobile Optimization */
+  .announcement-item {
+    padding: 1rem !important;
+  }
+  .announcement-item .alert-heading {
+    font-size: 1rem !important;
+  }
+  .announcement-item .content-text {
+    font-size: 0.85rem !important;
+    line-height: 1.4;
+  }
+  .announcement-item .date-text, 
+  .announcement-item .btn-view-details {
+    font-size: 0.75rem !important;
+  }
+}
+
+/* Helper Utilities */
+.x-small {
+  font-size: 0.75rem !important;
+}
+.tracking-wider {
+  letter-spacing: 0.1em;
 }
 
 .heart{
   display: inline-block;
   animation: heartbeat 1s infinite;
+}
+
+/* Hover Animations */
+.transition-all {
+  transition: all 0.3s ease-in-out !important;
+}
+.hover-translate-x-left:hover {
+  transform: translateX(-5px) !important;
 }
 
 @keyframes heartbeat {
