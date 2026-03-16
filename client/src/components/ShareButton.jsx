@@ -8,19 +8,23 @@ export default function ShareButton({ title, url, className = "btn btn-light rou
     const targetUrl = url || window.location.href;
     const fullUrl = targetUrl.startsWith('http') ? targetUrl : `${window.location.origin}${targetUrl.startsWith('/') ? '' : '/'}${targetUrl}`;
     
+    const shareData = {
+      title: title || 'GyanStack',
+      text: title ? `${title} | GyanStack Resources` : 'Check out these resources on GyanStack!',
+      url: fullUrl,
+    };
+
     if (navigator.share) {
       try {
-        await navigator.share({
-          title: title,
-          url: fullUrl,
-        });
+        await navigator.share(shareData);
       } catch (err) {
         console.error('Error sharing:', err);
       }
     } else {
-      // Fallback: Copy to clipboard
+      // Fallback: Copy to clipboard (including title for context)
       try {
-        await navigator.clipboard.writeText(fullUrl);
+        const copyText = title ? `${title}\n${fullUrl}` : fullUrl;
+        await navigator.clipboard.writeText(copyText);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       } catch (err) {
