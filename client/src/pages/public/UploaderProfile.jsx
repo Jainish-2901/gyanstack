@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../../services/api';
 import ContentCard from '../../components/ContentCard';
 import LoadingScreen from '../../components/LoadingScreen';
+import ShareButton from '../../components/ShareButton';
 import NotFound from './NotFound';
 
 export default function UploaderProfile() {
@@ -19,47 +20,50 @@ export default function UploaderProfile() {
   useEffect(() => {
     const fetchProfile = async () => {
       setLoading(true);
+      setError(null);
       try {
-        const [profileRes, catRes] = await Promise.all([
-          api.get(`/auth/uploader/${id}`),
-          api.get('/categories/all-nested'),
-        ]);
-
-        const contents = profileRes.data.contents;
+        const profileRes = await api.get(`/auth/uploader/${id}`);
+        const user = profileRes.data.user;
+        const contents = profileRes.data.contents || [];
+        setProfile(user);
+        setAllContents(contents);
         setTotalCount(contents.length);
 
-        // Flatten category tree into a name map { _id: name }
-        const catMap = {};
-        const flatten = (cats) => {
-          if (!cats) return;
-          cats.forEach(c => {
-            catMap[c._id] = c.name;
-            if (c.children) flatten(c.children);
+        try {
+          const catRes = await api.get('/categories/all-nested');
+          const categoriesData = catRes.data.categories || (Array.isArray(catRes.data) ? catRes.data : []);
+          const catMap = {};
+          const flatten = (cats) => {
+            if (!cats || !Array.isArray(cats)) return;
+            cats.forEach(c => {
+              catMap[c._id] = c.name;
+              if (c.children) flatten(c.children);
+            });
+          };
+          flatten(categoriesData);
+
+          const groups = {};
+          contents.forEach(item => {
+            const catName = catMap[item.categoryId] || 'Resources';
+            if (!groups[catName]) groups[catName] = [];
+            groups[catName].push(item);
           });
-        };
-        flatten(catRes.data.categories);
 
-        // Group contents by category
-        const groups = {};
-        contents.forEach(item => {
-          const catName = catMap[item.categoryId] || 'Uncategorised';
-          if (!groups[catName]) groups[catName] = [];
-          groups[catName].push(item);
-        });
+          const sortedGroups = Object.entries(groups)
+            .sort((a, b) => b[1].length - a[1].length)
+            .map(([name, items]) => ({ name, items }));
 
-        // Convert to sorted array (most items first)
-        const sortedGroups = Object.entries(groups)
-          .sort((a, b) => b[1].length - a[1].length)
-          .map(([name, items]) => ({ name, items }));
-
-        setGroupedContents(sortedGroups);
-        setAllContents(contents);
-        if (sortedGroups.length > 0) setActiveCategory(sortedGroups[0].name);
-        setProfile(profileRes.data.user);
+          setGroupedContents(sortedGroups);
+          if (sortedGroups.length > 0) setActiveCategory(sortedGroups[0].name);
+        } catch (catErr) {
+          console.warn("Categories fetch failed, using fallback grouping", catErr);
+          setGroupedContents([{ name: 'Resources', items: contents }]);
+          setActiveCategory('Resources');
+        }
 
       } catch (err) {
         console.error("Profile fetch error:", err);
-        setError("Uploader profile not found.");
+        setError(err.response?.data?.message || "Uploader profile not found.");
       } finally {
         setLoading(false);
       }
@@ -156,6 +160,11 @@ export default function UploaderProfile() {
               Contributions
               <span className="text-muted fw-normal ms-2 fs-6">({totalCount} items)</span>
             </h4>
+            <ShareButton 
+              title={`Check out ${profile?.username}'s profile on GyanStack`}
+              url={window.location.href}
+              className="btn btn-outline-primary rounded-pill btn-sm"
+            />
           </div>
 
           {/* Search Bar */}

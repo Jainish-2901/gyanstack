@@ -7,13 +7,13 @@ const {
   resetPassword,
   getUserProfile,
   getSavedContent,
-  updateUserProfile, // <-- Naya import
-  changePassword,     // <-- Naya import
-  toggleSaveContent, // <-- Naya import
-  getPublicStats, // <-- NAYI IMPORT
-  getPublicUserProfile, // <-- NAYI IMPORT
-  getTopUploaders, // <-- NAYI IMPORT
-  googleLogin // <-- NAYI IMPORT
+  updateUserProfile,
+  changePassword,
+  toggleSaveContent,
+  getPublicStats,
+  getPublicUserProfile,
+  getTopUploaders,
+  googleLogin
 } = require('../controllers/authController');
 const { body } = require('express-validator');
 const authMiddleware = require('../middleware/authMiddleware');
@@ -70,25 +70,25 @@ router.get('/saved-content', authMiddleware, getSavedContent);
 
 // Route 7: Update User Profile (PUT /api/auth/update-profile)
 router.put(
-    '/update-profile', 
-    authMiddleware, 
-    upload.single('profileImage'), // Handle single file upload
-    [
-        body('username', 'Username is required').not().isEmpty(),
-        body('phone', 'Phone is required').not().isEmpty(),
-    ],
-    updateUserProfile
+  '/update-profile',
+  authMiddleware,
+  upload.single('profileImage'), // Handle single file upload
+  [
+    body('username', 'Username is required').not().isEmpty(),
+    body('phone', 'Phone is required').not().isEmpty(),
+  ],
+  updateUserProfile
 );
 
 // Route 8: Change Password (PUT /api/auth/change-password)
 router.put(
-    '/change-password', 
-    authMiddleware, 
-    [
-        body('currentPassword', 'Current password is required').not().isEmpty(),
-        body('newPassword', 'New password must be 6 or more characters').isLength({ min: 6 }),
-    ],
-    changePassword
+  '/change-password',
+  authMiddleware,
+  [
+    body('currentPassword', 'Current password is required').not().isEmpty(),
+    body('newPassword', 'New password must be 6 or more characters').isLength({ min: 6 }),
+  ],
+  changePassword
 );
 
 // Route 9: Content ko Save/Unsave Karna (PUT /api/auth/save/:id)

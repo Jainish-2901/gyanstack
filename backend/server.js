@@ -13,7 +13,7 @@ dotenv.config();
 // 1. General API Limiter (100 requests/15min)
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: process.env.NODE_ENV === 'production' ? 100 : 1000, // Increased for development
   message: { message: "Too many requests from this IP, please try again after 15 minutes." },
   standardHeaders: true,
   legacyHeaders: false,
@@ -22,7 +22,7 @@ const apiLimiter = rateLimit({
 // 2. Auth Limiter (Brute-force protection: 10 attempts/15min)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: process.env.NODE_ENV === 'production' ? 10 : 1000, // Increased for development
   message: { message: "Too many login/signup attempts. Please wait 15 minutes." },
 });
 

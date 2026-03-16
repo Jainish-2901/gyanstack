@@ -379,10 +379,10 @@ export default function ContentDetailPage() {
               </button>
             </div>
 
-            <div className="col-12 col-sm-6 col-md-3">
+             <div className="col-12 col-sm-6 col-md-3">
               <ShareButton 
                 title={item.title} 
-                url={window.location.pathname} 
+                url={window.location.href} 
                 className="btn btn-outline-primary w-100 py-3 d-flex align-items-center justify-content-center h-100"
               />
             </div>

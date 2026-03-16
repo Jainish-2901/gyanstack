@@ -4,8 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import ThemeToggle from './ThemeToggle'; 
 import NotificationBell from './NotificationBell';
 
-// NotificationBell component removed from here
-
 
 export default function Header() {
   const { user, logout } = useAuth();

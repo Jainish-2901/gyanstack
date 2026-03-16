@@ -8,71 +8,75 @@ import ShareButton from '../../components/ShareButton';
 
 export default function Browse() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [selectedCategoryName, setSelectedCategoryName] = useState('All Content');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [uploaderFilter, setUploaderFilter] = useState('');
+  const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  
+  // URL values derivation
+  const categoryId = searchParams.get('category') || null;
+  const searchTerm = searchParams.get('search') || '';
+  const uploaderFilter = searchParams.get('uploader') || '';
 
-  // URL search params ko check karein
+  // Fetch Categories once for both Sidebar and Header Name lookup
   useEffect(() => {
-    const categoryId = searchParams.get('category');
-    const term = searchParams.get('search');
-    const uploader = searchParams.get('uploader');
+    const fetchCategories = async () => {
+      try {
+        const { data } = await api.get('/categories/all-nested');
+        setCategories(data.categories || data);
+      } catch (err) {
+        console.error("Failed to fetch categories", err);
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+    fetchCategories();
+  }, []);
 
-    setUploaderFilter(uploader || '');
-
-    if (categoryId) {
-      setSelectedCategoryId(categoryId);
-      // Category name fetch karein agar ID hai
-      const fetchCategoryName = async () => {
-        try {
-          const { data } = await api.get('/categories/all-nested');
-          const findCat = (cats) => {
-            for (const c of cats) {
-              if (c._id === categoryId) return c.name;
-              if (c.children) {
-                const found = findCat(c.children);
-                if (found) return found;
-              }
-            }
-            return null;
-          };
-          const name = findCat(data.categories);
-          if (name) setSelectedCategoryName(name);
-        } catch (err) {
-          console.error("Failed to fetch cat name", err);
+  // Sync Category Name based on ID and fetched categories
+  useEffect(() => {
+    if (categoryId && categoryId !== 'root' && categories.length > 0) {
+      const findCat = (cats) => {
+        for (const c of cats) {
+          if (c._id === categoryId) return c.name;
+          if (c.children) {
+            const found = findCat(c.children);
+            if (found) return found;
+          }
         }
+        return null;
       };
-      fetchCategoryName();
-    } else if (term || uploader) {
-      setSearchTerm(term || '');
+      
+      const name = findCat(categories);
+      if (name) setSelectedCategoryName(name);
+      else setSelectedCategoryName('Category');
+    } else if (searchTerm || uploaderFilter) {
       let displayName = '';
-      if (term) displayName += `Search: ${term}`;
-      if (uploader) displayName += `${term ? ' by ' : 'Uploader: '}${uploader}`;
+      if (searchTerm) displayName += `Search: ${searchTerm}`;
+      if (uploaderFilter) displayName += `${searchTerm ? ' by ' : 'Uploader: '}${uploaderFilter}`;
       setSelectedCategoryName(displayName);
     } else {
-      setSelectedCategoryId(null);
       setSelectedCategoryName('All Content');
     }
-  }, [searchParams]);
+  }, [categoryId, searchTerm, uploaderFilter, categories]);
 
   const handleCategorySelect = (id, name) => {
     setSearchParams({ category: id });
-    setSearchTerm(''); 
-    setUploaderFilter('');
   };
 
   const handleSearch = (term) => {
-    // Check if term contains an uploader reference (e.g., "MERN @username" or just "@username")
+    if (!term.trim()) {
+      setSearchParams({});
+      return;
+    }
+    
     if (term.includes('@')) {
       const parts = term.split('@');
-      const searchStr = parts[0].trim();
-      const uploaderStr = parts[1].trim();
-      
-      const newParams = {};
-      if (searchStr) newParams.search = searchStr;
-      if (uploaderStr) newParams.uploader = uploaderStr;
-      setSearchParams(newParams);
+      const s = parts[0].trim();
+      const u = parts[1].trim();
+      const params = {};
+      if (s) params.search = s;
+      if (u) params.uploader = u;
+      setSearchParams(params);
     } else {
       setSearchParams({ search: term });
     }
@@ -89,8 +93,12 @@ export default function Browse() {
               <h5 className="mb-0 fw-bold">Categories</h5>
             </div>
             <div className="">
-              {/* onCategorySelect props pass karein */}
-              <CategoryTree onCategorySelect={handleCategorySelect} /> 
+              <CategoryTree 
+                onCategorySelect={handleCategorySelect} 
+                activeCategoryId={categoryId || 'root'}
+                initialData={categories}
+                isLoading={categoriesLoading}
+              /> 
             </div>
           </div>
         </aside>
@@ -104,18 +112,16 @@ export default function Browse() {
              <h2 className="fw-bold mb-0 text-dark me-auto">{selectedCategoryName}</h2>
              <ShareButton 
                 title={`Check out ${selectedCategoryName} on GyanStack`}
-                url={window.location.pathname + window.location.search}
+                url={window.location.href}
                 className="btn btn-outline-primary rounded-pill btn-sm ms-2"
              />
           </div>
           
-          {/* Content ko yahaan render karein */}
           <ContentList 
-            categoryId={selectedCategoryId} 
+            categoryId={categoryId} 
             searchTerm={searchTerm} 
-            uploaderName={searchParams.get('uploader')}
+            uploaderName={uploaderFilter}
           />
-
         </main>
       </div>
     </div>

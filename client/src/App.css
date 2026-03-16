@@ -436,6 +436,37 @@ body {
   transform: rotate(0deg) scale(1.1);
 }
 
+/* Uploader & Contributor Cards */
+.uploader-card {
+  border-radius: 1.5rem;
+  background: transparent;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  padding: 1.25rem;
+  height: 100%;
+}
+
+.uploader-card:hover {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  transform: translateY(-12px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+  border-color: var(--primary);
+}
+
+[data-bs-theme="dark"] .uploader-card:hover {
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+}
+
+.uploader-card .avatar-container {
+  transition: all 0.4s ease;
+}
+
+.uploader-card:hover .avatar-container {
+  transform: scale(1.1);
+}
+
 .bg-gradient-1 {
   background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%);
   color: #D13B56;

@@ -4,7 +4,9 @@ export default function ShareButton({ title, url, className = "btn btn-light rou
   const [copied, setCopied] = useState(false);
 
   const handleShare = async () => {
-    const fullUrl = url.startsWith('http') ? url : `${window.location.origin}${url.startsWith('/') ? '' : '/'}${url}`;
+    // If no URL is provided, default to current page's full URL
+    const targetUrl = url || window.location.href;
+    const fullUrl = targetUrl.startsWith('http') ? targetUrl : `${window.location.origin}${targetUrl.startsWith('/') ? '' : '/'}${targetUrl}`;
     
     if (navigator.share) {
       try {

@@ -82,37 +82,32 @@ function CategoryItem({ category, onSelect, activeCategoryId }) {
 }
 
 // Main component jo root categories ko load karta hai
-export default function CategoryTree({ onCategorySelect }) {
-  // FIX 8: Ab nested structure store karein
+export default function CategoryTree({ onCategorySelect, activeCategoryId, initialData = [], isLoading = false }) {
   const [nestedCategories, setNestedCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeCategoryId, setActiveCategoryId] = useState(null);
 
+  // Sync internal state with props
   useEffect(() => {
-    const fetchAllCategories = async () => {
-      try {
-        // FIX 9: /all-nested route ko call karein
-        // Note: is route se pura tree structure (children ke saath) aata hai
-        const { data } = await api.get('/categories/all-nested'); 
-        
-        // Agar data {categories: [...]} format me hai
-        const categoriesList = data.categories || data; 
-        setNestedCategories(categoriesList);
-        
-        // FIX 10: Default 'All Content' (root) select karein
-        setActiveCategoryId('root');
-        onCategorySelect('root', 'All Content'); 
-
-      } catch (error) {
-        console.error("Error fetching all nested categories:", error);
-      }
+    if (initialData && initialData.length > 0) {
+      setNestedCategories(initialData);
       setLoading(false);
-    };
-    fetchAllCategories();
-  }, []);
+    } else if (!isLoading) {
+      // Fallback: only fetch if not loading and no initial data
+      const fetchAllCategories = async () => {
+        try {
+          const { data } = await api.get('/categories/all-nested'); 
+          const categoriesList = data.categories || data; 
+          setNestedCategories(categoriesList);
+        } catch (error) {
+          console.error("Error fetching all nested categories:", error);
+        }
+        setLoading(false);
+      };
+      fetchAllCategories();
+    }
+  }, [initialData, isLoading]);
 
   const handleSelect = (id, name) => {
-    setActiveCategoryId(id);
     onCategorySelect(id, name);
   };
 

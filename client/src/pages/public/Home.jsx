@@ -20,50 +20,8 @@ const FeatureCard = ({ icon, title, text, colorClass }) => (
 
 // --- CATEGORIZED CONTENT COMPONENT ---
 // REFACTORED: Now shows a list of items instead of cards, limited to 5 per category.
-const CategorizedContent = ({ setGlobalStats }) => {
-  const [categories, setCategories] = useState([]);
-  const [contentList, setContentList] = useState([]);
-  const [stats, setStats] = useState({
-    contentCount: '...',
-    studentCount: '...',
-    viewsCount: '...'
-  });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [catRes, contentRes, statsRes] = await Promise.all([
-          api.get('/categories/all-nested'),
-          api.get('/content'),
-          api.get('/auth/stats')
-        ]);
-
-        // Flatten categories to array for flexible lookup
-        const flattenCats = (cats, acc = []) => {
-          if (!cats) return acc;
-          cats.forEach(c => {
-            acc.push({ _id: c._id, name: c.name, parentId: c.parentId });
-            if (c.children) flattenCats(c.children, acc);
-          });
-          return acc;
-        };
-
-        const catArray = flattenCats(catRes.data.categories);
-        setCategories(catArray);
-        setContentList(contentRes.data.content);
-        setStats(statsRes.data);
-        if (setGlobalStats) setGlobalStats(statsRes.data);
-      } catch (err) {
-        console.error("Failed to fetch categorized content", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
-  }, []);
-
-  if (loading) {
+const CategorizedContent = ({ categories, contentList, stats }) => {
+  if (!categories || !contentList) {
     return (
       <div className="container py-5">
         <div className="row g-4">
@@ -245,28 +203,27 @@ const ContributorSection = ({ uploaders }) => {
         <div className="row g-4 justify-content-center">
           {uploaders.map((uploader) => (
             <div key={uploader._id} className="col-6 col-md-4 col-lg-2">
-              <div className="text-center h-100 p-3 transition-all hover-translate-y">
-                <div className="position-relative d-inline-block mb-3">
-                  <div className="rounded-circle overflow-hidden border border-4 border-white shadow-sm" style={{ width: '100px', height: '100px' }}>
-                    {uploader.profileImage ? (
-                      <img src={uploader.profileImage} alt={uploader.username} className="w-100 h-100 object-fit-cover" />
-                    ) : (
-                      <div className="w-100 h-100 bg-primary bg-opacity-10 d-flex align-items-center justify-content-center">
-                        <i className="bi bi-person-fill text-primary fs-1"></i>
-                      </div>
-                    )}
+              <Link to={`/uploader/${uploader._id}`} className="text-decoration-none">
+                <div className="uploader-card text-center d-flex flex-column align-items-center">
+                  <div className="avatar-container position-relative d-inline-block mb-3">
+                    <div className="rounded-circle overflow-hidden border border-4 border-white shadow-sm" style={{ width: '100px', height: '100px' }}>
+                      {uploader.profileImage ? (
+                        <img src={uploader.profileImage} alt={uploader.username} className="w-100 h-100 object-fit-cover" />
+                      ) : (
+                        <div className="w-100 h-100 bg-primary bg-opacity-10 d-flex align-items-center justify-content-center">
+                          <i className="bi bi-person-fill text-primary fs-1"></i>
+                        </div>
+                      )}
+                    </div>
+                    <div className="position-absolute bottom-0 end-0 bg-success border border-white border-2 rounded-circle" style={{ width: '15px', height: '15px' }}></div>
                   </div>
-                  <div className="position-absolute bottom-0 end-0 bg-success border border-white border-2 rounded-circle" style={{ width: '15px', height: '15px' }}></div>
+                  <h6 className="fw-bold mb-1 text-truncate px-2 text-dark">{uploader.username}</h6>
+                  <p className="text-muted extra-small mb-3">{uploader.count} Uploads</p>
+                  <div className="btn btn-outline-primary btn-sm rounded-pill px-3 py-1 small mt-auto">
+                    View Profile
+                  </div>
                 </div>
-                <h6 className="fw-bold mb-1 text-truncate px-2">{uploader.username}</h6>
-                <p className="text-muted extra-small mb-3">{uploader.count} Uploads</p>
-                <Link
-                  to={`/uploader/${uploader._id}`}
-                  className="btn btn-outline-primary btn-sm rounded-pill px-3 py-1 small"
-                >
-                  Profile
-                </Link>
-              </div>
+              </Link>
             </div>
           ))}
         </div>
@@ -279,17 +236,36 @@ export default function Home() {
   const { user } = useAuth();
   const [stats, setStats] = useState({ contentCount: '...', studentCount: '...', viewsCount: '...' });
   const [uploaders, setUploaders] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [contentList, setContentList] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchHomeData = async () => {
       try {
-        const [statsRes, uploadersRes] = await Promise.all([
+        const [statsRes, uploadersRes, catRes, contentRes] = await Promise.all([
           api.get('/auth/stats'),
-          api.get('/auth/top-uploaders')
+          api.get('/auth/top-uploaders'),
+          api.get('/categories/all-nested'),
+          api.get('/content')
         ]);
+        
         setStats(statsRes.data);
         setUploaders(uploadersRes.data.uploaders);
+        
+        // Flatten categories 
+        const flattenCats = (cats, acc = []) => {
+          if (!cats) return acc;
+          cats.forEach(c => {
+            acc.push({ _id: c._id, name: c.name, parentId: c.parentId });
+            if (c.children) flattenCats(c.children, acc);
+          });
+          return acc;
+        };
+        const catArray = flattenCats(catRes.data.categories);
+        
+        setCategories(catArray);
+        setContentList(contentRes.data.content);
       } catch (err) {
         console.error("Home data fetch error:", err);
       } finally {
@@ -407,7 +383,11 @@ export default function Home() {
       </section>
 
       {/* --- NEW SECTION: Categorized Content --- */}
-      <CategorizedContent setGlobalStats={setStats} />
+      <CategorizedContent 
+        categories={categories}
+        contentList={contentList}
+        stats={stats}
+      />
       {/* -------------------------------------- */}
 
       {/* 3. HOW IT WORKS / 3-STEP PROCESS */}
