@@ -33,7 +33,7 @@ const getAccessToken = () => {
 };
 
 // Push Notification bhejta hai (Modern HTTP v1)
-const sendPushNotification = async (title, body) => {
+const sendPushNotification = async (title, body, announcementId = null) => {
     try {
         console.log("FCM v1: Starting push notification process...");
         
@@ -46,15 +46,13 @@ const sendPushNotification = async (title, body) => {
 
         if (tokens.length === 0) {
             console.log("FCM: No users subscribed. Skipping send.");
-            return;
+            return 0;
         }
 
         // 2. Access Token generate karein
         const accessToken = await getAccessToken();
-        console.log("FCM: Access Token generated successfully.");
 
-        // 3. Sequential delivery to tokens (v1 sends to individual tokens)
-        // Note: Batch sending deprecated in v1, sequential is safer for reliability
+        // 3. Sequential delivery to tokens
         let successCount = 0;
         let failureCount = 0;
 
@@ -69,7 +67,8 @@ const sendPushNotification = async (title, body) => {
                     data: {
                         title: title,
                         body: body,
-                        url: "/announcements"
+                        url: "/announcements",
+                        announcementId: announcementId ? announcementId.toString() : ""
                     },
                     webpush: {
                         headers: {
@@ -101,8 +100,16 @@ const sendPushNotification = async (title, body) => {
         }
 
         console.log(`FCM Delivery Complete: ${successCount} Success, ${failureCount} Failures.`);
+        
+        // --- NAYA: Database mein sentCount update karein ---
+        if (announcementId && successCount > 0) {
+            await Announcement.findByIdAndUpdate(announcementId, { sentCount: successCount });
+        }
+        
+        return successCount;
     } catch (error) {
         console.error("FCM v1: Fatal Error:", error.message);
+        return 0;
     }
 };
 // -----------------------------
@@ -126,7 +133,7 @@ exports.requestAnnouncement = async (req, res) => {
             // Auto-approved announcement ke liye notification bhejien
             const pushTitle = `🚨 New Update: ${title}`;
             const pushBody = content.substring(0, 100) + '... Tap to view.';
-            await sendPushNotification(pushTitle, pushBody); // Wait for results
+            await sendPushNotification(pushTitle, pushBody, newAnnouncement._id); 
         }
 
         res.status(201).json({ 
@@ -216,7 +223,7 @@ exports.updateAnnouncementStatus = async (req, res) => {
         if (status === 'approved') {
             const title = `🚨 New Update: ${updatedAnnouncement.title}`;
             const body = updatedAnnouncement.content.substring(0, 100) + '... Tap to view.';
-            await sendPushNotification(title, body); // Helper function call karein
+            await sendPushNotification(title, body, updatedAnnouncement._id); 
         }
         // --------------------------------------------------
 
@@ -305,4 +312,16 @@ exports.subscribeUser = async (req, res) => {
     console.error("Subscription Error:", err.message);
     res.status(500).json({ message: 'Failed to subscribe: ' + err.message });
   }
-};
+};
+
+// 9. Announcement Open Tracking
+exports.trackAnnouncementOpen = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await Announcement.findByIdAndUpdate(id, { $inc: { openCount: 1 } });
+        res.status(200).json({ success: true, message: 'Open tracked successfully' });
+    } catch (err) {
+        console.error("Track Open Error:", err.message);
+        res.status(500).json({ message: 'Failed to track open' });
+    }
+};

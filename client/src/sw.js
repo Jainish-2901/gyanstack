@@ -75,6 +75,49 @@ onBackgroundMessage(messaging, (payload) => {
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
+// 4. Handle Notification Clicks (Tracking)
+self.addEventListener('notificationclick', (event) => {
+  console.log('[sw.js] Notification clicked:', event);
+  event.notification.close();
+
+  const data = event.notification.data;
+  const announcementId = data?.announcementId;
+  const targetUrl = data?.url || '/announcements';
+
+  // --- Track Open Event in Backend ---
+  const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+  
+  if (announcementId) {
+    // Specific Announcement Ping
+    fetch(`${backendUrl}/announcements/${announcementId}/track-open`, { 
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' }
+    }).catch(err => console.error("SW: Failed to track specific open:", err));
+  } else {
+    // Firebase Console / External Message Ping
+    fetch(`${backendUrl}/stats/track-external-open`, { 
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' }
+    }).catch(err => console.error("SW: Failed to track external open:", err));
+  }
+
+  // Open the Window
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // If a window is already open, focus it
+      for (const client of clientList) {
+        if (client.url === targetUrl && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // Otherwise open a new window
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(targetUrl);
+      }
+    })
+  );
+});
+
 // Self-update listener
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {

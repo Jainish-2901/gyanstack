@@ -4,7 +4,7 @@ const {
     requestAnnouncement,
     getAllAnnouncements,
     getMyAnnouncements,
-    getAnnouncements, // <-- YEH FLEXIBLE FUNCTION PUBLIC FETCH KARTA HAI
+    getAnnouncements, 
     updateAnnouncementStatus,
     deleteAnnouncement,
     updateAnnouncement
@@ -18,6 +18,9 @@ router.post('/subscribe', authMiddleware, require('../controllers/announcementCo
 // 2. Public/General User Routes (Header Bell, Homepage, AnnouncementsPage)
 // GET /api/announcements?limit=5&status=approved
 router.get('/', getAnnouncements); 
+
+// Track Notification Open (Public)
+router.put('/:id/track-open', require('../controllers/announcementController').trackAnnouncementOpen);
 
 // 2. Admin/Uploader Routes (Auth Required)
 // POST /api/announcements/request 

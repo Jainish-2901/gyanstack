@@ -14,7 +14,9 @@ export default defineConfig({
       devOptions: {
         enabled: true, // Enabled for local testing of PWA features
         type: 'module',
-        navigateFallbackAllowlist: [/^index.html$/] 
+        navigateFallbackAllowlist: [/^index.html$/],
+        // Prevent SW from interfering with Auth/API during local dev
+        webManifestAllowlist: [/manifest\.webmanifest$/]
       },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg', 'logo.png'],
       manifest: {
@@ -46,4 +48,7 @@ export default defineConfig({
       },
     })
   ],
+  server: {
+    port: 5173
+  }
 })

@@ -154,6 +154,7 @@ app.use('/api/requests', require('./routes/requestRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/contact', require('./routes/contactRoutes'));
+app.use('/api/stats', require('./routes/statsRoutes'));
 // ---------------------------------
 
 // --- Global Error Handler ---
