@@ -144,7 +144,7 @@ exports.loginUser = async (req, res) => {
 // ** googleLogin controller with Cloudinary Capture **
 exports.googleLogin = async (req, res) => {
   const { email, username, googleId, profileImage: googlePhotoUrl } = req.body;
-  
+
   try {
     // 1. PROMPT: Check for valid email first
     if (!email) {
@@ -168,7 +168,7 @@ exports.googleLogin = async (req, res) => {
       // Create NEW user
       const safeUsername = (username || email.split('@')[0] || 'user').replace(/\s+/g, '').toLowerCase();
       let finalUsername = safeUsername;
-      
+
       const existingUser = await User.findOne({ username: finalUsername });
       if (existingUser) {
         finalUsername = `${finalUsername}${Math.floor(Math.random() * 1000)}`;
@@ -185,21 +185,21 @@ exports.googleLogin = async (req, res) => {
 
     // 3. CAPTURE Profile Image: If user doesn't have a Cloudinary image, upload the Google one
     if (googlePhotoUrl && (!user.profileImage || !user.profileImage.includes('cloudinary'))) {
-        try {
-            const highResUrl = googlePhotoUrl.replace('=s96-c', '=s400-c'); // Get better quality
-            const result = await cloudinary.uploader.upload(highResUrl, {
-                folder: 'gyanstack_profiles',
-                width: 250,
-                height: 250,
-                crop: 'fill',
-                gravity: 'face'
-            });
-            user.profileImage = result.secure_url;
-            await user.save({ validateBeforeSave: false });
-            console.log("Captured Google profile image into Cloudinary");
-        } catch (uploadErr) {
-            console.warn("Failed to capture Google photo, using default/existing:", uploadErr.message);
-        }
+      try {
+        const highResUrl = googlePhotoUrl.replace('=s96-c', '=s400-c'); // Get better quality
+        const result = await cloudinary.uploader.upload(highResUrl, {
+          folder: 'gyanstack_profiles',
+          width: 250,
+          height: 250,
+          crop: 'fill',
+          gravity: 'face'
+        });
+        user.profileImage = result.secure_url;
+        await user.save({ validateBeforeSave: false });
+        console.log("Captured Google profile image into Cloudinary");
+      } catch (uploadErr) {
+        console.warn("Failed to capture Google photo, using default/existing:", uploadErr.message);
+      }
     }
 
     // 4. Generate Token & Send FULL User Info
@@ -221,9 +221,9 @@ exports.googleLogin = async (req, res) => {
 
   } catch (err) {
     console.error("CRITICAL Google Login Error:", err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Google login failed on server. ' + err.message 
+    res.status(500).json({
+      success: false,
+      message: 'Google login failed on server. ' + err.message
     });
   }
 };

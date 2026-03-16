@@ -22,7 +22,7 @@ const apiLimiter = rateLimit({
 // 2. Auth Limiter (Brute-force protection: 10 attempts/15min)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: process.env.NODE_ENV === 'production' ? 10 : 1000, // Increased for development
+  max: process.env.NODE_ENV === 'production' ? 50 : 1000, // Increased for development
   message: { message: "Too many login/signup attempts. Please wait 15 minutes." },
 });
 
@@ -45,6 +45,10 @@ require('./models/contactModel');
 // -------------------------------------------------------------
 
 const app = express();
+
+// --- THE CRITICAL FIX FOR VERCEL/PRODUCTION ---
+app.set('trust proxy', 1);
+
 const PORT = process.env.PORT || 5000;
 
 // Middleware
@@ -77,7 +81,7 @@ let connectionPromise = null;
 const connectDB = async () => {
   // If already connected, return immediately
   if (mongoose.connection.readyState === 1) return mongoose.connection;
-  
+
   // If a connection attempt is already in progress, wait for it
   if (connectionPromise) return connectionPromise;
 
@@ -89,28 +93,28 @@ const connectDB = async () => {
     try {
       console.log('Attempting to connect to MongoDB...');
       const conn = await mongoose.connect(process.env.MONGO_URI, {
-        serverSelectionTimeoutMS: 15000, 
-        connectTimeoutMS: 20000,         
-        socketTimeoutMS: 45000,          
-        family: 4,                       
+        serverSelectionTimeoutMS: 15000,
+        connectTimeoutMS: 20000,
+        socketTimeoutMS: 45000,
+        family: 4,
         bufferCommands: true, // Re-enable buffering for startup stability
       });
-      
+
       console.log('MongoDB connection established successfully');
-      
+
       // Watchdog for connection health
       if (mongoose.connection.listenerCount('error') === 0) {
-          mongoose.connection.on('error', (err) => {
-            console.error('MongoDB Runtime Error:', err);
-            cachedConnection = null;
-          });
+        mongoose.connection.on('error', (err) => {
+          console.error('MongoDB Runtime Error:', err);
+          cachedConnection = null;
+        });
       }
 
       if (mongoose.connection.listenerCount('disconnected') === 0) {
-          mongoose.connection.on('disconnected', () => {
-            console.warn('MongoDB Disconnected. Reconnect pending...');
-            cachedConnection = null;
-          });
+        mongoose.connection.on('disconnected', () => {
+          console.warn('MongoDB Disconnected. Reconnect pending...');
+          cachedConnection = null;
+        });
       }
 
       return conn;
