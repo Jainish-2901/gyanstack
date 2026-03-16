@@ -12,8 +12,18 @@ const AnnouncementCardMobile = ({ ann, handleAnnouncementStatus, handleEditClick
             <div className="card-body">
                 <div className="data-item fw-bold text-dark mb-1" data-label="Title">{ann.title}</div>
                 <div className="data-item small mb-2" data-label="Requested By">{ann.requestedBy?.username || 'System'}</div>
-                <div className="data-item mb-3" data-label="Status">
-                    <span className={`badge bg-${statusColor}`}>{ann.status}</span>
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <div className="data-item" data-label="Status">
+                      <span className={`badge bg-${statusColor}`}>{ann.status}</span>
+                  </div>
+                  <div className="d-flex gap-2">
+                    <span className="badge bg-light text-primary border sm">
+                      <i className="bi bi-send-check me-1"></i> {ann.sentCount || 0}
+                    </span>
+                    <span className="badge bg-light text-success border sm">
+                      <i className="bi bi-eye-fill me-1"></i> {ann.openCount || 0}
+                    </span>
+                  </div>
                 </div>
                 <div className="card-actions">
                     <div className="scroll-selection">
@@ -41,15 +51,22 @@ export default function ManageAnnouncements() {
 
   const [isEditingAnn, setIsEditingAnn] = useState(false);
   const [currentAnn, setCurrentAnn] = useState(null);
+  
+  // --- NAYA: FCM Pulse State ---
+  const [pulse, setPulse] = useState(null);
 
   const fetchAnnouncements = async () => {
     setLoading(true);
     try {
       const { data } = await api.get('/announcements/all');
       setAnnouncements(data.announcements);
+      
+      // Fetch Pulse data
+      const pulseRes = await api.get('/stats/fcm-pulse');
+      setPulse(pulseRes.data);
     } catch (err) {
-      console.error("Error fetching announcements:", err);
-      setError('Failed to load announcements.');
+      console.error("Error fetching data:", err);
+      setError('Failed to load management data.');
     }
     setLoading(false);
   };
@@ -123,6 +140,60 @@ export default function ManageAnnouncements() {
       {error && <div className="alert alert-danger" onClick={() => setError('')}>{error}</div>}
       {success && <div className="alert alert-success" onClick={() => setSuccess('')}>{success}</div>}
 
+      {/* --- NAYA: FIREBASE GLOBAL PULSE CARD --- */}
+      {pulse && (
+        <div className="row g-3 mb-4">
+            <div className="col-md-4">
+                <div className="card border-0 rounded-4 shadow-sm bg-dark text-white p-3">
+                    <div className="d-flex justify-content-between">
+                        <div>
+                            <p className="small text-secondary mb-1">External Engagement</p>
+                            <h3 className="fw-bold mb-0">{pulse.firebaseConsole.opened} <span className="fs-6 fw-normal text-secondary">Clicks</span></h3>
+                        </div>
+                        <div className="bg-primary bg-opacity-25 rounded-3 p-2 h-100">
+                             <i className="bi bi-google fs-4 text-primary"></i>
+                        </div>
+                    </div>
+                    <div className="mt-2 small text-secondary">
+                        <i className="bi bi-activity me-1 text-success"></i> Console Pulse Active
+                    </div>
+                </div>
+            </div>
+            <div className="col-md-4">
+                <div className="card border-0 rounded-4 shadow-sm p-3">
+                    <div className="d-flex justify-content-between">
+                        <div>
+                            <p className="small text-muted mb-1">Platform Engagement</p>
+                            <h3 className="fw-bold mb-0 text-dark">{pulse.platform.opened} <span className="fs-6 fw-normal text-muted">Clicks</span></h3>
+                        </div>
+                        <div className="bg-info bg-opacity-10 rounded-3 p-2 h-100">
+                             <i className="bi bi-intersect fs-4 text-info"></i>
+                        </div>
+                    </div>
+                    <div className="mt-2 small text-muted">
+                        Total Sent: <span className="fw-bold">{pulse.platform.sent}</span>
+                    </div>
+                </div>
+            </div>
+            <div className="col-md-4">
+                <div className="card border-0 rounded-4 shadow-sm bg-primary text-white p-3">
+                    <div className="d-flex justify-content-between">
+                        <div>
+                            <p className="small text-white text-opacity-75 mb-1">Grand Engagement</p>
+                            <h3 className="fw-bold mb-0">{pulse.grandTotal.engagement} <span className="fs-6 fw-normal text-white text-opacity-50">Combined</span></h3>
+                        </div>
+                        <div className="bg-white bg-opacity-25 rounded-3 p-2 h-100">
+                             <i className="bi bi-lightning-charge-fill fs-4 text-white"></i>
+                        </div>
+                    </div>
+                    <div className="mt-2 small text-white text-opacity-75">
+                         Last interaction: {new Date(pulse.firebaseConsole.lastActivity).toLocaleTimeString()}
+                    </div>
+                </div>
+            </div>
+        </div>
+      )}
+
       {/* --- QUICK ANNOUNCEMENT SECTION (SHIFTED HERE) --- */}
       <div className="card border-0 rounded-4 mb-5 bg-primary bg-opacity-10">
         <div className="card-body p-4 p-md-4 text-center">
@@ -178,6 +249,7 @@ export default function ManageAnnouncements() {
                       <th>Title</th>
                       <th>Requested By</th>
                       <th>Status</th>
+                      <th>Reach (Sent/Open)</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -193,6 +265,16 @@ export default function ManageAnnouncements() {
                           }`}>
                             {ann.status}
                           </span>
+                        </td>
+                        <td>
+                          <div className="d-flex align-items-center gap-2">
+                            <span className="badge bg-light text-primary border" title="Delivered to devices">
+                              <i className="bi bi-send-check me-1"></i> {ann.sentCount || 0}
+                            </span>
+                            <span className="badge bg-light text-success border" title="Opened by students">
+                              <i className="bi bi-eye-fill me-1"></i> {ann.openCount || 0}
+                            </span>
+                          </div>
                         </td>
                         <td>
                           <div className="scroll-selection">

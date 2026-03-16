@@ -1,6 +1,8 @@
 import { initializeApp } from "firebase/app";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, browserPopupRedirectResolver, useDeviceLanguage } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getAnalytics } from "firebase/analytics";
 import api from "./services/api";
 
 const firebaseConfig = {
@@ -10,13 +12,24 @@ const firebaseConfig = {
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
 export const auth = getAuth(app);
+export const db = getFirestore(app);
+
+// Safe Analytics Initialization
+export const analytics = (typeof window !== 'undefined' && 
+                          import.meta.env.VITE_FIREBASE_MEASUREMENT_ID && 
+                          import.meta.env.VITE_FIREBASE_MEASUREMENT_ID !== 'PASTE_YOUR_G_ID_HERE') 
+                          ? getAnalytics(app) : null;
+
 export const googleProvider = new GoogleAuthProvider();
+// Force standard popup behavior for localhost compatibility
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 export const requestForToken = async () => {
   try {

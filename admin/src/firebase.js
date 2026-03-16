@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
+import { getAuth, GoogleAuthProvider, browserPopupRedirectResolver, useDeviceLanguage } from "firebase/auth";
 import api from "./services/api";
 
 const firebaseConfig = {
@@ -14,6 +15,13 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
+export const auth = getAuth(app);
+
+// Fix for COOP/COEP issues
+auth.popupRedirectResolver = browserPopupRedirectResolver;
+useDeviceLanguage(auth);
+
+export const googleProvider = new GoogleAuthProvider();
 
 export const requestForToken = async () => {
   try {

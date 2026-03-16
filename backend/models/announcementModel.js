@@ -23,6 +23,14 @@ const announcementSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  sentCount: {
+    type: Number,
+    default: 0
+  },
+  openCount: {
+    type: Number,
+    default: 0
+  }
 });
 
 const Announcement = mongoose.models.Announcement || mongoose.model('Announcement', announcementSchema);
