@@ -78,7 +78,8 @@ export default function ChatWidget() {
         try {
             const { data } = await api.post('/ai/chat', {
                 message: message,
-                chatHistory: updatedHistory.slice(-10)
+                chatHistory: updatedHistory.slice(-10),
+                currentPath: window.location.pathname
             });
             
             setChatHistory(curr => [...curr, { role: 'assistant', content: data.reply }]);

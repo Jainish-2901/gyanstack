@@ -1408,3 +1408,26 @@ body {
     gap: 0.5rem !important;
   }
 }
+
+.heart{
+  display: inline-block;
+  animation: heartbeat 1s infinite;
+}
+
+@keyframes heartbeat {
+  0%{
+    transform: scale(1);
+  }
+  25%{
+    transform: scale(1.2);
+  }
+  40%{
+    transform: scale(1);
+  }
+  60%{
+    transform: scale(1.2);
+  }
+  100%{
+    transform: scale(1);
+  }
+}

@@ -77,7 +77,7 @@ export default function Footer() {
             © {new Date().getFullYear()} GyanStack. All Rights Reserved.
           </p>
           <a href={`https://www.linkedin.com/in/${socialLinks.linkedin}`} target="_blank" rel="noopener noreferrer" className="footer-link small d-flex align-items-center justify-content-center" title="Developer">
-            Designed & Developed with <i className="bi bi-heart-fill text-danger mx-1"></i> by Jainish Dabgar
+            Designed & Developed with <i className="bi bi-heart-fill text-danger mx-1 heart"></i> by Jainish Dabgar
           </a>
         </div>
       </div>

@@ -8,6 +8,7 @@ const rateLimit = require('express-rate-limit'); // NAYA IMPORT
 const announcementRoutes = require('./routes/announcementRoutes'); // <-- NAYA IMPORT
 
 dotenv.config();
+mongoose.set('bufferCommands', false); // Global: fail fast on DB issues
 
 // --- RATE LIMITERS (Protective Shields) ---
 // 1. General API Limiter (100 requests/15min)
@@ -70,22 +71,43 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Database Connection Utility for Serverless environments
+// Database Connection Utility
 let cachedConnection = null;
 const connectDB = async () => {
-  if (cachedConnection) return cachedConnection;
+  if (cachedConnection && mongoose.connection.readyState === 1) return cachedConnection;
+  
   if (!process.env.MONGO_URI) {
     throw new Error('MONGO_URI is missing in environment variables');
   }
 
-  // Create new connection if none cached
   try {
+    // Hardened connection options for resilience
     const conn = await mongoose.connect(process.env.MONGO_URI, {
-      family: 4,
-      serverSelectionTimeoutMS: 8000,
+      serverSelectionTimeoutMS: 15000, 
+      connectTimeoutMS: 20000,         
+      socketTimeoutMS: 45000,          
+      family: 4,                       
+      bufferCommands: false,           // Disable buffering to fail fast on DB issues
     });
+    
     cachedConnection = conn;
     console.log('MongoDB connection established successfully');
+    
+    // Watchdog for connection health (Added Listeners only once)
+    if (mongoose.connection.listenerCount('error') === 0) {
+        mongoose.connection.on('error', (err) => {
+          console.error('MongoDB Runtime Error:', err);
+          cachedConnection = null;
+        });
+    }
+
+    if (mongoose.connection.listenerCount('disconnected') === 0) {
+        mongoose.connection.on('disconnected', () => {
+          console.warn('MongoDB Disconnected. Reconnect pending...');
+          cachedConnection = null;
+        });
+    }
+
     return conn;
   } catch (err) {
     console.error('MongoDB Initial Connection Error:', err.message);
