@@ -18,6 +18,7 @@ import ContactInquiries from './pages/admin/ContactInquiries';
 import ManageUsers from './pages/admin/ManageUsers';
 import ManageAnnouncements from './pages/admin/ManageAnnouncements';
 import MyAnnouncements from './pages/admin/MyAnnouncements';
+import GlobalContentManager from './pages/admin/GlobalContentManager';
 import NotFound from './pages/admin/NotFound';
 
 export default function App() {
@@ -58,6 +59,11 @@ export default function App() {
                   <Route path="dashboard/users" element={
                     <ProtectedRoute roles={['superadmin']}> 
                       <ManageUsers />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="dashboard/global-content" element={
+                    <ProtectedRoute roles={['superadmin']}> 
+                      <GlobalContentManager />
                     </ProtectedRoute>
                   } />
                   <Route path="dashboard/announcements-manage" element={

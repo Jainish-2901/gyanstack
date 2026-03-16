@@ -4,7 +4,7 @@ import LoadingScreen from '../../components/LoadingScreen';
 // -------------------
 
 // --- 1. HELPER COMPONENT: Request Card for Mobile View ---
-const RequestCardMobile = ({ req, updateStatus }) => (
+const RequestCardMobile = ({ req, updateStatus, handleDelete }) => (
   <div className="card mb-2 border border-light rounded-3 shadow-none overflow-hidden transition-all bg-white">
     <div className="card-body p-2 px-3">
       <div className="d-flex justify-content-between align-items-center mb-1">
@@ -52,6 +52,14 @@ const RequestCardMobile = ({ req, updateStatus }) => (
             <i className="bi bi-arrow-counterclockwise me-1"></i>Reopen
           </button>
         )}
+        <button 
+          onClick={() => handleDelete(req._id)}
+          className="btn btn-sm btn-outline-danger py-1 px-2 rounded-pill fw-bold flex-shrink-0"
+          style={{ fontSize: '0.75rem' }}
+          title="Delete Request"
+        >
+          <i className="bi bi-trash"></i>
+        </button>
       </div>
     </div>
   </div>
@@ -91,6 +99,17 @@ export default function ViewContentRequests() {
     } catch (err) {
       console.error("Status update error:", err);
       alert("Failed to update status.");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to PERMANENTLY delete this request?")) return;
+    try {
+      await api.delete(`/requests/${id}`);
+      setRequests(requests.filter(req => req._id !== id));
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("Failed to delete request.");
     }
   };
 
@@ -170,12 +189,21 @@ export default function ViewContentRequests() {
                         </span>
                       </td>
                       <td className="pe-4 py-3 text-end">
-                        <button 
-                          onClick={() => updateStatus(req._id, req.status === 'pending' ? 'fulfilled' : 'pending')}
-                          className={`btn btn-sm rounded-pill px-3 py-1 ${req.status === 'pending' ? 'btn-primary' : 'btn-outline-warning'}`}
-                        >
-                          {req.status === 'pending' ? 'Mark Fulfilled' : 'Reopen'}
-                        </button>
+                        <div className="d-flex gap-2 justify-content-end">
+                          <button 
+                            onClick={() => updateStatus(req._id, req.status === 'pending' ? 'fulfilled' : 'pending')}
+                            className={`btn btn-sm rounded-pill px-3 py-1 ${req.status === 'pending' ? 'btn-primary' : 'btn-outline-warning'}`}
+                          >
+                            {req.status === 'pending' ? 'Mark Fulfilled' : 'Reopen'}
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(req._id)}
+                            className="btn btn-sm btn-outline-danger rounded-pill px-2 py-1"
+                            title="Delete Request"
+                          >
+                            <i className="bi bi-trash"></i>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -186,7 +214,7 @@ export default function ViewContentRequests() {
             {/* MOBILE VIEW: Cards */}
             <div className="d-lg-none px-1 pb-4">
               {requests.map((req) => (
-                <RequestCardMobile key={req._id} req={req} updateStatus={updateStatus} />
+                <RequestCardMobile key={req._id} req={req} updateStatus={updateStatus} handleDelete={handleDelete} />
               ))}
             </div>
           </div>

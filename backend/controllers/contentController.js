@@ -634,8 +634,10 @@ exports.bulkDeleteContent = async (req, res) => {
     const contents = await Content.find({ _id: { $in: ids } });
     
     for (const content of contents) {
-      // Check authorization
-      if (content.uploadedBy.toString() !== req.user.id) continue;
+      // SuperAdmin can delete everything. Admin can delete only their own.
+      if (req.user.role !== 'superadmin' && content.uploadedBy.toString() !== req.user.id) {
+          continue;
+      }
 
       // DELETE LOGIC (Same as single delete)
       let driveIdToDelete = content.googleDriveId;
@@ -656,8 +658,13 @@ exports.bulkDeleteContent = async (req, res) => {
       }
     }
 
-    // Delete from DB
-    await Content.deleteMany({ _id: { $in: ids }, uploadedBy: req.user.id });
+    // Delete from DB: SuperAdmin deletes all selected, Admin only their own
+    const deleteQuery = { _id: { $in: ids } };
+    if (req.user.role !== 'superadmin') {
+        deleteQuery.uploadedBy = req.user.id;
+    }
+    
+    await Content.deleteMany(deleteQuery);
     
     // Cleanup folders for all affected categories
     const affectedCategoryIds = [...new Set(contents.map(c => c.categoryId))];
@@ -745,3 +752,63 @@ exports.trackDownload = async (req, res) => {
   }
 };
 // --- END OF NAYA FUNCTION ---
+
+// --- SUPERADMIN ONLY FUNCTIONS ---
+
+// 11. Content Reassign Karna (Handover logic)
+exports.reassignContent = async (req, res) => {
+  try {
+    const { contentIds, newUploaderId } = req.body;
+
+    if (!contentIds || !Array.isArray(contentIds) || contentIds.length === 0) {
+      return res.status(400).json({ message: 'No content IDs provided.' });
+    }
+
+    const newUploader = await User.findById(newUploaderId);
+    if (!newUploader) {
+      return res.status(404).json({ message: 'New uploader user not found.' });
+    }
+
+    // Update 'uploadedBy' for all provided IDs
+    const result = await Content.updateMany(
+      { _id: { $in: contentIds } },
+      { $set: { uploadedBy: newUploaderId } }
+    );
+
+    res.json({ 
+      message: `Successfully reassigned ${result.modifiedCount} items to ${newUploader.username}.`,
+      modifiedCount: result.modifiedCount 
+    });
+
+  } catch (err) {
+    console.error("Reassign Error:", err.message);
+    res.status(500).json({ message: 'Server error during content reassignment.' });
+  }
+};
+
+// 12. Global Content Management (SuperAdmin specifically section)
+exports.getGlobalContentManagement = async (req, res) => {
+  try {
+    const { search, categoryId, uploadedBy } = req.query;
+    const query = {};
+
+    if (categoryId && categoryId !== 'all') query.categoryId = categoryId;
+    if (uploadedBy && uploadedBy !== 'all') query.uploadedBy = uploadedBy;
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { tags: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const content = await Content.find(query)
+      .populate('uploadedBy', 'username email role isDeleted')
+      .populate('likedBy', 'username')
+      .sort({ createdAt: -1 });
+
+    res.json({ content });
+  } catch (err) {
+    console.error("Global Management Error:", err.message);
+    res.status(500).json({ message: 'Server error fetching global content.' });
+  }
+};

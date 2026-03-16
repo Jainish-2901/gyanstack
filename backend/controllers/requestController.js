@@ -58,3 +58,15 @@ exports.getUserRequests = async (req, res) => {
     res.status(500).send('Server error');
   }
 };
+
+// 5. Request Delete Karna (Admin Only)
+exports.deleteRequest = async (req, res) => {
+  try {
+    const request = await Request.findByIdAndDelete(req.params.id);
+    if (!request) return res.status(404).json({ message: 'Request not found' });
+    res.json({ message: 'Request deleted successfully' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+};

@@ -4,13 +4,15 @@ import api from '../services/api'; // Path ko fix kiya gaya hai
 // 'categories' prop ko AdminPanel se receive karein
 export default function EditContentModal({ item, onClose, onUpdate, categories }) {
   
-  // Form state ko 'item' se initialize karein
-  const [title, setTitle] = useState(item.title);
-  const [categoryId, setCategoryId] = useState(item.categoryId);
-  const [tags, setTags] = useState((item.tags || []).join(', ')); // Array ko string mein badlein
-  const [url, setUrl] = useState(item.url || '');
-  const [textNote, setTextNote] = useState(item.textNote || '');
-  const [file, setFile] = useState(null); // Naya state file replace ke liye
+  // Form state initialization with safety fallbacks
+  const [title, setTitle] = useState(item?.title || '');
+  const [categoryId, setCategoryId] = useState(item?.categoryId || '');
+  const [tags, setTags] = useState((item?.tags || []).join(', '));
+  const [url, setUrl] = useState(item?.url || '');
+  const [textNote, setTextNote] = useState(item?.textNote || '');
+  const [file, setFile] = useState(null);
+  
+  if (!item) return null;
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -87,7 +89,7 @@ export default function EditContentModal({ item, onClose, onUpdate, categories }
                   >
                     <option value="" disabled>Select a category</option>
                     {/* categories map (object) se loop karein */}
-                    {Object.entries(categories).map(([catId, catName]) => (
+                    {Object.entries(categories || {}).map(([catId, catName]) => (
                       <option key={catId} value={catId}>
                         {catName}
                       </option>

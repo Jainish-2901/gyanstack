@@ -7,7 +7,15 @@ const UserCardMobile = ({ user, handleRoleChange, handleUserDelete }) => (
     <div className="card mb-3 border border-light rounded-3 transition-all">
         <div className="card-body p-3">
             <div className="d-flex justify-content-between align-items-center mb-2">
-                <div className="data-item fw-bold text-dark" style={{ fontSize: '1rem' }}>{user.username}</div>
+                <div className="data-item fw-bold text-dark d-flex align-items-center gap-2" style={{ fontSize: '1rem' }}>
+                    <span className={user.isDeleted ? 'text-decoration-line-through text-muted' : ''}>{user.username}</span>
+                    {user.isDeleted && <span className="badge bg-danger bg-opacity-10 text-danger" style={{ fontSize: '0.6rem' }}>Deactivated</span>}
+                    {user.googleId ? (
+                        <i className="bi bi-google text-danger" style={{ fontSize: '0.8rem' }} title="Google Sign-In"></i>
+                    ) : (
+                        <i className="bi bi-person-badge text-primary" style={{ fontSize: '0.8rem' }} title="Manual Sign-In"></i>
+                    )}
+                </div>
                 <span className={`badge rounded-pill ${user.role === 'superadmin' ? 'bg-danger' : user.role === 'admin' ? 'bg-warning text-dark' : 'bg-secondary'}`} style={{ fontSize: '0.7rem' }}>{user.role}</span>
             </div>
             <div className="data-item small text-muted mb-3">{user.email}</div>
@@ -67,7 +75,7 @@ export default function ManageUsers() {
   };
 
   const handleUserDelete = async (userId) => {
-    if (!window.confirm('WARNING: Are you sure you want to PERMANENTLY delete this user? All their uploaded content will also be removed.')) return;
+    if (!window.confirm('Are you sure you want to deactivate this user? Their account will be blocked, but their UPLOADED CONTENT and names will remain safe in the library.')) return;
     try {
       await api.delete(`/admin/users/${userId}`);
       fetchUsers(); 
@@ -100,16 +108,31 @@ export default function ManageUsers() {
             <table className="table table-striped table-hover align-middle mb-0">
               <thead className="sticky-top bg-white z-1 shadow-sm">
                 <tr>
-                  <th className="ps-4">Name</th>
+                  <th className="ps-4">Method</th>
+                  <th>Name</th>
                   <th>Email</th>
-                  <th>Current Role</th>
+                  <th>Role</th>
                   <th className="pe-4">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {users.map(user => (
                   <tr key={user._id}>
-                    <td className="ps-4 fw-medium text-dark">{user.username}</td>
+                    <td className="ps-4">
+                        {user.googleId ? (
+                            <span className="badge bg-light text-danger border border-danger border-opacity-25 rounded-pill d-inline-flex align-items-center gap-1">
+                                <i className="bi bi-google"></i> Google
+                            </span>
+                        ) : (
+                            <span className="badge bg-light text-primary border border-primary border-opacity-25 rounded-pill d-inline-flex align-items-center gap-1">
+                                <i className="bi bi-person-badge"></i> Manual
+                            </span>
+                        )}
+                    </td>
+                    <td className="fw-medium text-dark">
+                        <span className={user.isDeleted ? 'text-decoration-line-through text-muted' : ''}>{user.username}</span>
+                        {user.isDeleted && <span className="badge bg-danger bg-opacity-10 text-danger ms-2" style={{ fontSize: '0.65rem' }}>Deactivated</span>}
+                    </td>
                     <td>{user.email}</td>
                     <td><span className={`badge rounded-pill ${user.role === 'superadmin' ? 'bg-danger' : user.role === 'admin' ? 'bg-warning text-dark' : 'bg-secondary'}`}>{user.role}</span></td>
                     <td className="pe-4">

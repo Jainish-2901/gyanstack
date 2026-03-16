@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createRequest, getRequests, updateRequestStatus, getUserRequests } = require('../controllers/requestController');
+const { createRequest, getRequests, updateRequestStatus, getUserRequests, deleteRequest } = require('../controllers/requestController');
 const authMiddleware = require('../middleware/authMiddleware');
 const { adminMiddleware } = require('../middleware/adminMiddleware');
 
@@ -15,5 +15,8 @@ router.get('/', authMiddleware, adminMiddleware, getRequests);
 
 // Route 4: Request Status Update Karna (Admin Only)
 router.put('/:id', authMiddleware, adminMiddleware, updateRequestStatus);
+
+// Route 5: Request Delete Karna (Admin Only)
+router.delete('/:id', authMiddleware, adminMiddleware, deleteRequest);
 
 module.exports = router;

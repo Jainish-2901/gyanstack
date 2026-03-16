@@ -12,7 +12,7 @@ const announcementSchema = new mongoose.Schema({
   requestedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
+    required: false, // Changed to false for external messages
   },
   status: {
     type: String,

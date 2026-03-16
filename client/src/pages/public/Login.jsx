@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import PasswordInput from '../../components/PasswordInput';
-import { requestForToken, auth, googleProvider } from '../../firebase';
+import { requestForToken, auth, googleProvider, analytics, logEvent } from '../../firebase';
 import { signInWithPopup } from "firebase/auth";
 import api from '../../services/api';
 
@@ -29,6 +29,11 @@ export default function Login() {
             setError('Staff/Admin accounts cannot log in here. Please use the Admin Portal.');
             setLoading(false);
             return;
+        }
+
+        // --- ANALYTICS: Login Event ---
+        if (analytics) {
+          logEvent(analytics, 'login', { method: 'manual' });
         }
 
         // --- PUSH NOTIFICATION PERMISSION ---
@@ -64,6 +69,11 @@ export default function Login() {
             setError('Admins cannot log in here. Please use the Admin Portal.');
             setLoading(false);
             return;
+        }
+
+        // --- ANALYTICS: Login Event ---
+        if (analytics) {
+          logEvent(analytics, 'login', { method: 'google' });
         }
 
         await requestForToken();

@@ -114,6 +114,10 @@ exports.loginUser = async (req, res) => {
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
+    // Block deleted users
+    if (user.isDeleted) {
+      return res.status(401).json({ message: 'Your account has been deactivated. Please contact support.' });
+    }
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
@@ -151,6 +155,10 @@ exports.googleLogin = async (req, res) => {
     let user = await User.findOne({ email });
 
     if (user) {
+      // Block deleted users
+      if (user.isDeleted) {
+        return res.status(401).json({ success: false, message: 'Your account has been deactivated. Please contact support.' });
+      }
       // Link Google ID if missing
       if (!user.googleId) {
         user.googleId = googleId;
@@ -225,8 +233,8 @@ exports.forgotPassword = async (req, res) => {
   const { email } = req.body;
   try {
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+    if (!user || user.isDeleted) {
+      return res.status(404).json({ message: 'User not found or account deactivated' });
     }
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     user.resetPasswordOtp = otp;

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import PasswordInput from '../../components/PasswordInput';
-import { requestForToken, auth, googleProvider } from '../../firebase';
+import { requestForToken, auth, googleProvider, analytics, logEvent } from '../../firebase';
 import { signInWithPopup } from "firebase/auth";
 import api from '../../services/api';
 
@@ -36,6 +36,12 @@ export default function Signup() {
     
     try {
       await register(username, email, phone, password);
+      
+      // --- ANALYTICS: Sign Up Event ---
+      if (analytics) {
+        logEvent(analytics, 'sign_up', { method: 'manual' });
+      }
+
       await requestForToken();
       navigate('/dashboard');
     } catch (err) {
@@ -65,6 +71,11 @@ export default function Signup() {
             setError('Admins cannot register here.');
             setLoading(false);
             return;
+        }
+
+        // --- ANALYTICS: Sign Up Event ---
+        if (analytics) {
+          logEvent(analytics, 'sign_up', { method: 'google' });
         }
 
         await requestForToken();

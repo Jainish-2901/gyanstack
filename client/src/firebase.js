@@ -2,7 +2,8 @@ import { initializeApp } from "firebase/app";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 import { getAuth, GoogleAuthProvider, browserPopupRedirectResolver, useDeviceLanguage } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import { getAnalytics } from "firebase/analytics";
+import { getAnalytics, logEvent } from "firebase/analytics";
+export { logEvent };
 import api from "./services/api";
 
 const firebaseConfig = {

@@ -8,13 +8,15 @@ const {
   deleteContent,
   getSingleContent,
   likeContent,
-  saveContent, // --- NAYA IMPORT ---
+  saveContent,
   getSavedContent,
-  trackDownload, // --- NAYA IMPORT (DOWNLOAD) ---
-  bulkDeleteContent // <-- NAYA IMPORT
+  trackDownload,
+  bulkDeleteContent,
+  reassignContent,
+  getGlobalContentManagement
 } = require('../controllers/contentController');
 const authMiddleware = require('../middleware/authMiddleware');
-const { adminMiddleware } = require('../middleware/adminMiddleware');
+const { adminMiddleware, superAdminMiddleware } = require('../middleware/adminMiddleware');
 const upload =require('../middleware/uploadMiddleware'); // Yahaan se import ho raha hai
 
 // Define the maximum number of files allowed in a batch
@@ -69,6 +71,10 @@ router.put('/:id', authMiddleware, adminMiddleware, (req, res, next) => {
 router.get('/', getContent);
 router.get('/saved', authMiddleware, getSavedContent);
 router.get('/my-content', authMiddleware, adminMiddleware, getMyContent);
+// --- SUPERADMIN ONLY ROUTES (Must be above /:id) ---
+router.get('/manage-all', authMiddleware, superAdminMiddleware, getGlobalContentManagement);
+router.post('/reassign', authMiddleware, superAdminMiddleware, reassignContent);
+
 router.get('/:id', getSingleContent);
 router.put('/:id/like', authMiddleware, likeContent);
 router.put('/:id/save', authMiddleware, saveContent);

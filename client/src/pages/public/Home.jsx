@@ -281,7 +281,7 @@ export default function Home() {
 
   return (
     <div className="fade-in">
-      <div className="container mt-3">
+      <div className="container mt-0">
         <AnnouncementBanner />
       </div>
 

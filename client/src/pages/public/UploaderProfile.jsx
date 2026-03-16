@@ -116,6 +116,13 @@ export default function UploaderProfile() {
             </div>
 
             <h4 className="fw-bold mb-1">{profile.username}</h4>
+            {profile.isDeleted && (
+              <div className="mb-2">
+                <span className="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-1 small">
+                  <i className="bi bi-person-x-fill me-1"></i> Deactivated Account
+                </span>
+              </div>
+            )}
 
             {/* Stats */}
             <div className="d-flex justify-content-center gap-3 mb-4">

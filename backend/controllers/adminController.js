@@ -81,6 +81,8 @@ exports.getDashboardStats = async (req, res) => {
     const contentStats = await Content.aggregate(pipeline);
 
     const totalUsers = await User.countDocuments();
+    const googleUsersCount = await User.countDocuments({ googleId: { $exists: true, $ne: null } });
+    const manualUsersCount = totalUsers - googleUsersCount;
     
     let stats = {};
     if (contentStats.length > 0) {
@@ -99,7 +101,9 @@ exports.getDashboardStats = async (req, res) => {
     
     const dashboardData = {
       ...stats,
-      totalUsers
+      totalUsers,
+      googleUsersCount,
+      manualUsersCount
     };
 
     res.json(dashboardData);
@@ -110,7 +114,7 @@ exports.getDashboardStats = async (req, res) => {
   }
 };
 
-// 4. User ko PERMANENTLY Delete Karna (SuperAdmin Only)
+// 4. User ko Soft Delete Karna (SuperAdmin Only)
 exports.deleteUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -124,28 +128,14 @@ exports.deleteUser = async (req, res) => {
       return res.status(400).json({ message: 'You cannot delete yourself!' });
     }
 
-    // Protection: Dusre SuperAdmin ko delete karne se pehle sochna chahiye
-    // Lekin abhi ke liye simplicity ke liye hum allow kar dete hain (unless special logic needed)
+    // SOFT DELETE: Hum user ko delete nahi karenge, sirf flag set karenge
+    // Taaki unka content aur profile data database mein rahe (as per user request)
+    user.isDeleted = true;
+    await user.save({ validateBeforeSave: false });
 
-    // 1. User ka content fetch karein physical files delete karne ke liye
-    const userContents = await Content.find({ uploadedBy: user._id });
-    const { deleteFromDrive } = require('../utils/googleDrive');
-
-    for (const content of userContents) {
-      if (content.googleDriveId) {
-        await deleteFromDrive(content.googleDriveId);
-      }
-    }
-
-    // 2. User ka content DB se delete karein
-    await Content.deleteMany({ uploadedBy: user._id });
-
-    // 3. User ko delete karein
-    await User.findByIdAndDelete(req.params.id);
-
-    res.json({ message: 'User and their content deleted successfully' });
+    res.json({ message: 'User deactivated successfully. Content and profile are preserved.' });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error (deleteUser)');
   }
-};
+};

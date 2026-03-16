@@ -130,8 +130,16 @@ export default function ManageAnnouncements() {
 
   return (
     <div className="container-fluid fade-in px-0 overflow-x-hidden">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="fw-bold text-danger mb-0">Manage All Announcements</h4>
+      <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div className="d-flex align-items-center gap-3">
+          <button 
+            onClick={() => window.history.back()} 
+            className="btn btn-light btn-sm rounded-pill px-3 shadow-sm text-primary fw-bold"
+          >
+            <i className="bi bi-arrow-left me-2"></i> Back
+          </button>
+          <h4 className="fw-bold text-danger mb-0">Manage All Announcements</h4>
+        </div>
         <button className="btn btn-sm btn-outline-primary" onClick={fetchAnnouncements}>
             <i className="bi bi-arrow-clockwise me-1"></i> Refresh
         </button>
@@ -155,7 +163,7 @@ export default function ManageAnnouncements() {
                         </div>
                     </div>
                     <div className="mt-2 small text-secondary">
-                        <i className="bi bi-activity me-1 text-success"></i> Console Pulse Active
+                        <i className="bi bi-send-check me-1 text-primary"></i> Sent: <span className="fw-bold">{pulse.firebaseConsole.sent || 0}</span>
                     </div>
                 </div>
             </div>

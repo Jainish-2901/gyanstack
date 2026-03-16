@@ -12,6 +12,7 @@ export default function Sidebar({ show, onMobileClose }) {
         { path: '/announcements', icon: 'bi-megaphone-fill', label: 'View Announcements', roles: ['admin', 'superadmin'] },
         { path: '/dashboard/requests', icon: 'bi-chat-left-dots-fill', label: 'User Requests', roles: ['admin', 'superadmin'] },
         { path: '/dashboard/users', icon: 'bi-people-fill', label: 'Manage Users', roles: ['superadmin'] },
+        { path: '/dashboard/global-content', icon: 'bi-box-seam-fill', label: 'Global Content', roles: ['superadmin'] },
         { path: '/dashboard/announcements-manage', icon: 'bi-bell-fill', label: 'All Announcements', roles: ['superadmin'] },
         { path: '/dashboard/contact', icon: 'bi-envelope-paper-fill', label: 'Contact Inquiries', roles: ['superadmin'] },
         { path: '/settings', icon: 'bi-gear-fill', label: 'Profile Settings', roles: ['admin', 'superadmin'] },

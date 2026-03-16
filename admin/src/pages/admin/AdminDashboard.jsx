@@ -145,6 +145,12 @@ export default function AdminDashboard() {
         {/* Note: Total Uploads aur Total Users hamesha All Time data hi dikhayenge, isliye yahaan date filter ka impact kam hai. */}
         <StatCard title="Total Uploads" value={stats.totalUploads} icon="bi-cloud-arrow-up-fill" colorClass="text-primary" />
         <StatCard title="Total Users" value={stats.totalUsers} icon="bi-people-fill" colorClass="text-success" />
+        
+        {/* --- NEW: User Breakdown Cards --- */}
+        <StatCard title="Google Users" value={stats.googleUsersCount || 0} icon="bi-google" colorClass="text-danger" />
+        <StatCard title="Manual Users" value={stats.manualUsersCount || 0} icon="bi-person-badge-fill" colorClass="text-primary" />
+        {/* ------------------------------- */}
+
         {/* Views, Likes, Saves, Downloads filter ke hisaab se update honge */}
         <StatCard title="Views" value={stats.totalViews} icon="bi-eye-fill" colorClass="text-info" />
         <StatCard title="Likes" value={stats.totalLikes} icon="bi-heart-fill" colorClass="text-danger" />
@@ -167,28 +173,83 @@ export default function AdminDashboard() {
             </div>
           </div>
           <div className="col-lg-4">
-            {/* Doughnut Chart ke liye naya data object banaayein */}
-            <div className="card border-0 rounded-lg">
+            {/* User Distribution Doughnut Chart */}
+            <div className="card border-0 rounded-lg h-100">
               <div className="card-body">
-                <h6 className="card-title fw-bold">Engagement Split (Excluding Views)</h6>
-                <Doughnut 
-                  data={{
-                    labels: ['Likes', 'Saves', 'Downloads'],
-                    datasets: [
-                      {
-                        label: 'Total Engagement',
-                        data: [stats.totalLikes, stats.totalSaves, stats.totalDownloads],
-                        backgroundColor: [
-                            'rgba(255, 99, 132, 0.9)', 
-                            'rgba(75, 192, 192, 0.9)', 
-                            'rgba(255, 206, 86, 0.9)',
-                        ],
-                        hoverOffset: 4
-                      }
-                    ]
-                  }}
-                  options={{ responsive: true, plugins: { legend: { position: 'bottom' } } }} 
-                />
+                <h6 className="card-title fw-bold">User Distribution (Login Type)</h6>
+                <div style={{ height: '240px', position: 'relative' }} className="d-flex align-items-center justify-content-center">
+                  <Doughnut 
+                    data={{
+                      labels: ['Google Users', 'Manual Users'],
+                      datasets: [
+                        {
+                          data: [stats.googleUsersCount || 0, stats.manualUsersCount || 0],
+                          backgroundColor: [
+                              'rgba(66, 133, 244, 0.9)', // Google Blue
+                              'rgba(52, 168, 83, 0.9)',  // Success Green
+                          ],
+                          borderWidth: 0,
+                          hoverOffset: 10
+                        }
+                      ]
+                    }}
+                    options={{ 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { position: 'bottom' },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.parsed || 0;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = Math.round((value / total) * 100);
+                                        return `${label}: ${value} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        } 
+                    }} 
+                  />
+                </div>
+                <div className="mt-3 small text-center text-muted">
+                    Total Registered: <span className="fw-bold">{stats.totalUsers}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="col-lg-4">
+            {/* Engagement Split Doughnut Chart */}
+            <div className="card border-0 rounded-lg h-100">
+              <div className="card-body">
+                <h6 className="card-title fw-bold">Engagement Split (Actions)</h6>
+                <div style={{ height: '240px', position: 'relative' }} className="d-flex align-items-center justify-content-center">
+                    <Doughnut 
+                    data={{
+                        labels: ['Likes', 'Saves', 'Downloads'],
+                        datasets: [
+                        {
+                            label: 'Total Engagement',
+                            data: [stats.totalLikes, stats.totalSaves, stats.totalDownloads],
+                            backgroundColor: [
+                                'rgba(255, 99, 132, 0.9)', 
+                                'rgba(75, 192, 192, 0.9)', 
+                                'rgba(255, 206, 86, 0.9)',
+                            ],
+                            borderWidth: 0,
+                            hoverOffset: 10
+                        }
+                        ]
+                    }}
+                    options={{ 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } } 
+                    }} 
+                    />
+                </div>
               </div>
             </div>
           </div>

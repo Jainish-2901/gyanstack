@@ -57,6 +57,23 @@ const messaging = getMessaging(app);
 onBackgroundMessage(messaging, (payload) => {
   console.log('[sw.js] Background message received:', payload);
   
+  // --- Track Sent Event (External campaign) ---
+  const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+  const title = payload.notification?.title || payload.data?.title;
+  const body = payload.notification?.body || payload.data?.body;
+
+  if (!payload.data?.announcementId) {
+    fetch(`${backendUrl}/stats/track-external-pulse`, { 
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        type: 'sent',
+        title: title,
+        content: body
+      })
+    }).catch(err => console.error("SW: Failed to track external sent:", err));
+  }
+
   if (payload.notification) {
     // Firebase SDK automatically shows notifications with 'notification' payload.
     // Manual call here would cause duplication.
@@ -64,9 +81,9 @@ onBackgroundMessage(messaging, (payload) => {
   }
 
   // Handle Data-Only messages (optional fallback)
-  const notificationTitle = payload.data?.title || 'GyanStack Update';
+  const notificationTitle = title || 'GyanStack Update';
   const notificationOptions = {
-    body: payload.data?.body || 'Check the latest updates on GyanStack.',
+    body: body || 'Check the latest updates on GyanStack.',
     icon: '/logo.png',
     badge: '/pwa-192x192.png',
     data: payload.data
@@ -82,7 +99,8 @@ self.addEventListener('notificationclick', (event) => {
 
   const data = event.notification.data;
   const announcementId = data?.announcementId;
-  const targetUrl = data?.url || '/announcements';
+  // --- REDIRECT: Default to production announcements page ---
+  const targetUrl = data?.url || 'https://gyanstack.vercel.app/announcements';
 
   // --- Track Open Event in Backend ---
   const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
@@ -95,9 +113,10 @@ self.addEventListener('notificationclick', (event) => {
     }).catch(err => console.error("SW: Failed to track specific open:", err));
   } else {
     // Firebase Console / External Message Ping
-    fetch(`${backendUrl}/stats/track-external-open`, { 
+    fetch(`${backendUrl}/stats/track-external-pulse`, { 
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'open' })
     }).catch(err => console.error("SW: Failed to track external open:", err));
   }
 
