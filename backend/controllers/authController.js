@@ -140,6 +140,7 @@ exports.loginUser = async (req, res) => {
 // ** googleLogin controller with Cloudinary Capture **
 exports.googleLogin = async (req, res) => {
   const { email, username, googleId, profileImage: googlePhotoUrl } = req.body;
+  console.log("Backend googleLogin hit:", { email, username, googleId });
   
   try {
     // 1. PROMPT: Check for valid email first

@@ -3,10 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import PasswordInput from '../../components/PasswordInput';
 import { requestForToken, auth, googleProvider } from '../../firebase';
-import { signInWithPopup, getRedirectResult } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { signInWithPopup } from "firebase/auth";
 import api from '../../services/api';
-import { db } from '../../firebase';
 
 export default function Login() {
   const [loginId, setLoginId] = useState('');
@@ -17,47 +15,6 @@ export default function Login() {
   const { login, logout } = useAuth();
   const navigate = useNavigate();
 
-  // --- HANDLE REDIRECT RESULT ---
-  React.useEffect(() => {
-    const handleRedirect = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result) {
-          setLoading(true);
-          const { user: firebaseUser } = result;
-          
-          // 1. Sync Firestore
-          await setDoc(doc(db, "users", firebaseUser.uid), {
-            uid: firebaseUser.uid,
-            name: firebaseUser.displayName,
-            email: firebaseUser.email,
-            photoURL: firebaseUser.photoURL,
-            role: 'student',
-            lastLogin: serverTimestamp()
-          }, { merge: true });
-
-          // 2. Sync MERN
-          const { data } = await api.post('/auth/google-login', {
-            email: firebaseUser.email,
-            username: firebaseUser.displayName,
-            googleId: firebaseUser.uid,
-            profileImage: firebaseUser.photoURL
-          });
-
-          await login(null, null, data);
-          await requestForToken();
-          navigate('/dashboard');
-        }
-      } catch (err) {
-        console.error("Redirect Resolution Error:", err);
-        setError("Failed to complete Google Sign-In after redirect.");
-      } finally {
-          setLoading(false);
-      }
-    };
-    handleRedirect();
-  }, [auth, login, navigate]);
-  
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -87,50 +44,21 @@ export default function Login() {
   const handleGoogleSignIn = async () => {
     setError('');
     setLoading(true);
-
-    // Watchdog Timer: If popup hangs for more than 3 seconds on localhost, force redirect
-    const watchdog = setTimeout(async () => {
-      console.warn("Popup watchdog triggered. Attempting redirect fallback...");
-      try {
-        const { signInWithRedirect } = await import("firebase/auth");
-        await signInWithRedirect(auth, googleProvider);
-      } catch (e) {
-        console.error("Watchdog redirect failed:", e);
-      }
-    }, 3000);
-
     try {
-        // --- LOCALHOST OPTIMIZATION ---
-        // Force Redirect flow on localhost to completely bypass COOP/Popup policy blocks
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            console.log("Localhost environment detected: Using high-stability Redirect Flow...");
-            const { signInWithRedirect } = await import("firebase/auth");
-            await signInWithRedirect(auth, googleProvider);
-            return; // Exit and wait for redirect to happen
-        }
-
         console.log("Attempting Google Sign-In via Popup...");
         const result = await signInWithPopup(auth, googleProvider);
-        clearTimeout(watchdog);
         const { user: firebaseUser } = result;
+        console.log("Firebase Auth success:", firebaseUser.email);
 
-        // --- 1. Store in Firebase Firestore ---
-        await setDoc(doc(db, "users", firebaseUser.uid), {
-            uid: firebaseUser.uid,
-            name: firebaseUser.displayName,
-            email: firebaseUser.email,
-            photoURL: firebaseUser.photoURL,
-            role: 'student',
-            lastLogin: serverTimestamp()
-        }, { merge: true });
-
-        // --- 2. Send to our MERN backend ---
+        // Send to our MERN backend
+        console.log("Sending to backend Login...");
         const { data } = await api.post('/auth/google-login', {
             email: firebaseUser.email,
             username: firebaseUser.displayName,
             googleId: firebaseUser.uid,
             profileImage: firebaseUser.photoURL
         });
+        console.log("Backend response received:", !!data.token);
 
         const loggedInUser = await login(null, null, data); 
 
@@ -144,31 +72,15 @@ export default function Login() {
         await requestForToken();
         navigate('/dashboard');
     } catch (err) {
-        clearTimeout(watchdog);
         setLoading(false);
-        console.warn("Google Auth error caught:", err.code, err.message);
+        console.error("Google Auth Error:", err);
         
-        // Handle explicit COOP or policy errors immediately
-        const isCOOPError = err.message?.toLowerCase().includes('cross-origin-opener-policy') || 
-                          err.message?.toLowerCase().includes('window.close') ||
-                          err.code === 'auth/internal-error';
-        
-        const shouldRedirect = err.code === 'auth/popup-blocked' || 
-                             err.code === 'auth/cancelled-popup-request' || 
-                             isCOOPError;
-
-        if (shouldRedirect || window.location.hostname === 'localhost') {
-            console.log("Localhost or Policy block detected: Switching to Redirect Flow...");
-            try {
-                const { signInWithRedirect } = await import("firebase/auth");
-                await signInWithRedirect(auth, googleProvider);
-            } catch (redirErr) {
-                console.error("Critical: Redirect Flow failed:", redirErr);
-                setError('Login failed. Please refresh and try again.');
-            }
+        if (err.code === 'auth/popup-blocked') {
+            setError('Login popup was blocked. Please allow popups for this site.');
+        } else if (err.code === 'auth/popup-closed-by-user') {
+            setError('Login cancelled by user.');
         } else {
-            console.error("Unhandleable Auth Error:", err);
-            setError(`Login failed: ${err.message || 'Please try again.'}`);
+            setError(`Google login failed: ${err.message || 'Please try again.'}`);
         }
     }
   };
