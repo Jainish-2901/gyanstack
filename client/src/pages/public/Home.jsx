@@ -18,15 +18,169 @@ const FeatureCard = ({ icon, title, text, colorClass }) => (
   </div>
 );
 
-// --- CATEGORIZED CONTENT COMPONENT ---
-// REFACTORED: Now shows a list of items instead of cards, limited to 5 per category.
-const CategorizedContent = ({ categories, contentList, stats }) => {
-  if (!categories || !contentList) {
+// --- Recursive Home Tree ---
+// Node with children → collapsible branch (any depth)
+// Node without children → lazy content-fetching leaf
+// Works for: BCA → SEM-3 → GU Papers → JAVA Theory Papers → ...
+
+const getSmallIcon = (type) => {
+  if (type?.includes('pdf')) return 'bi-file-earmark-pdf text-danger';
+  if (type?.includes('video')) return 'bi-play-circle text-info';
+  if (type?.includes('image')) return 'bi-image text-success';
+  if (type === 'link') return 'bi-link-45deg text-primary';
+  if (type === 'note') return 'bi-sticky text-warning';
+  return 'bi-file-earmark text-secondary';
+};
+
+// Palette for branch icons based on depth
+const BRANCH_COLORS = ['#f59e0b', '#6366f1', '#10b981', '#ec4899'];
+
+const HomeTreeNode = ({ cat, depth = 0 }) => {
+  const hasChildren = Boolean(cat.children && cat.children.length > 0);
+
+  // ALL hooks declared unconditionally (React rules of hooks)
+  const [open, setOpen] = React.useState(false);
+  const [items, setItems] = React.useState(null); // leaf-only: fetched content
+  const [loading, setLoading] = React.useState(false);
+  const fetched = React.useRef(false);
+
+  // Leaf toggle: lazy-fetch content on first open
+  const toggleLeaf = async () => {
+    const next = !open;
+    setOpen(next);
+    if (next && !fetched.current) {
+      fetched.current = true;
+      setLoading(true);
+      try {
+        const { data } = await api.get(`/content?categoryId=${cat._id}&limit=8`);
+        setItems(data.content || []);
+      } catch { setItems([]); }
+      setLoading(false);
+    }
+  };
+
+  const indent = depth * 12;
+
+  // --- LEAF: node has no children — shows lazy content list ---
+  if (!hasChildren) {
+    return (
+      <div className="cat-leaf">
+        <button
+          className="d-flex align-items-center w-100 text-start border-0 rounded-2 cat-leaf-btn"
+          onClick={toggleLeaf}
+          style={{ paddingLeft: `${indent + 8}px`, padding: `7px 8px 7px ${indent + 8}px`, background: open ? 'rgba(99,102,241,0.07)' : 'transparent', cursor: 'pointer', transition: 'background 0.15s' }}
+        >
+          <i className={`bi bi-chevron-${open ? 'down' : 'right'} me-2 text-muted`} style={{ fontSize: '0.65rem' }}></i>
+          <i className="bi bi-folder2 me-2 text-primary" style={{ fontSize: '0.82rem' }}></i>
+          <span className="small fw-semibold text-dark flex-grow-1">{cat.name}</span>
+          {items !== null && <span className="badge rounded-pill bg-primary bg-opacity-10 text-primary ms-1" style={{ fontSize: '0.62rem' }}>{items.length}</span>}
+        </button>
+
+        {open && (
+          <div style={{ paddingLeft: `${indent + 20}px` }} className="pb-1">
+            {loading && <div className="py-2"><span className="spinner-border spinner-border-sm text-primary me-2"></span><small className="text-muted">Loading...</small></div>}
+            {!loading && items?.length === 0 && <p className="text-muted small mb-2">No content yet.</p>}
+            {!loading && items?.map(item => (
+              <Link key={item._id} to={`/content/${item._id}`} className="d-flex align-items-center text-decoration-none py-1 px-2 rounded-2 mb-1 content-link-row">
+                <i className={`bi ${getSmallIcon(item.type)} me-2`} style={{ fontSize: '0.82rem' }}></i>
+                <span className="text-muted small text-truncate">{item.title}</span>
+              </Link>
+            ))}
+            {!loading && items?.length > 0 && (
+              <Link to={`/browse?category=${cat._id}`} className="d-flex align-items-center text-decoration-none py-1 px-2 rounded-2 mb-1">
+                <i className="bi bi-arrow-right-circle me-2 text-primary" style={{ fontSize: '0.82rem' }}></i>
+                <span className="small text-primary fw-bold">View all in {cat.name}</span>
+              </Link>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // --- BRANCH: has children — collapsible, recurse into children at depth+1 ---
+  const iconColor = BRANCH_COLORS[depth % BRANCH_COLORS.length];
+  const folderIcon = open ? 'bi-folder2-open' : 'bi-folder2';
+
+  return (
+    <div>
+      <button
+        className="d-flex align-items-center w-100 text-start border-0 rounded-2"
+        onClick={() => setOpen(o => !o)}
+        style={{ paddingLeft: `${indent + 8}px`, padding: `8px 8px 8px ${indent + 8}px`, background: open ? 'rgba(99,102,241,0.06)' : 'transparent', cursor: 'pointer', transition: 'background 0.15s' }}
+      >
+        <i className={`bi bi-chevron-${open ? 'down' : 'right'} me-1 text-muted`} style={{ fontSize: '0.65rem' }}></i>
+        <i className={`bi ${folderIcon} me-2`} style={{ fontSize: '0.88rem', color: iconColor }}></i>
+        <span className="small fw-bold text-dark flex-grow-1">{cat.name}</span>
+        <span className="badge rounded-pill bg-light text-muted border ms-1" style={{ fontSize: '0.62rem' }}>{cat.children.length}</span>
+      </button>
+      {open && (
+        <div className="border-start border-2 ms-3" style={{ marginLeft: `${indent + 20}px`, borderColor: 'rgba(99,102,241,0.15)' }}>
+          {cat.children.map(child => (
+            <HomeTreeNode key={child._id} cat={child} depth={depth + 1} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- Card wrapper for top-level programs (BCA / MCA ...) ---
+const CategoryTree = ({ cat }) => {
+  const [open, setOpen] = React.useState(false);
+  const hasChildren = Boolean(cat.children && cat.children.length > 0);
+
+  const gradients = [
+    'linear-gradient(135deg,#6366f1,#8b5cf6)',
+    'linear-gradient(135deg,#06b6d4,#3b82f6)',
+    'linear-gradient(135deg,#ec4899,#f43f5e)',
+    'linear-gradient(135deg,#10b981,#06b6d4)',
+  ];
+  const grad = gradients[Math.abs(cat.name.charCodeAt(0)) % gradients.length];
+
+  return (
+    <div className="glass-card overflow-hidden border-0 shadow-sm" style={{ borderRadius: '1rem' }}>
+      <button
+        className="d-flex align-items-center w-100 text-start p-4 border-0"
+        onClick={() => setOpen(o => !o)}
+        style={{ background: 'transparent', cursor: 'pointer' }}
+      >
+        <div className="rounded-3 d-flex align-items-center justify-content-center me-3 flex-shrink-0"
+          style={{ width: '44px', height: '44px', background: grad }}>
+          <i className="bi bi-journal-bookmark-fill text-white fs-5"></i>
+        </div>
+        <div className="flex-grow-1 text-start">
+          <h5 className="fw-bold mb-0" style={{ color: 'var(--text-primary)', fontSize: '1.05rem' }}>{cat.name}</h5>
+          <small className="text-muted">
+            {hasChildren ? `${cat.children.length} section${cat.children.length > 1 ? 's' : ''}` : 'Open to browse'}
+          </small>
+        </div>
+        <div className="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+          style={{ width: '32px', height: '32px', background: open ? 'rgba(99,102,241,0.12)' : 'rgba(0,0,0,0.04)', transition: 'all 0.2s' }}>
+          <i className={`bi bi-chevron-${open ? 'up' : 'down'} text-primary`} style={{ fontSize: '0.8rem' }}></i>
+        </div>
+      </button>
+
+      {open && (
+        <div className="px-3 pb-3 pt-1 border-top" style={{ borderColor: 'var(--glass-border)' }}>
+          {hasChildren
+            ? cat.children.map(child => <HomeTreeNode key={child._id} cat={child} depth={0} />)
+            : <HomeTreeNode cat={cat} depth={0} />
+          }
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- MAIN SECTION WRAPPER ---
+const CategorizedContent = ({ nestedCategories }) => {
+  if (!nestedCategories) {
     return (
       <div className="container py-5">
         <div className="row g-4">
           {[1, 2, 3].map(i => (
-            <div key={i} className="col-lg-4 col-md-6 mb-3">
+            <div key={i} className="col-lg-4 col-md-6">
               <ListSkeleton />
             </div>
           ))}
@@ -35,98 +189,42 @@ const CategorizedContent = ({ categories, contentList, stats }) => {
     );
   }
 
-  // Group content by only the immediate leaf category
-  const grouped = contentList.reduce((acc, item) => {
-    // Sirf item ki apni category find karein (Last sub-category)
-    const cat = categories.find(c => c._id === item.categoryId);
-    const catName = cat ? cat.name : 'Other Resources';
-    const catId = cat ? cat._id : 'other';
+  // /categories/all-nested already returns only root-level items at the top of array
+  const topLevel = nestedCategories;
+  if (!topLevel || topLevel.length === 0) return null;
 
-    if (!acc[catName]) {
-      acc[catName] = {
-        id: catId,
-        items: []
-      };
-    }
-
-    // Check for duplicates (safety)
-    if (!acc[catName].items.find(i => i._id === item._id)) {
-      acc[catName].items.push(item);
-    }
-
-    return acc;
-  }, {});
-
-  const categoryEntries = Object.entries(grouped);
-  if (categoryEntries.length === 0) return null;
-
-  // Helper to get icon for list items
-  const getSmallIcon = (type) => {
-    if (type?.includes('pdf')) return 'bi-file-earmark-pdf text-danger';
-    if (type?.includes('video')) return 'bi-play-circle text-info';
-    if (type?.includes('image')) return 'bi-image text-success';
-    if (type === 'link') return 'bi-link-45deg text-primary';
-    if (type === 'note') return 'bi-sticky text-warning';
-    return 'bi-file-earmark text-secondary';
-  };
+  // Adaptive column: clean layout for any number of programs
+  // 1 → centered full-width  |  2 → 2-col  |  3+ → 3-col grid (wraps to new rows for 4, 5, 6...)
+  const colClass =
+    topLevel.length === 1 ? 'col-12 col-md-8 mx-auto' :
+    topLevel.length === 2 ? 'col-md-6' :
+    'col-lg-4 col-md-6';
 
   return (
     <section className="container py-5">
+      <style>{`
+        .content-link-row { transition: background 0.15s; }
+        .content-link-row:hover { background: rgba(99,102,241,0.07); }
+        .cat-leaf-btn:hover { background: rgba(99,102,241,0.07) !important; }
+      `}</style>
+
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-center align-items-md-end mb-5 fade-in gap-4">
         <div className="text-center text-md-start">
           <h6 className="text-primary fw-bold text-uppercase tracking-wider">Explore Hub</h6>
           <h2 className="display-6 fw-bold" style={{ color: 'var(--text-primary)' }}>Quick Access By Category</h2>
-          <p className="text-muted mb-0">Browse the most recent 5 uploads across all our sections.</p>
+          <p className="text-muted mb-0">Expand any program → semester → subject to browse resources instantly.</p>
         </div>
         <div className="flex-shrink-0">
-          <Link to="/browse" className='btn btn-light btn-lg glass-card px-4 border-0 shadow-sm text-primary fw-bold rounded-pill'>
-            <i className='bi bi-funnel-fill me-2'></i> Browse All
+          <Link to="/browse" className="btn btn-light btn-lg glass-card px-4 border-0 shadow-sm text-primary fw-bold rounded-pill">
+            <i className="bi bi-funnel-fill me-2"></i>Browse All
           </Link>
         </div>
       </div>
 
       <div className="row g-4">
-        {categoryEntries.map(([catName, data]) => (
-          <div key={catName} className="col-lg-4 col-md-6 mb-3 fade-in">
-            <div className="glass-card h-100 p-4 border-0 shadow-sm transition-hover">
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <h5 className="fw-bold mb-0 text-dark d-flex align-items-center">
-                  <span className="p-2 bg-primary bg-opacity-10 rounded me-2">
-                    <i className="bi bi-folder2-open text-primary"></i>
-                  </span>
-                  {catName}
-                </h5>
-                <span className="badge bg-light text-muted fw-normal">{data.items.length} items</span>
-              </div>
-
-              <div className="content-list-simple">
-                {data.items.slice(0, 5).map(item => (
-                  <Link
-                    key={item._id}
-                    to={`/content/${item._id}`}
-                    className="d-flex align-items-center mb-2 text-decoration-none py-2 px-1 rounded hover-bg-light transition-all"
-                  >
-                    <i className={`bi ${getSmallIcon(item.type)} me-3 fs-5`}></i>
-                    <span className="text-muted small text-truncate fw-medium" style={{ maxWidth: '100%' }}>
-                      {item.title}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-
-              {data.items.length > 0 ? (
-                <div className="mt-3 pt-3 border-top border-light">
-                  <Link
-                    to={`/browse?category=${data.id !== 'other' ? data.id : ''}`}
-                    className="btn btn-sm btn-outline-primary rounded-pill w-100 fw-bold"
-                  >
-                    View All Resources <i className="bi bi-arrow-right ms-1"></i>
-                  </Link>
-                </div>
-              ) : (
-                <p className="text-muted small mt-2">No items found.</p>
-              )}
-            </div>
+        {topLevel.map(cat => (
+          <div key={cat._id} className={`${colClass} fade-in`}>
+            <CategoryTree cat={cat} />
           </div>
         ))}
       </div>
@@ -236,38 +334,25 @@ export default function Home() {
   const { user } = useAuth();
   const [stats, setStats] = useState({ contentCount: '...', studentCount: '...', viewsCount: '...' });
   const [uploaders, setUploaders] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [contentList, setContentList] = useState([]);
+  const [nestedCategories, setNestedCategories] = useState(null); // null = loading
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchHomeData = async () => {
       try {
-        const [statsRes, uploadersRes, catRes, contentRes] = await Promise.all([
+        const [statsRes, uploadersRes, catRes] = await Promise.all([
           api.get('/auth/stats'),
           api.get('/auth/top-uploaders'),
           api.get('/categories/all-nested'),
-          api.get('/content')
+          // Removed: api.get('/content') — content is now fetched lazily per category
         ]);
         
         setStats(statsRes.data);
         setUploaders(uploadersRes.data.uploaders);
-        
-        // Flatten categories 
-        const flattenCats = (cats, acc = []) => {
-          if (!cats) return acc;
-          cats.forEach(c => {
-            acc.push({ _id: c._id, name: c.name, parentId: c.parentId });
-            if (c.children) flattenCats(c.children, acc);
-          });
-          return acc;
-        };
-        const catArray = flattenCats(catRes.data.categories);
-        
-        setCategories(catArray);
-        setContentList(contentRes.data.content);
+        // Pass nested categories directly (no flattening needed for the tree)
+        setNestedCategories(catRes.data.categories || []);
       } catch (err) {
-        console.error("Home data fetch error:", err);
+        console.error('Home data fetch error:', err);
       } finally {
         setLoading(false);
       }
@@ -382,13 +467,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* --- NEW SECTION: Categorized Content --- */}
-      <CategorizedContent 
-        categories={categories}
-        contentList={contentList}
-        stats={stats}
-      />
-      {/* -------------------------------------- */}
+      {/* --- SECTION: Lazy Category Tree --- */}
+      <CategorizedContent nestedCategories={nestedCategories} />
+      {/* ---------------------------------- */}
 
       {/* 3. HOW IT WORKS / 3-STEP PROCESS */}
       <section className="py-5 position-relative">

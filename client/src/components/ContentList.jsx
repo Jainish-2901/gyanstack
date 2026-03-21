@@ -14,7 +14,9 @@ export default function ContentList({ categoryId, searchTerm, uploaderName }) {
       setLoading(true);
       try {
         let url = '/content';
-        const params = {};
+        const params = {
+          limit: 30, // PERF: Limit initial fetch; prevents rendering 100+ cards at once
+        };
 
         // --- FIX: Logic: Agar categoryId 'root' hai, to koi filter na lagayein ---
         if (categoryId && categoryId !== 'root') {

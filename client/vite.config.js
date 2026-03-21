@@ -12,11 +12,10 @@ export default defineConfig({
       filename: 'sw.js', // Output will be public/sw.js 
       registerType: 'autoUpdate',
       devOptions: {
-        enabled: true, // Enabled for local testing of PWA features
-        type: 'module',
-        navigateFallbackAllowlist: [/^index.html$/],
-        // Prevent SW from interfering with Auth/API during local dev
-        webManifestAllowlist: [/manifest\.webmanifest$/]
+        // PERF: Disabled in dev — Workbox intercepts HMR/JSX requests in dev mode
+        // causing 'Precaching did not find a match' spam and 453ms message handler violations.
+        // Service worker is only meaningful on the production build.
+        enabled: false,
       },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg', 'logo.png'],
       manifest: {

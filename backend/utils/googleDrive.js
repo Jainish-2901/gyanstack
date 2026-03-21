@@ -136,7 +136,10 @@ const uploadToDrive = async (file, folderNames = [], folderId = null) => {
             media: media,
             fields: 'id, webViewLink, webContentLink',
             supportsAllDrives: true,
-            uploadType: 'resumable', // Optimized for 5MB+ files
+            // Use 'multipart' for files under 5MB — it sends metadata + file in a single 
+            // HTTP request, making it reliable on serverless (Vercel) environments.
+            // 'resumable' requires a persistent multi-step session which breaks on cold starts.
+            uploadType: 'multipart',
         });
 
         const fileId = response.data.id;

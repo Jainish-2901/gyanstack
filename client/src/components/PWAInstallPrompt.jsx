@@ -1,29 +1,33 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const PWAInstallPrompt = () => {
-    const [deferredPrompt, setDeferredPrompt] = useState(null);
+    // Use ref instead of state for deferredPrompt:
+    // State would re-trigger the useEffect (which registers listeners),
+    // causing re-registration loops and stale closures.
+    const deferredPromptRef = useRef(null);
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
+        // Only register listeners once (empty dep array)
         const handler = (e) => {
-            e.preventDefault();
-            setDeferredPrompt(e);
+            e.preventDefault(); // REQUIRED: prevents browser's default mini-infobar
+            deferredPromptRef.current = e;
             setIsVisible(true);
         };
-
         window.addEventListener('beforeinstallprompt', handler);
 
-        // Listen for internal triggers from other components (like Home.jsx button)
+        // Listen for external trigger (e.g. from Home page install button)
         const triggerHandler = () => {
-            if (deferredPrompt) {
+            // Read from ref — always gets latest value (no stale closure)
+            if (deferredPromptRef.current) {
                 handleInstallClick();
             } else {
-                // If no native prompt, show instructions
                 setIsVisible(true);
             }
         };
         window.addEventListener('trigger-pwa-install', triggerHandler);
 
+        // Hide if already installed
         if (window.matchMedia('(display-mode: standalone)').matches) {
             setIsVisible(false);
         }
@@ -32,24 +36,21 @@ const PWAInstallPrompt = () => {
             window.removeEventListener('beforeinstallprompt', handler);
             window.removeEventListener('trigger-pwa-install', triggerHandler);
         };
-    }, [deferredPrompt]);
+    }, []); // IMPORTANT: empty array — register once only
 
     const handleInstallClick = async () => {
-        if (!deferredPrompt) {
-            // Provide feedback if native prompt is missing
-            alert("To install GyanStack:\n\n1. On Mobile: Tap 'Share' or browser menu then 'Add to Home Screen'.\n2. On Desktop: Look for the 'Install' icon in your address bar.");
+        if (!deferredPromptRef.current) {
+            alert('To install GyanStack:\n\n• Mobile: Tap \'Share\' then \'Add to Home Screen\'\n• Desktop: Click the install icon in address bar');
             return;
         }
 
-        // Show the native install prompt
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        
-        if (outcome === 'accepted') {
-            console.log('App install accepted');
-        }
-        
-        setDeferredPrompt(null);
+        // Show native prompt — this is the critical call the browser was waiting for
+        deferredPromptRef.current.prompt();
+        const { outcome } = await deferredPromptRef.current.userChoice;
+        console.log('PWA install outcome:', outcome);
+
+        // Clear after use — prompt() can only be called once
+        deferredPromptRef.current = null;
         setIsVisible(false);
     };
 

@@ -69,9 +69,9 @@ html, body, #root {
   height: 100vh;
   width: 100%;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  scroll-behavior: smooth;
+  /* Removed scroll-behavior: smooth — blocks main thread */
   font-size: 0.92rem;
-  overflow: hidden; /* Remove browser level scrollbar */
+  overflow: hidden;
 }
 
 body {
@@ -294,7 +294,8 @@ body {
   font-weight: 600;
   letter-spacing: 0.3px;
   padding: 0.6rem 1.5rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* PERF: 'transition: all' triggers reflow on every click — specify only GPU props */
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.15s ease;
 }
 
 .btn-primary {
@@ -372,7 +373,9 @@ body {
   border-radius: 1.5rem;
   padding: 2rem;
   height: 100%;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  /* PERF: 'transition: all' is expensive; specify only what changes */
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  will-change: transform;
 }
 
 .feature-card:hover {
@@ -408,10 +411,12 @@ body {
 .card {
   border: none;
   background: var(--glass-bg);
-  backdrop-filter: blur(10px);
+  /* PERF: Removed backdrop-filter — causes forced reflow on every click/scroll event.
+     Admin table renders many cards at once; blur on all of them kills click performance */
   border: 1px solid var(--glass-border);
   border-radius: 1.25rem;
-  transition: all 0.3s ease;
+  /* PERF: No 'transition: all' — only GPU-composited props */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   overflow: hidden;
 }
 
@@ -484,7 +489,8 @@ body {
   margin-bottom: 0.5rem;
   border-radius: 0.75rem !important;
   font-weight: 500;
-  transition: all 0.2s ease;
+  /* PERF: Only transition color and background, not all properties */
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
   color: var(--text-primary);
 }
 

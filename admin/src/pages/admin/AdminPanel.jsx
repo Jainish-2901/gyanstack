@@ -110,6 +110,7 @@ export default function AdminPanel() {
   const [categoryName, setCategoryName] = useState('None Selected');
 
   const [uploadMode, setUploadMode] = useState('single'); // 'single', 'batch', or 'external'
+  const [externalMimeType, setExternalMimeType] = useState('application/pdf'); // for external Drive links
 
   // --- NAYA STATE: Category Map ---
   const [categoryMap, setCategoryMap] = useState({});
@@ -206,6 +207,10 @@ export default function AdminPanel() {
     formData.append('categoryId', categoryId);
     formData.append('tags', tags);
     formData.append('uploadMode', uploadMode);
+    // Send explicit MIME type for external links so backend doesn't have to guess
+    if (type === 'file' && uploadMode === 'external') {
+      formData.append('externalMimeType', externalMimeType);
+    }
 
     // --- BATCH UPLOAD LOGIC ---
     if (type === 'file' && uploadMode !== 'external' && files && files.length > 0) {
@@ -250,6 +255,7 @@ export default function AdminPanel() {
       // Form reset karein
       setTitle(''); setType('note'); setFiles(null); setLink(''); setNote(''); setTags('');
       setCategoryId(''); setCategoryName('None Selected');
+      setExternalMimeType('application/pdf');
       setUploadProgress(0);
       fetchData(); // Sabkuch refresh karein
     } catch (err) {
@@ -462,10 +468,10 @@ export default function AdminPanel() {
                     </div>
                     <small className="text-muted mt-2 d-block">
                       {uploadMode === 'single'
-                        ? 'Upload one file with a custom title (Max 4.5MB).'
+                        ? '⚠️ Upload one file with a custom title. Max 4.5MB (Vercel server limit).'
                         : uploadMode === 'batch'
-                        ? 'Upload multiple files (Max 4.5MB each).'
-                        : 'Manually upload to Google Drive first, then paste the link here. No size limit!'}
+                        ? '⚠️ Upload multiple files. Max 4.5MB each (Vercel server limit).'
+                        : '✅ No size limit! Upload your file to Google Drive → set "Anyone with link → Viewer" → paste link here.'}
                     </small>
                   </div>
                 )}
@@ -522,17 +528,38 @@ export default function AdminPanel() {
                   {type === 'file' && (
                     <div className="mb-3">
                       {uploadMode === 'external' ? (
-                        <div className="form-floating mb-3">
-                          <input 
-                            type="url" 
-                            className="form-control" 
-                            id="externalFileLink" 
-                            placeholder="Paste Google Drive Link" 
-                            value={link} 
-                            onChange={(e) => setLink(e.target.value)} 
-                            required 
-                          />
-                          <label htmlFor="externalFileLink">Paste Google Drive Link</label>
+                        <div className="mb-3">
+                          <div className="form-floating mb-2">
+                            <input 
+                              type="url" 
+                              className="form-control" 
+                              id="externalFileLink" 
+                              placeholder="Paste Google Drive Link" 
+                              value={link} 
+                              onChange={(e) => setLink(e.target.value)} 
+                              required 
+                            />
+                            <label htmlFor="externalFileLink">Paste Google Drive Link</label>
+                          </div>
+                          {/* File type selector — required since Drive share URLs have no extension */}
+                          <label className="form-label fw-semibold small"><i className="bi bi-file-earmark me-1"></i>File Type <span className="text-danger">*</span></label>
+                          <select
+                            className="form-select"
+                            value={externalMimeType}
+                            onChange={(e) => setExternalMimeType(e.target.value)}
+                          >
+                            <option value="application/pdf">📄 PDF Document</option>
+                            <option value="application/msword">📝 Word Document (.doc)</option>
+                            <option value="application/vnd.openxmlformats-officedocument.wordprocessingml.document">📝 Word Document (.docx)</option>
+                            <option value="application/vnd.ms-powerpoint">📊 PowerPoint (.ppt)</option>
+                            <option value="application/vnd.openxmlformats-officedocument.presentationml.presentation">📊 PowerPoint (.pptx)</option>
+                            <option value="application/vnd.ms-excel">📈 Excel (.xls)</option>
+                            <option value="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">📈 Excel (.xlsx)</option>
+                            <option value="video/mp4">🎬 Video (MP4)</option>
+                            <option value="image/jpeg">🖼️ Image (JPG/PNG)</option>
+                            <option value="application/zip">🗜️ ZIP Archive</option>
+                            <option value="application/octet-stream">❓ Other / Unknown</option>
+                          </select>
                           <small className="text-muted mt-1 d-block"><i className="bi bi-info-circle me-1"></i> Ensure link is set to "Anyone with the link can view"</small>
                         </div>
                       ) : (

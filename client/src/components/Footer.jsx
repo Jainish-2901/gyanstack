@@ -31,8 +31,11 @@ export default function Footer() {
               <li><Link to="/" className="footer-link">Home</Link></li>
               <li><Link to="/browse" className="footer-link">Browse Library</Link></li>
               <li><Link to="/request" className="footer-link">Request Content</Link></li>
-              <li><Link to="/contact" className="footer-link">Contact Us</Link></li>
-              <li><Link to="/dashboard" className="footer-link">My Dashboard</Link></li>
+              <li><Link to="/privacy" className="footer-link">Privacy Policy</Link></li>
+              <li><Link to="/terms" className="footer-link">Terms of Service</Link></li>
+              <li><Link to="/contact" className="footer-link">Contact</Link></li>
+              <li><Link to="/about" className="footer-link">About</Link></li>
+              <li><Link to="/dashboard" className="footer-link">Dashboard</Link></li>
             </ul>
           </div>
 
@@ -73,9 +76,16 @@ export default function Footer() {
         {/* Copyright & Branding Line */}
         <div className="border-top" style={{ borderColor: 'var(--glass-border)' }}></div>
         <div className="d-flex flex-column flex-md-row justify-content-between align-items-center pt-4 text-center">
-          <p className="footer-text small mb-2 mb-md-0">
-            © {new Date().getFullYear()} GyanStack. All Rights Reserved.
-          </p>
+          <div className="mb-3 mb-md-0">
+            <p className="footer-text small mb-1">
+              © {new Date().getFullYear()} GyanStack. All Rights Reserved.
+            </p>
+            <div className="d-flex gap-3 justify-content-center justify-content-md-start">
+              <Link to="/privacy" className="footer-link x-small text-muted" style={{ fontSize: '0.75rem' }}>Privacy Policy</Link>
+              <Link to="/terms" className="footer-link x-small text-muted" style={{ fontSize: '0.75rem' }}>Terms of Service</Link>
+            </div>
+          </div>
+
           <a href={`https://www.linkedin.com/in/${socialLinks.linkedin}`} target="_blank" rel="noopener noreferrer" className="footer-link small d-flex align-items-center justify-content-center" title="Developer">
             Designed & Developed with <i className="bi bi-heart-fill text-danger mx-1 heart"></i> by Jainish Dabgar
           </a>

@@ -12,10 +12,12 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 // 3. Hamari custom CSS
 import './App.css'; 
 
-// PWA: Service Worker Registration (Only in Production)
+// PWA: Service Worker Registration (Production Only)
+// SW is disabled in dev (vite.config.js devOptions.enabled: false) to prevent
+// Workbox from intercepting HMR/JSX source files and causing console violations.
 import { registerSW } from 'virtual:pwa-register';
 
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
   registerSW({
     onNeedRefresh() {
        if (confirm('New content available. Reload?')) {
@@ -23,17 +25,8 @@ if ('serviceWorker' in navigator) {
        }
     },
     onOfflineReady() {
-      console.log('App ready to work offline');
+      console.log('GyanStack: App ready to work offline');
     },
-  });
-
-  // Connection listeners
-  window.addEventListener('online', () => {
-    console.log('App is back online');
-    // You could trigger a toast here if you have a toast system
-  });
-  window.addEventListener('offline', () => {
-    console.log('App is in offline mode');
   });
 }
 

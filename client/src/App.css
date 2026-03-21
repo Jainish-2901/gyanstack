@@ -84,19 +84,19 @@ body,
   min-height: 100vh;
   width: 100%;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  scroll-behavior: smooth;
+  /* Removed scroll-behavior: smooth — it blocks the main thread on scroll events */
 }
 
 body {
   background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
-  background-attachment: fixed;
+  /* Removed background-attachment: fixed — it forces re-paint on every scroll frame
+     and prevents GPU-accelerated scrolling (major FPS killer) */
   color: var(--text-primary);
   transition: background 0.5s ease;
 }
 
 [data-bs-theme="dark"] body {
   background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
-  background-attachment: fixed;
   color: var(--text-primary);
 }
 
@@ -152,6 +152,7 @@ body {
 /* Glassmorphism Classes */
 .glass-panel {
   background: var(--glass-bg);
+  /* backdrop-filter kept here — panels are modals/dropdowns, not repeated scroll items */
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--glass-border);
@@ -161,21 +162,23 @@ body {
 
 .glass-card {
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  /* PERF: Removed backdrop-filter — applying blur to dozens of cards on every scroll
+     frame causes 'Forced reflow' violations. Use box-shadow + background for the effect. */
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   border-radius: 1rem;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+  /* PERF: Only transition transform + box-shadow (GPU composited, no reflow) */
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease;
+  will-change: transform;
 }
 
 .glass-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
 }
 
 [data-bs-theme="dark"] .glass-card:hover {
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
 }
 
 /* Animations */
@@ -250,11 +253,13 @@ body {
   max-width: 1400px;
   padding: 0.6rem 1.25rem;
   background: var(--glass-bg) !important;
+  /* PERF: backdrop-filter is justified on a single sticky header element */
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
-  transition: all 0.3s ease;
+  /* PERF: Only transition box-shadow, not 'all' */
+  transition: box-shadow 0.3s ease;
 }
 
 .fancy-header:hover {
@@ -320,7 +325,8 @@ body {
   font-weight: 600;
   letter-spacing: 0.3px;
   padding: 0.6rem 1.5rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* PERF: Replaced 'transition: all' with specific GPU-composited properties */
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
 .btn-primary {
@@ -491,16 +497,18 @@ body {
 .card {
   border: none;
   background: var(--glass-bg);
-  backdrop-filter: blur(10px);
+  /* PERF: No backdrop-filter on cards — causes reflow on every card during scroll */
   border: 1px solid var(--glass-border);
   border-radius: 1.25rem;
-  transition: all 0.3s ease;
+  /* PERF: 'transition: all' checks every CSS property. Only transition composited props */
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
   overflow: hidden;
+  will-change: transform;
 }
 
 .card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.09);
 }
 
 [data-bs-theme="dark"] .card {

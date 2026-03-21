@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 // --- FIX: Sahi import paths (bina .js/.jsx) ---
 import api from '../../services/api';
@@ -67,6 +67,71 @@ const getDownloadUrl = (item) => {
 };
 
 
+// --- Drive Iframe Preview with CSP fallback ---
+// Google Drive's CSP `frame-ancestors` policy may block preview on deployed sites.
+// We detect this and show a graceful fallback with direct links.
+const DrivePreview = ({ previewUrl, item }) => {
+  const [blocked, setBlocked] = React.useState(false);
+  const [loaded, setLoaded] = React.useState(false);
+  const viewUrl = item.url; // webViewLink stored from Drive
+  const downloadUrl = `https://drive.google.com/uc?export=download&id=${item.googleDriveId}`;
+
+  // If the iframe fails to load within 6 seconds, assume CSP block
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!loaded) setBlocked(true);
+    }, 6000);
+    return () => clearTimeout(timer);
+  }, [loaded]);
+
+  if (blocked) {
+    return (
+      <div className="text-center p-4 p-md-5 rounded-3 border bg-light">
+        <div className="mb-3">
+          <div className="bg-primary bg-opacity-10 rounded-circle d-inline-flex p-4 mb-3">
+            <i className="bi bi-google-drive display-5 text-primary"></i>
+          </div>
+          <h5 className="fw-bold">Google Drive Secure File</h5>
+          <p className="text-muted small mb-0">
+            Preview is restricted by Google's security policy. Open the file directly to view or download it.
+          </p>
+        </div>
+        <div className="d-flex justify-content-center gap-3 flex-wrap mt-4">
+          <a href={viewUrl || previewUrl.replace('/preview', '/view')} target="_blank" rel="noopener noreferrer" className="btn btn-primary rounded-pill px-4">
+            <i className="bi bi-box-arrow-up-right me-2"></i>Open in Google Drive
+          </a>
+          <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className="btn btn-outline-primary rounded-pill px-4">
+            <i className="bi bi-download me-2"></i>Download
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="shadow-sm rounded overflow-hidden">
+      {!loaded && (
+        <div className="d-flex align-items-center justify-content-center bg-light" style={{ height: '300px' }}>
+          <div className="text-center">
+            <div className="spinner-border text-primary mb-2" role="status"></div>
+            <p className="small text-muted mb-0">Loading preview...</p>
+          </div>
+        </div>
+      )}
+      <div className="ratio ratio-4x3" style={{ minHeight: '300px', maxHeight: '70vh', display: loaded ? 'block' : 'none' }}>
+        <iframe
+          src={previewUrl}
+          title={item.title}
+          allow="autoplay; encrypted-media"
+          allowFullScreen
+          onLoad={() => setLoaded(true)}
+          onError={() => setBlocked(true)}
+        ></iframe>
+      </div>
+    </div>
+  );
+};
+
 // --- Detail Preview Component ---
 const DetailPreview = ({ item }) => {
   const fileType = item.type || '';
@@ -75,18 +140,7 @@ const DetailPreview = ({ item }) => {
   // 0. Google Drive Preview logic (Responsive)
   if (item.googleDriveId) {
     const previewUrl = `https://drive.google.com/file/d/${item.googleDriveId}/preview`;
-    return (
-      <div className="shadow-sm rounded overflow-hidden">
-        <div className="ratio ratio-4x3" style={{ minHeight: '300px', maxHeight: '70vh' }}>
-          <iframe 
-            src={previewUrl} 
-            title={item.title} 
-            allow="autoplay; encrypted-media" 
-            allowFullScreen
-          ></iframe>
-        </div>
-      </div>
-    );
+    return <DrivePreview previewUrl={previewUrl} item={item} />;
   }
 
   // 1. Text/Note Type
@@ -221,42 +275,58 @@ export default function ContentDetailPage() {
   const [downloadsCount, setDownloadsCount] = useState(0);
   const [relatedItems, setRelatedItems] = useState([]);
 
+  // --- View count guard (ref-based, no storage) ---
+  // Every genuine content open → +1. No user/timing restrictions.
+  // The ONLY guard: React.StrictMode in dev intentionally mounts → unmounts → remounts
+  // components to detect side-effects, which would fire this effect twice per real visit.
+  // Storing the last-counted ID in a ref (not state) prevents that StrictMode artifact
+  // without affecting real users: navigating to a new ID always counts +1 fresh.
+  const lastCountedId = useRef(null);
+
   useEffect(() => {
+    // If we already counted for this exact ID in this render cycle, skip.
+    // (Only triggers in StrictMode's double-mount; never blocks real navigations.)
+    if (lastCountedId.current === id) return;
+    lastCountedId.current = id;
+
     const fetchContent = async () => {
       setLoading(true);
       try {
+        // Simple fetch — backend always does $inc: { viewsCount: 1 }
         const { data } = await api.get(`/content/${id}`);
+
         setItem(data);
         setLikeCount(data.likesCount);
         setSavesCount(data.savesCount || 0);
         setDownloadsCount(data.downloadsCount || 0);
 
-        if (user) {
-          setIsLiked(data.likedBy.includes(user.id));
-          setIsSaved(data.savedBy && data.savedBy.includes(user.id));
-        }
-        
-        // --- Fetch Related Items ---
+        // Fetch related items
         try {
-          const relRes = await api.get(`/content?category=${data.categoryId}`);
-          // Filter out current item and limit to 4
-          const filtered = relRes.data.content
-            .filter(i => i._id !== id)
-            .slice(0, 4);
+          const relRes = await api.get(`/content?categoryId=${data.categoryId}&limit=5`);
+          const filtered = relRes.data.content.filter(i => i._id !== id).slice(0, 4);
           setRelatedItems(filtered);
         } catch (relErr) {
-          console.error("Related fetch error:", relErr);
+          console.error('Related fetch error:', relErr);
         }
-        
+
       } catch (err) {
-        console.error("Content fetch error:", err);
+        console.error('Content fetch error:', err);
         setError('Content not found or failed to load.');
         setItem(null);
       }
       setLoading(false);
     };
+
     if (id) fetchContent();
-  }, [id, user]);
+  }, [id]); // [id] only — triggers fresh fetch+count on every new content page
+
+  // Effect 2: Set user-specific state (like/save) separately, with NO view count
+  useEffect(() => {
+    if (item && user) {
+      setIsLiked(item.likedBy?.includes(user.id));
+      setIsSaved(item.savedBy?.includes(user.id));
+    }
+  }, [item, user]);
 
   const handleLike = async () => {
     if (!user) { alert('Please log in to like content.'); return; }

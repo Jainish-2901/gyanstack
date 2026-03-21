@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -32,11 +32,19 @@ export default function ChatWidget() {
         }
     }, []);
 
-    // 2. Persist Chat History to LocalStorage
+    // 2. Persist Chat History to LocalStorage — DEBOUNCED
+    // Writing JSON.stringify synchronously on every state update blocked the main thread.
+    // Debounce: only write 500ms after the last update, and cap at 20 messages.
+    const saveTimerRef = useRef(null);
     useEffect(() => {
-        if (chatHistory.length > 1) { // Only save if more than initial message
-            localStorage.setItem('gyanstack_ai_history', JSON.stringify(chatHistory));
+        if (chatHistory.length > 1) {
+            if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+            saveTimerRef.current = setTimeout(() => {
+                const toSave = chatHistory.slice(-20); // Keep only last 20 messages
+                localStorage.setItem('gyanstack_ai_history', JSON.stringify(toSave));
+            }, 500);
         }
+        return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
     }, [chatHistory]);
 
     // 3. Clear guest count upon login, but KEEP history

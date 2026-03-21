@@ -1,87 +1,91 @@
-import React from 'react';
-import { Routes, Route, Link, Navigate } from 'react-router-dom'; 
-import ProtectedRoute from './components/ProtectedRoute'; 
-import AdminLayout from './components/AdminLayout'; // The new professional layout
+import React, { lazy, Suspense } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import ProtectedRoute from './components/ProtectedRoute';
+import AdminLayout from './components/AdminLayout';
+import LoadingScreen from './components/LoadingScreen';
 
-// Components
+// Always-loaded (app-wide shell)
 import OfflineNotice from './components/OfflineNotice';
 
-// Pages
-import Login from './pages/public/Login';
-import ForgotPassword from './pages/public/ForgotPassword'; 
-import AdminPanel from './pages/admin/AdminPanel';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import EditProfile from './pages/public/EditProfile';
-import AnnouncementsPage from './pages/admin/AnnouncementsPage';
-import ViewContentRequests from './pages/admin/ViewContentRequests';
-import ContactInquiries from './pages/admin/ContactInquiries';
-import ManageUsers from './pages/admin/ManageUsers';
-import ManageAnnouncements from './pages/admin/ManageAnnouncements';
-import MyAnnouncements from './pages/admin/MyAnnouncements';
-import GlobalContentManager from './pages/admin/GlobalContentManager';
-import NotFound from './pages/admin/NotFound';
+// Lazy-loaded admin pages — each page becomes its own JS chunk
+const Login                 = lazy(() => import('./pages/public/Login'));
+const ForgotPassword        = lazy(() => import('./pages/public/ForgotPassword'));
+const AdminDashboard        = lazy(() => import('./pages/admin/AdminDashboard'));
+const AdminPanel            = lazy(() => import('./pages/admin/AdminPanel'));
+const EditProfile           = lazy(() => import('./pages/public/EditProfile'));
+const AnnouncementsPage     = lazy(() => import('./pages/admin/AnnouncementsPage'));
+const ViewContentRequests   = lazy(() => import('./pages/admin/ViewContentRequests'));
+const ContactInquiries      = lazy(() => import('./pages/admin/ContactInquiries'));
+const ManageUsers           = lazy(() => import('./pages/admin/ManageUsers'));
+const ManageAnnouncements   = lazy(() => import('./pages/admin/ManageAnnouncements'));
+const MyAnnouncements       = lazy(() => import('./pages/admin/MyAnnouncements'));
+const GlobalContentManager  = lazy(() => import('./pages/admin/GlobalContentManager'));
+const NotFound              = lazy(() => import('./pages/admin/NotFound'));
 
 export default function App() {
   return (
-    <div className="App" style={{ minHeight: '100vh' }}> 
+    <div className="App" style={{ minHeight: '100vh' }}>
       <OfflineNotice />
-      
-      <Routes>
-        {/* 1. Public Auth Routes (No Dashboard Layout) */}
-        <Route path="/" element={<Navigate to="/dashboard/admin" replace />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
 
-        {/* 2. PROTECTED DASHBOARD ROUTES (Wrapped in AdminLayout) */}
-        <Route 
-          path="/*" 
-          element={
-            <ProtectedRoute roles={['admin', 'superadmin']}>
-              <AdminLayout>
-                <Routes>
-                  <Route path="dashboard/admin" element={<AdminDashboard />} />
-                  <Route path="admin-panel" element={<AdminPanel />} />
-                  <Route path="settings" element={<EditProfile />} />
-                  <Route path="announcements" element={<AnnouncementsPage />} />
-                  <Route path="dashboard/requests" element={<ViewContentRequests />} />
-                  <Route path="dashboard/my-announcements" element={
-                    <ProtectedRoute roles={['admin']}>
-                      <MyAnnouncements />
-                    </ProtectedRoute>
-                  } />
-                  
-                  {/* Super Admin Restricted Routes */}
-                  <Route path="dashboard/contact" element={
-                    <ProtectedRoute roles={['superadmin']}> 
-                      <ContactInquiries />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="dashboard/users" element={
-                    <ProtectedRoute roles={['superadmin']}> 
-                      <ManageUsers />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="dashboard/global-content" element={
-                    <ProtectedRoute roles={['superadmin']}> 
-                      <GlobalContentManager />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="dashboard/announcements-manage" element={
-                    <ProtectedRoute roles={['superadmin']}> 
-                      <ManageAnnouncements />
-                    </ProtectedRoute>
-                  } />
+      <Suspense fallback={<LoadingScreen text="Loading admin panel..." />}>
+        <Routes>
+          {/* 1. Public Auth Routes */}
+          <Route path="/"               element={<Navigate to="/dashboard/admin" replace />} />
+          <Route path="/login"          element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
-                  {/* 404 inside Dashboard */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </AdminLayout>
-            </ProtectedRoute>
-          } 
-        />
-        {/* 3. GLOBAL Catch-all 404 */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+          {/* 2. Protected Dashboard Routes */}
+          <Route
+            path="/*"
+            element={
+              <ProtectedRoute roles={['admin', 'superadmin']}>
+                <AdminLayout>
+                  <Routes>
+                    <Route path="dashboard/admin"   element={<AdminDashboard />} />
+                    <Route path="admin-panel"        element={<AdminPanel />} />
+                    <Route path="settings"           element={<EditProfile />} />
+                    <Route path="announcements"      element={<AnnouncementsPage />} />
+                    <Route path="dashboard/requests" element={<ViewContentRequests />} />
+
+                    <Route path="dashboard/my-announcements" element={
+                      <ProtectedRoute roles={['admin']}>
+                        <MyAnnouncements />
+                      </ProtectedRoute>
+                    } />
+
+                    {/* Super Admin Only */}
+                    <Route path="dashboard/contact" element={
+                      <ProtectedRoute roles={['superadmin']}>
+                        <ContactInquiries />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="dashboard/users" element={
+                      <ProtectedRoute roles={['superadmin']}>
+                        <ManageUsers />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="dashboard/global-content" element={
+                      <ProtectedRoute roles={['superadmin']}>
+                        <GlobalContentManager />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="dashboard/announcements-manage" element={
+                      <ProtectedRoute roles={['superadmin']}>
+                        <ManageAnnouncements />
+                      </ProtectedRoute>
+                    } />
+
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Global catch-all */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
     </div>
   );
 }

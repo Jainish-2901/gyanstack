@@ -11,6 +11,7 @@ export default function EditContentModal({ item, onClose, onUpdate, categories }
   const [url, setUrl] = useState(item?.url || '');
   const [textNote, setTextNote] = useState(item?.textNote || '');
   const [file, setFile] = useState(null);
+  const [fileType, setFileType] = useState(item?.type || '');
   
   if (!item) return null;
   
@@ -28,6 +29,8 @@ export default function EditContentModal({ item, onClose, onUpdate, categories }
     formData.append('title', title);
     formData.append('categoryId', categoryId);
     formData.append('tags', tags);
+    // Allow admin to correct the MIME type on existing content
+    if (fileType) formData.append('fileType', fileType);
     
     if (item.type === 'link') {
       formData.append('url', url);
@@ -155,6 +158,25 @@ export default function EditContentModal({ item, onClose, onUpdate, categories }
                         <i className="bi bi-info-circle-fill me-1 text-info"></i>
                         Selecting a new file will <strong>automatically replace</strong> the old one on Google Drive, Server, and Website.
                       </div>
+                    </div>
+                  )}
+                  {/* File type override — visible for Drive files or octet-stream type */}
+                  {(item.googleDriveId || item.type?.includes('octet') || item.fileResourceType === 'raw') && (
+                    <div className="mt-3">
+                      <label className="form-label small fw-bold"><i className="bi bi-file-earmark-fill me-1 text-primary"></i>File Type</label>
+                      <select className="form-select form-select-sm" value={fileType} onChange={(e) => setFileType(e.target.value)}>
+                        <option value="application/pdf">📄 PDF Document</option>
+                        <option value="application/msword">📝 Word Document (.doc)</option>
+                        <option value="application/vnd.openxmlformats-officedocument.wordprocessingml.document">📝 Word Document (.docx)</option>
+                        <option value="application/vnd.ms-powerpoint">📊 PowerPoint (.ppt)</option>
+                        <option value="application/vnd.openxmlformats-officedocument.presentationml.presentation">📊 PowerPoint (.pptx)</option>
+                        <option value="application/vnd.ms-excel">📈 Excel (.xls)</option>
+                        <option value="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">📈 Excel (.xlsx)</option>
+                        <option value="video/mp4">🎬 Video (MP4)</option>
+                        <option value="image/jpeg">🖼️ Image (JPG/PNG)</option>
+                        <option value="application/zip">🗜️ ZIP Archive</option>
+                        <option value="application/octet-stream">❓ Other / Unknown</option>
+                      </select>
                     </div>
                   )}
                 </div>

@@ -267,20 +267,60 @@ exports.uploadContent = async (req, res) => {
         fileUrl = link; 
         if (type === 'file') {
           fileResourceType = 'raw';
-          // --- AUTO-DETECT: Drive Metadata fetching ---
-          const driveIdMatch = link.match(/[-\w]{25,}/); 
-          if (driveIdMatch) {
-            const driveId = driveIdMatch[0];
-            driveIdForDB = driveId;
-            const meta = await getDriveFileMetadata(driveId);
-            if (meta && !meta.trashed) {
-              finalFileType = meta.mimeType;
-              if (!title) title = meta.name ? meta.name.split('.').slice(0, -1).join('.') : meta.name;
-              console.log(`Auto-detected Drive file: ${meta.name} (${meta.mimeType})`);
-            } else {
-              finalFileType = 'application/octet-stream';
-            }
+
+          // PRIORITY 1: Admin explicitly selected the file type in the UI (most reliable)
+          const { externalMimeType } = req.body;
+          if (externalMimeType && externalMimeType !== 'application/octet-stream') {
+            finalFileType = externalMimeType;
+            console.log(`Using admin-selected MIME type: ${finalFileType}`);
+          }
+
+          // PRIORITY 2: Extract Google Drive file ID and try API metadata
+          // (Works only if the service account has access or file is in our Drive)
+          let driveId = null;
+          const filePathMatch = link.match(/\/file\/d\/([A-Za-z0-9_-]{10,})/);
+          if (filePathMatch) {
+            driveId = filePathMatch[1];
           } else {
+            const idParamMatch = link.match(/[?&]id=([A-Za-z0-9_-]{10,})/);
+            if (idParamMatch) driveId = idParamMatch[1];
+          }
+
+          if (driveId) {
+            driveIdForDB = driveId;
+
+            // Only hit the Drive API if we don't already have a confirmed MIME type
+            if (!externalMimeType || externalMimeType === 'application/octet-stream') {
+              const meta = await getDriveFileMetadata(driveId);
+              if (meta && !meta.trashed) {
+                finalFileType = meta.mimeType;
+                if (!title) title = meta.name ? meta.name.split('.').slice(0, -1).join('.') || meta.name : '';
+                console.log(`Auto-detected from Drive API: ${meta.name} (${meta.mimeType})`);
+              } else {
+                // PRIORITY 3: Guess from URL extension (last resort — rarely works for Drive URLs)
+                const extMatch = link.match(/\.([a-z0-9]+)([?#]|$)/i);
+                const ext = extMatch ? extMatch[1].toLowerCase() : '';
+                const mimeMap = {
+                  pdf:  'application/pdf',
+                  doc:  'application/msword',
+                  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                  ppt:  'application/vnd.ms-powerpoint',
+                  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                  xls:  'application/vnd.ms-excel',
+                  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                  zip:  'application/zip',
+                  mp4:  'video/mp4',
+                  png:  'image/png',
+                  jpg:  'image/jpeg',
+                  jpeg: 'image/jpeg',
+                  gif:  'image/gif',
+                };
+                finalFileType = mimeMap[ext] || 'application/octet-stream';
+                console.warn(`Drive metadata unavailable. Guessed MIME from extension: ${finalFileType}`);
+              }
+            }
+          } else if (!externalMimeType || externalMimeType === 'application/octet-stream') {
+            // No Drive ID, no admin selection — truly unknown
             finalFileType = 'application/octet-stream';
           }
         }
@@ -377,8 +417,9 @@ exports.getContent = async (req, res) => {
       projectObj = { score: { $meta: "textScore" } };
     }
 
-    const content = await Content.find(query, projectObj).sort(sortObj);
-    res.json({ content });
+    const limit = parseInt(req.query.limit) || 0; // 0 = no limit (default for backwards compat)
+    const content = await Content.find(query, projectObj).sort(sortObj).limit(limit);
+    res.json({ content, hasMore: limit > 0 && content.length === limit });
   } catch (err) {
     console.error("getContent error:", err.message);
     res.status(500).json({ message: 'Server error (getContent): ' + err.message });
@@ -386,14 +427,24 @@ exports.getContent = async (req, res) => {
 };
 
 // 3. Ek Single Content Piece Lena (Aur View Count badhana)
-// ... (Ye function pehle jaisa hi sahi hai, koi change nahi) ...
+// skipView=true → only fetch, do NOT increment (used by client when already counted in session)
 exports.getSingleContent = async (req, res) => {
   try {
-    const content = await Content.findByIdAndUpdate(
-      req.params.id,
-      { $inc: { viewsCount: 1 } }, 
-      { new: true } 
-    ).populate('uploadedBy', 'username email'); 
+    const skipView = req.query.skipView === 'true';
+
+    let content;
+    if (skipView) {
+      // Just fetch — no view increment
+      content = await Content.findById(req.params.id)
+        .populate('uploadedBy', 'username email');
+    } else {
+      // First visit: fetch + increment view count atomically
+      content = await Content.findByIdAndUpdate(
+        req.params.id,
+        { $inc: { viewsCount: 1 } },
+        { new: true }
+      ).populate('uploadedBy', 'username email');
+    }
 
     if (!content) {
       return res.status(404).json({ message: 'Content not found' });
@@ -448,7 +499,7 @@ exports.getMyContent = async (req, res) => {
 
 // 6. Content Update Karna (Admin Only) - (CHANGED with Drive Sync)
 exports.updateContent = async (req, res) => {
-    const { title, categoryId, tags, url, textNote } = req.body;
+    const { title, categoryId, tags, url, textNote, fileType } = req.body;
     try {
       let content = await Content.findById(req.params.id);
       if (!content) {
@@ -467,6 +518,8 @@ exports.updateContent = async (req, res) => {
       if (typeof tags === 'string') {
           updateData.tags = tags.split(',').map(tag => tag.trim()).filter(tag => tag);
       }
+      // Allow admin to correct the MIME type (e.g. fix octet-stream on external Drive links)
+      if (fileType) updateData.type = fileType;
 
     // --- FILE REPLACE LOGIC ---
     if (req.file) {
@@ -550,8 +603,15 @@ exports.updateContent = async (req, res) => {
       }
       
       if (syncName || syncPathNames) {
-        // Note: updateDriveFile takes path names to resolve ID if needed
-        await updateDriveFile(content.googleDriveId, syncName, syncPathNames);
+        // Wrap Drive sync in its own try/catch:
+        // A Drive API failure (network issue, permission error, token expiry) should NOT
+        // abort the DB update and return 500. DB changes save regardless.
+        try {
+          await updateDriveFile(content.googleDriveId, syncName, syncPathNames);
+        } catch (driveErr) {
+          console.warn('Drive sync failed (non-fatal):', driveErr.message);
+          // Continue — DB update will still succeed below
+        }
       }
     }
 
