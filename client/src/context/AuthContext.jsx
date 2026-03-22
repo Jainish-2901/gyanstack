@@ -8,12 +8,13 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // --- HELPER: Load User on Refresh ---
   useEffect(() => {
     const loadUser = async () => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          const { data } = await api.get('/auth/me'); 
+          const { data } = await api.get('/auth/me');
           setUser(data);
         } catch (error) {
           console.error("Token validation failed:", error);
@@ -26,8 +27,7 @@ export function AuthProvider({ children }) {
     loadUser();
   }, []);
 
-  // --- (register, login, logout, forgotPassword, resetPassword functions pehle se hain...) ---
-
+  // --- 1. Register ---
   const register = async (username, email, phone, password) => {
     try {
       const { data } = await api.post('/auth/register', {
@@ -35,13 +35,13 @@ export function AuthProvider({ children }) {
       });
       localStorage.setItem('token', data.token);
       setUser(data.user);
-      return data.user; 
+      return data.user;
     } catch (error) {
-      const msg = error.response?.data?.message || 'Registration failed due to server error.';
-      throw new Error(msg);
+      throw new Error(error.response?.data?.message || 'Registration failed.');
     }
   };
 
+  // --- 2. Login ---
   const login = async (loginId, password, preFetchedData = null) => {
     try {
       const data = preFetchedData || (await api.post('/auth/login', {
@@ -53,16 +53,19 @@ export function AuthProvider({ children }) {
       setUser(data.user);
       return data.user;
     } catch (error) {
-      const msg = error.response?.data?.message || 'Login failed. Invalid credentials.';
-      throw new Error(msg);
+      throw new Error(error.response?.data?.message || 'Login failed.');
     }
   };
 
+  // --- 3. Logout ---
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
+    // Note: You might want to call a backend route here to clear the fcmToken 
+    // so the user doesn't get notifications after logging out.
   };
-  
+
+  // --- 4. Password Recovery ---
   const forgotPasswordRequest = async (email) => {
     try {
       const { data } = await api.post('/auth/forgotpassword', { email });
@@ -76,62 +79,58 @@ export function AuthProvider({ children }) {
     try {
       const { data } = await api.post('/auth/resetpassword', { otp, newPassword });
       return data.message;
-    } catch (error)
-    {
-      throw new Error(error.response?.data?.message || 'Invalid or expired OTP.');
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Invalid OTP.');
     }
   };
 
-  // --- YEH NAYE FUNCTIONS HAIN ---
-
-  // 7. Profile Update (Username/Phone/ProfileImage)
+  // --- 5. Profile & Security Updates ---
   const updateProfile = async (formData) => {
     try {
-      // API call to backend (sending FormData for multipart/form-data)
       const { data } = await api.put('/auth/update-profile', formData);
-      
-      // Naya token aur user data save karein (taaki Header mein naam/photo update ho)
       localStorage.setItem('token', data.token);
       setUser(data.user);
-      
       return "Profile updated successfully!";
     } catch (error) {
-      const msg = error.response?.data?.message || 'Profile update failed.';
-      throw new Error(msg);
+      throw new Error(error.response?.data?.message || 'Profile update failed.');
     }
   };
 
-  // 8. Password Change (Dashboard se)
   const changePassword = async (currentPassword, newPassword) => {
     try {
-      // API call to backend
-      const { data } = await api.put('/auth/change-password', { 
-        currentPassword, 
-        newPassword 
-      });
-      return data.message; // "Password changed successfully"
+      const { data } = await api.put('/change-password', { currentPassword, newPassword });
+      return data.message;
     } catch (error) {
-      const msg = error.response?.data?.message || 'Password change failed.';
-      throw new Error(msg);
+      throw new Error(error.response?.data?.message || 'Password change failed.');
     }
   };
 
-  // ---------------------------------
+  // --- 6. NEW: Manual FCM Token Sync ---
+  // This allows you to manually trigger a sync if needed outside of the NotificationBell
+  const syncFCMToken = async (fcmToken) => {
+    try {
+      await api.post('/auth/update-fcm-token', { fcmToken });
+      console.log("FCM Token synced via AuthContext");
+    } catch (error) {
+      console.error("FCM Sync Background Error:", error);
+    }
+  };
 
   const value = {
     user,
     loading,
     register,
-    login,  
+    login,
     logout,
     forgotPasswordRequest,
     resetPassword,
-    updateProfile, // <-- Naya function add karein
-    changePassword, // <-- Naya function add karein
+    updateProfile,
+    changePassword,
+    syncFCMToken, // Exported for global use
   };
 
   if (loading) {
-    return <LoadingScreen text="Authenticating user..." />;
+    return <LoadingScreen text="GyanStack is checking your credentials..." />;
   }
 
   return (

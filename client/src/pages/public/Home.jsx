@@ -197,8 +197,8 @@ const CategorizedContent = ({ nestedCategories }) => {
   // 1 → centered full-width  |  2 → 2-col  |  3+ → 3-col grid (wraps to new rows for 4, 5, 6...)
   const colClass =
     topLevel.length === 1 ? 'col-12 col-md-8 mx-auto' :
-    topLevel.length === 2 ? 'col-md-6' :
-    'col-lg-4 col-md-6';
+      topLevel.length === 2 ? 'col-md-6' :
+        'col-lg-4 col-md-6';
 
   return (
     <section className="container py-5">
@@ -346,7 +346,7 @@ export default function Home() {
           api.get('/categories/all-nested'),
           // Removed: api.get('/content') — content is now fetched lazily per category
         ]);
-        
+
         setStats(statsRes.data);
         setUploaders(uploadersRes.data.uploaders);
         // Pass nested categories directly (no flattening needed for the tree)
@@ -378,8 +378,9 @@ export default function Home() {
             <h1 className="hero-title">
               Master Your Semesters with GyanStack
             </h1>
-            <p className="lead fw-normal mb-5 opacity-75 mx-auto" style={{ maxWidth: '600px' }}>
-              Get access to premium BCA/MCA notes, most essential assignments, and previous year question papers instantly. Don't study hard, study smartly.
+            <p className="lead fw-normal mb-5 opacity-75 mx-auto" style={{ maxWidth: '650px' }}>
+              Access premium study notes, essential assignments, and previous year question papers
+              across all academic fields instantly. Don't study hard, study smartly.
             </p>
             <div className='d-flex justify-content-center gap-3 flex-wrap fade-in'>
               <Link className="btn cta-gradient btn-lg px-5 py-3 rounded-pill" to={CTALink} role="button">
@@ -404,7 +405,7 @@ export default function Home() {
           </h2>
           <p className="text-muted">High-quality resources tailored for BCA & MCA excellence.</p>
         </div>
-        
+
         {/* Type 1: Core Platform Excellence */}
         <div className="row justify-content-center mb-5">
           <FeatureCard
@@ -436,7 +437,7 @@ export default function Home() {
         {/* Type 2: Premium Account Benefits */}
         <div className="text-center mb-5 mt-5 fade-in">
           <h4 className="fw-bold mb-3"><span className="text-primary"><i className="bi bi-star-fill me-2"></i></span>Unlock Premium Benefits</h4>
-          <p className="text-muted mx-auto" style={{maxWidth: '600px'}}>Join our community to access these exclusive member-only features designed for high-performance learning.</p>
+          <p className="text-muted mx-auto" style={{ maxWidth: '600px' }}>Join our community to access these exclusive member-only features designed for high-performance learning.</p>
         </div>
 
         <div className="row justify-content-center">
@@ -461,7 +462,7 @@ export default function Home() {
           <FeatureCard
             icon="bi-people-fill"
             title="Community Powered"
-            text="Join 1000+ BCA/MCA students sharing and helping each other grow together."
+            text="Join 1000+ students sharing and helping each other grow together."
             colorClass="bg-gradient-3"
           />
         </div>

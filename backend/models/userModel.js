@@ -30,6 +30,10 @@ const userSchema = new mongoose.Schema({
     unique: true,
     sparse: true,
   },
+  fcmToken: {
+    type: String,
+    default: ''
+  },
   role: {
     type: String,
     enum: ['student', 'admin', 'superadmin'],
@@ -51,10 +55,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
-  isDeleted: { 
-    type: Boolean, 
-    default: false 
-  }
+  isDeleted: {
+    type: Boolean,
+    default: false
+  },
 });
 
 // Password Hash karne ke liye (automatic)

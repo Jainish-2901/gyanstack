@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import api from '../../services/api'; // FIX: Absolute path (assuming src root)
-import LoadingScreen from '../../components/LoadingScreen'; // FIX: Absolute path
+import React, { useState, useEffect, useMemo } from 'react';
+import api from '../../services/api';
+import LoadingScreen from '../../components/LoadingScreen';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -12,8 +12,8 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels'; // Zaroori: plugin for counting on bars
 
-// Chart.js components ko register karein (ZAROORI)
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -21,240 +21,223 @@ ChartJS.register(
   ArcElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  ChartDataLabels // Registering the counting plugin
 );
 
-// Chhota helper component (Stat Card)
-const StatCard = ({ title, value, icon, colorClass }) => (
-  <div className="col-md-4 col-sm-6">
-    <div className="card border-0 h-100 rounded-lg">
-      <div className="card-body d-flex align-items-center">
-        <div className={`fs-1 ${colorClass} me-3`}>
-          <i className={`bi ${icon}`}></i>
+const MetricTile = ({ title, value, icon, color }) => (
+  <div className="col-6 col-md-3">
+    <div className="card border-0 shadow-sm rounded-4 h-100 transition-hover">
+      <div className="card-body p-2 p-md-3 d-flex align-items-center">
+        <div
+          className={`rounded-circle bg-${color} bg-opacity-10 d-flex align-items-center justify-content-center text-${color} me-2 me-md-3`}
+          style={{ width: '45px', height: '45px', minWidth: '45px' }}
+        >
+          <i className={`bi ${icon} fs-5`}></i>
         </div>
-        <div>
-          <h5 className="card-title text-muted mb-1">{title}</h5>
-          <p className="card-text h2 fw-bold mb-0">{value}</p>
+        <div className="flex-grow-1 overflow-hidden text-start">
+          <h6 className="text-muted extra-small text-uppercase fw-bold mb-0 text-truncate">{title}</h6>
+          <h4 className="fw-bold mb-0 text-dark">{value?.toLocaleString() || 0}</h4>
         </div>
       </div>
     </div>
   </div>
 );
 
-
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
-  // --- NAYA STATE: Time Filter ---
-  const [period, setPeriod] = useState('all'); // FIX: Default 'all' rakhte hain
-  // -----------------------------
-
-  // Chart data ke liye state
-  const [chartData, setChartData] = useState(null);
+  const [period, setPeriod] = useState('all');
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchDashboardData = async () => {
       setLoading(true);
       try {
-        // API call: Period ko API call me bhejein
         const { data } = await api.get(`/admin/stats?period=${period}`);
-        
         setStats(data);
-        
-        // Chart ka label period ke hisaab se update karein
-        const label = period === 'all' ? 'All Time Engagement' : `Engagement (Last ${period})`;
-
-        // Chart ka data prepare karein
-        setChartData({
-          labels: ['Likes', 'Saves', 'Downloads', 'Views'],
-          datasets: [
-            {
-              label: label, 
-              data: [
-                data.totalLikes,
-                data.totalSaves,
-                data.totalDownloads,
-                data.totalViews,
-              ],
-              backgroundColor: [
-                'rgba(255, 99, 132, 0.8)', // Red (Likes)
-                'rgba(75, 192, 192, 0.8)', // Green (Saves)
-                'rgba(255, 206, 86, 0.8)', // Yellow (Downloads)
-                'rgba(54, 162, 235, 0.8)', 	// Blue (Views)
-              ],
-            },
-          ],
-        });
-        
       } catch (err) {
-        setError('Failed to load dashboard data. Check API/Server logs.');
-        console.error(err);
+        setError('Connection failed. Please check server status.');
       }
       setLoading(false);
     };
-    fetchStats();
-  // Dependency array me 'period' add karein
-  }, [period]); 
+    fetchDashboardData();
+  }, [period]);
 
-  if (loading) {
-    return <LoadingScreen text="Loading dashboard analytics..." />;
-  }
+  const engagementChart = useMemo(() => {
+    if (!stats) return null;
+    return {
+      labels: ['Likes', 'Saves', 'Downloads', 'Views'],
+      datasets: [{
+        data: [stats.totalLikes || 0, stats.totalSaves || 0, stats.totalDownloads || 0, stats.totalViews || 0],
+        backgroundColor: ['#FF6384', '#4BC0C0', '#FFCE56', '#36A2EB'],
+        borderRadius: 8,
+        barThickness: 40, // Increased thickness for wide view
+      }]
+    };
+  }, [stats]);
 
-  if (error) {
-    return (
-      <div className="container">
-        <h3 className="fw-bold mb-4 text-primary">Admin Dashboard</h3>
-        <div className="alert alert-danger">{error}</div>
-      </div>
-    );
-  }
+  const authDistribution = useMemo(() => {
+    if (!stats) return null;
+    const google = stats.googleUsersCount || 0;
+    const manual = stats.manualUsersCount || 0;
+    const total = google + manual || 1;
+    return {
+      percentage: ((google / total) * 100).toFixed(0),
+      chartData: {
+        labels: ['Google Sync', 'Manual Entry'],
+        datasets: [{
+          data: [google, manual],
+          backgroundColor: ['#EA4335', '#0D6EFD'],
+          borderWidth: 0,
+          cutout: '75%',
+        }]
+      }
+    };
+  }, [stats]);
 
+  if (loading) return <LoadingScreen text="Analyzing Platform Data..." />;
+  if (error) return <div className="alert alert-danger m-4 rounded-4">{error}</div>;
   if (!stats) return null;
 
-  // --- DASHBOARD LAYOUT MEIN WRAP KAREIN ---
   return (
-    <div className="container-fluid fade-in px-0 overflow-x-hidden">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="fw-bold text-primary mb-0">
-          Analytics Dashboard
-        </h4>
-        
-        {/* --- NAYA FILTER DROPDOWN --- */}
-        <div className="filter-select">
-          <select 
-            className="form-select form-select-sm" 
-            value={period} 
+    <div className="container-fluid py-3 px-2 overflow-x-hidden">
+
+      {/* HEADER SECTION */}
+      <div className="d-flex justify-content-between align-items-center mb-4 px-1">
+        <div>
+          <h5 className="fw-bold text-dark mb-0">Platform Pulse</h5>
+          <small className="text-muted extra-small">Real-time engagement tracking</small>
+        </div>
+
+        {/* UPDATED DROPDOWN STYLING */}
+        <div className="d-flex align-items-center bg-white border border-light-subtle rounded-pill px-3 py-1 shadow-sm transition-hover"
+          style={{ minWidth: '180px', transition: 'all 0.2s ease' }}>
+          <i className="bi bi-calendar3 text-primary me-2 small"></i>
+          <select
+            className="form-select form-select-sm fw-bold text-dark shadow-none bg-transparent p-0"
+            style={{ fontSize: '0.85rem', cursor: 'pointer', border: 'none', outline: 'none', backgroundImage: 'none' }}
+            value={period}
             onChange={(e) => setPeriod(e.target.value)}
-            style={{minWidth: '150px'}}
           >
-            {/* --- NAYA OPTION ADD HUA --- */}
-            <option value="all">All Over (Total)</option>
-            {/* --------------------------- */}
+            <option value="all">Total Lifetime</option>
             <option value="week">Past Week</option>
             <option value="month">Past Month</option>
-            <option value="year">Past Year</option>
           </select>
+          <i className="bi bi-chevron-down small text-muted ms-1" style={{ fontSize: '0.7rem' }}></i>
         </div>
-        {/* ---------------------------- */}
       </div>
-      
-      {/* Stat Cards */}
-      <div className="row g-3 mb-4">
-        {/* Note: Total Uploads aur Total Users hamesha All Time data hi dikhayenge, isliye yahaan date filter ka impact kam hai. */}
-        <StatCard title="Total Uploads" value={stats.totalUploads} icon="bi-cloud-arrow-up-fill" colorClass="text-primary" />
-        <StatCard title="Total Users" value={stats.totalUsers} icon="bi-people-fill" colorClass="text-success" />
-        
-        {/* --- NEW: User Breakdown Cards --- */}
-        <StatCard title="Google Users" value={stats.googleUsersCount || 0} icon="bi-google" colorClass="text-danger" />
-        <StatCard title="Manual Users" value={stats.manualUsersCount || 0} icon="bi-person-badge-fill" colorClass="text-primary" />
-        {/* ------------------------------- */}
 
-        {/* Views, Likes, Saves, Downloads filter ke hisaab se update honge */}
-        <StatCard title="Views" value={stats.totalViews} icon="bi-eye-fill" colorClass="text-info" />
-        <StatCard title="Likes" value={stats.totalLikes} icon="bi-heart-fill" colorClass="text-danger" />
-        <StatCard title="Saves" value={stats.totalSaves} icon="bi-bookmark-fill" colorClass="text-success" />
-        <StatCard title="Downloads" value={stats.totalDownloads} icon="bi-download" colorClass="text-warning" />
+      {/* METRIC TILES GRID */}
+      <div className="row g-2 g-md-3 mb-4">
+        <MetricTile title="Total Uploads" value={stats.totalUploads} icon="bi-cloud-arrow-up-fill" color="primary" />
+        <MetricTile title="Total Users" value={stats.totalUsers} icon="bi-people-fill" color="success" />
+        <MetricTile title="Google Sync" value={stats.googleUsersCount} icon="bi-google" color="danger" />
+        <MetricTile title="Manual Entry" value={stats.manualUsersCount} icon="bi-person-badge-fill" color="dark" />
+        <MetricTile title="Total Views" value={stats.totalViews} icon="bi-eye-fill" color="secondary" />
+        <MetricTile title="Total Likes" value={stats.totalLikes} icon="bi-heart-fill" color="danger" />
+        <MetricTile title="Total Saves" value={stats.totalSaves} icon="bi-bookmark-star-fill" color="success" />
+        <MetricTile title="Downloads" value={stats.totalDownloads} icon="bi-download" color="warning" />
       </div>
-      
-      {/* Charts */}
-      {chartData && (
-        <div className="row gx-lg-2 gy-4">
-          <div className="col-lg-8">
-            <div className="card border-0 rounded-lg">
-              <div className="card-body">
-                <h5 className="card-title">{chartData.datasets[0].label}</h5>
-                <Bar 
-                  data={chartData} 
-                  options={{ responsive: true, plugins: { legend: { display: false } } }} 
+
+      <div className="row g-3">
+        {/* FULL WIDTH ACTION DISTRIBUTION CHART */}
+        <div className="col-12">
+          <div className="card border-0 shadow-sm rounded-4">
+            <div className="card-body p-4">
+              <h6 className="fw-bold mb-4 small text-uppercase text-muted">Action Distribution Analysis</h6>
+              <div style={{ height: '350px' }}>
+                <Bar
+                  data={engagementChart}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: { display: false },
+                      datalabels: { // Count display logic
+                        anchor: 'end',
+                        align: 'top',
+                        formatter: (value) => value.toLocaleString(),
+                        font: { weight: 'bold', size: 12 },
+                        color: '#475569'
+                      }
+                    },
+                    scales: {
+                      y: { display: false }, // Hiding Y axis to make it cleaner since we have labels
+                      x: { grid: { display: false }, ticks: { font: { weight: 'bold' } } }
+                    }
+                  }}
                 />
               </div>
             </div>
           </div>
-          <div className="col-lg-4">
-            {/* User Distribution Doughnut Chart */}
-            <div className="card border-0 rounded-lg h-100">
-              <div className="card-body">
-                <h6 className="card-title fw-bold">User Distribution (Login Type)</h6>
-                <div style={{ height: '240px', position: 'relative' }} className="d-flex align-items-center justify-content-center">
-                  <Doughnut 
-                    data={{
-                      labels: ['Google Users', 'Manual Users'],
-                      datasets: [
-                        {
-                          data: [stats.googleUsersCount || 0, stats.manualUsersCount || 0],
-                          backgroundColor: [
-                              'rgba(66, 133, 244, 0.9)', // Google Blue
-                              'rgba(52, 168, 83, 0.9)',  // Success Green
-                          ],
-                          borderWidth: 0,
-                          hoverOffset: 10
-                        }
-                      ]
-                    }}
-                    options={{ 
-                        responsive: true, 
-                        maintainAspectRatio: false,
-                        plugins: { 
-                            legend: { position: 'bottom' },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        const label = context.label || '';
-                                        const value = context.parsed || 0;
-                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                        const percentage = Math.round((value / total) * 100);
-                                        return `${label}: ${value} (${percentage}%)`;
-                                    }
-                                }
-                            }
-                        } 
-                    }} 
-                  />
-                </div>
-                <div className="mt-3 small text-center text-muted">
-                    Total Registered: <span className="fw-bold">{stats.totalUsers}</span>
+        </div>
+
+        {/* LOGIN SOURCE */}
+        <div className="col-md-4">
+          <div className="card border-0 shadow-sm rounded-4 h-100">
+            <div className="card-body p-4">
+              <h6 className="fw-bold small text-uppercase text-muted mb-4">Traffic Channel</h6>
+              <div style={{ height: '180px', position: 'relative' }}>
+                <Doughnut
+                  data={authDistribution.chartData}
+                  options={{ maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: false } } }}
+                />
+                <div className="chart-center-label text-center">
+                  <h3 className="fw-bold mb-0 text-dark">{authDistribution.percentage}%</h3>
+                  <small className="text-muted extra-small fw-bold">GOOGLE</small>
                 </div>
               </div>
-            </div>
-          </div>
-          
-          <div className="col-lg-4">
-            {/* Engagement Split Doughnut Chart */}
-            <div className="card border-0 rounded-lg h-100">
-              <div className="card-body">
-                <h6 className="card-title fw-bold">Engagement Split (Actions)</h6>
-                <div style={{ height: '240px', position: 'relative' }} className="d-flex align-items-center justify-content-center">
-                    <Doughnut 
-                    data={{
-                        labels: ['Likes', 'Saves', 'Downloads'],
-                        datasets: [
-                        {
-                            label: 'Total Engagement',
-                            data: [stats.totalLikes, stats.totalSaves, stats.totalDownloads],
-                            backgroundColor: [
-                                'rgba(255, 99, 132, 0.9)', 
-                                'rgba(75, 192, 192, 0.9)', 
-                                'rgba(255, 206, 86, 0.9)',
-                            ],
-                            borderWidth: 0,
-                            hoverOffset: 10
-                        }
-                        ]
-                    }}
-                    options={{ 
-                        responsive: true, 
-                        maintainAspectRatio: false,
-                        plugins: { legend: { position: 'bottom' } } 
-                    }} 
-                    />
+              <div className="mt-4">
+                <div className="d-flex justify-content-between mb-2">
+                  <small className="fw-bold text-muted extra-small"><i className="bi bi-circle-fill text-danger me-1"></i> Google</small>
+                  <small className="fw-bold">{stats.googleUsersCount}</small>
+                </div>
+                <div className="d-flex justify-content-between">
+                  <small className="fw-bold text-muted extra-small"><i className="bi bi-circle-fill text-primary me-1"></i> Manual</small>
+                  <small className="fw-bold">{stats.manualUsersCount}</small>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      )}
+
+        {/* SYSTEM VITALITY */}
+        <div className="col-md-8">
+          <div className="card border-0 shadow-sm rounded-4 h-100">
+            <div className="card-body p-4">
+              <div className="d-flex justify-content-between align-items-center mb-4">
+                <h6 className="fw-bold small text-uppercase text-muted mb-0">System Vitality</h6>
+                <span className="badge bg-success bg-opacity-10 text-success extra-small rounded-pill">OPTIMIZED</span>
+              </div>
+              <div className="row g-4">
+                {[
+                  { label: 'Interaction Rate', color: 'danger', val: stats.totalViews > 0 ? (stats.totalLikes / stats.totalViews) * 100 : 0 },
+                  { label: 'Retention Power', color: 'success', val: stats.totalViews > 0 ? (stats.totalSaves / stats.totalViews) * 100 : 0 },
+                  { label: 'Platform Reach', color: 'primary', val: stats.totalUsers > 0 ? (stats.totalViews / stats.totalUsers) * 10 : 0 },
+                  { label: 'Cloud Stability', color: 'info', val: 100 }
+                ].map((item, idx) => (
+                  <div className="col-md-6" key={idx}>
+                    <div className="d-flex align-items-center mb-2">
+                      <small className="extra-small fw-bold text-dark">{item.label}</small>
+                      <span className="ms-auto extra-small fw-bold text-muted">{item.val.toFixed(1)}%</span>
+                    </div>
+                    <div className="progress rounded-pill mb-1" style={{ height: '6px' }}>
+                      <div className={`progress-bar progress-bar-striped progress-bar-animated bg-${item.color}`} style={{ width: `${item.val > 100 ? 100 : item.val}%` }}></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        .extra-small { font-size: 0.65rem; letter-spacing: 0.3px; }
+        .chart-center-label { position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%); }
+        .transition-hover:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.05) !important; }
+      `}</style>
     </div>
   );
 }

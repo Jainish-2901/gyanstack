@@ -20,8 +20,8 @@ const ContentCardMobile = ({ item, categoryMap, handleEditClick, handleDelete, i
     <div className="card-body p-3">
       {/* 1. Header Row: Title (Full Space) */}
       <div className="mb-3">
-        <div className="fw-bold text-dark" style={{ 
-          fontSize: '1.05rem', 
+        <div className="fw-bold text-dark" style={{
+          fontSize: '1.05rem',
           lineHeight: '1.3',
           wordBreak: 'break-word',
           overflowWrap: 'break-word',
@@ -54,40 +54,40 @@ const ContentCardMobile = ({ item, categoryMap, handleEditClick, handleDelete, i
               </span>
             </div>
           </div>
-          
+
           <div className="d-flex align-items-center gap-3 text-muted mb-3" style={{ fontSize: '0.8rem' }}>
             <span><i className="bi bi-eye me-1"></i>{item.viewsCount}</span>
             <span><i className="bi bi-heart me-1"></i>{item.likesCount}</span>
           </div>
 
-            <a
-              href={`${SITE_URL}/content/${item._id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-sm btn-outline-info border-0 p-0 rounded-circle d-flex align-items-center justify-content-center"
-              title="View Details"
-              style={{ width: '36px', height: '36px' }}
-            >
-              <i className="bi bi-eye" style={{ fontSize: '1rem' }}></i>
-            </a>
-            <button
-              className="btn btn-sm btn-outline-warning border-0 p-0 rounded-circle d-flex align-items-center justify-content-center"
-              onClick={() => handleEditClick(item)}
-              title="Edit"
-              style={{ width: '36px', height: '36px' }}
-            >
-              <i className="bi bi-pencil-square" style={{ fontSize: '1rem' }}></i>
-            </button>
-            <button
-              className="btn btn-sm btn-outline-danger border-0 p-0 rounded-circle d-flex align-items-center justify-content-center"
-              onClick={() => handleDelete(item._id)}
-              title="Delete"
-              style={{ width: '36px', height: '36px' }}
-            >
-              <i className="bi bi-trash3" style={{ fontSize: '1rem' }}></i>
-            </button>
-          </div>
+          <a
+            href={`${SITE_URL}/content/${item._id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-sm btn-outline-info border-0 p-0 rounded-circle d-flex align-items-center justify-content-center"
+            title="View Details"
+            style={{ width: '36px', height: '36px' }}
+          >
+            <i className="bi bi-eye" style={{ fontSize: '1rem' }}></i>
+          </a>
+          <button
+            className="btn btn-sm btn-outline-warning border-0 p-0 rounded-circle d-flex align-items-center justify-content-center"
+            onClick={() => handleEditClick(item)}
+            title="Edit"
+            style={{ width: '36px', height: '36px' }}
+          >
+            <i className="bi bi-pencil-square" style={{ fontSize: '1rem' }}></i>
+          </button>
+          <button
+            className="btn btn-sm btn-outline-danger border-0 p-0 rounded-circle d-flex align-items-center justify-content-center"
+            onClick={() => handleDelete(item._id)}
+            title="Delete"
+            style={{ width: '36px', height: '36px' }}
+          >
+            <i className="bi bi-trash3" style={{ fontSize: '1rem' }}></i>
+          </button>
         </div>
+      </div>
     </div>
   </div>
 );
@@ -440,7 +440,7 @@ export default function AdminPanel() {
                         <i className="bi bi-file-earmark me-2"></i>Single File Upload
                       </label>
 
-                       <input
+                      <input
                         type="radio"
                         className="btn-check"
                         name="uploadMode"
@@ -470,8 +470,8 @@ export default function AdminPanel() {
                       {uploadMode === 'single'
                         ? '⚠️ Upload one file with a custom title. Max 4.5MB (Vercel server limit).'
                         : uploadMode === 'batch'
-                        ? '⚠️ Upload multiple files. Max 4.5MB each (Vercel server limit).'
-                        : '✅ No size limit! Upload your file to Google Drive → set "Anyone with link → Viewer" → paste link here.'}
+                          ? '⚠️ Upload multiple files. Max 4.5MB each (Vercel server limit).'
+                          : '✅ No size limit! Upload your file to Google Drive → set "Anyone with link → Viewer" → paste link here.'}
                     </small>
                   </div>
                 )}
@@ -530,14 +530,14 @@ export default function AdminPanel() {
                       {uploadMode === 'external' ? (
                         <div className="mb-3">
                           <div className="form-floating mb-2">
-                            <input 
-                              type="url" 
-                              className="form-control" 
-                              id="externalFileLink" 
-                              placeholder="Paste Google Drive Link" 
-                              value={link} 
-                              onChange={(e) => setLink(e.target.value)} 
-                              required 
+                            <input
+                              type="url"
+                              className="form-control"
+                              id="externalFileLink"
+                              placeholder="Paste Google Drive Link"
+                              value={link}
+                              onChange={(e) => setLink(e.target.value)}
+                              required
                             />
                             <label htmlFor="externalFileLink">Paste Google Drive Link</label>
                           </div>
@@ -779,7 +779,7 @@ export default function AdminPanel() {
                                 />
                               </td>
                               <td style={{ maxWidth: '300px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                                <div style={{ 
+                                <div style={{
                                   fontWeight: '500',
                                   whiteSpace: 'normal'
                                 }}>

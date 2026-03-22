@@ -13,7 +13,8 @@ const {
   getPublicStats,
   getPublicUserProfile,
   getTopUploaders,
-  googleLogin
+  googleLogin,
+  updateFCMToken
 } = require('../controllers/authController');
 const { body } = require('express-validator');
 const authMiddleware = require('../middleware/authMiddleware');
@@ -100,5 +101,8 @@ router.get('/uploader/:id', getPublicUserProfile);
 
 // Route 11: Top Uploaders (GET /api/auth/top-uploaders)
 router.get('/top-uploaders', getTopUploaders);
+
+// Route 12: Update FCM Token (POST /api/auth/update-fcm-token)
+router.post('/update-fcm-token', authMiddleware, updateFCMToken);
 
 module.exports = router;

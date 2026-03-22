@@ -503,3 +503,45 @@ exports.getTopUploaders = async (req, res) => {
     res.status(500).json({ message: 'Server error while fetching uploaders' });
   }
 };
+
+// 13. Update FCM Token for Push Notifications
+exports.updateFCMToken = async (req, res) => {
+  try {
+    const { fcmToken } = req.body;
+
+    if (!fcmToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'FCM Token is required'
+      });
+    }
+
+    // req.user.id is available from the authMiddleware
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Update the token
+    user.fcmToken = fcmToken;
+
+    // Use validateBeforeSave: false to avoid password validation issues 
+    // when just updating the token
+    await user.save({ validateBeforeSave: false });
+
+    res.status(200).json({
+      success: true,
+      message: 'FCM Token updated successfully'
+    });
+  } catch (err) {
+    console.error("updateFCMToken Error:", err.message);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while updating FCM token'
+    });
+  }
+};

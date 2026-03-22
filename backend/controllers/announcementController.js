@@ -39,10 +39,16 @@ const sendPushNotification = async (title, body, announcementId = null) => {
         
         const projectId = process.env.FIREBASE_PROJECT_ID || "gyanstack-server";
         
-        // 1. Fetch all tokens
-        const subscriptions = await Subscription.find().select('fcmToken').exec();
-        const rawTokens = subscriptions.map(sub => sub.fcmToken);
-        const tokens = [...new Set(rawTokens)].filter(t => t);
+        // 1. Fetch all unique tokens from the User collection
+        const usersWithTokens = await User.find({ 
+            fcmToken: { $exists: true, $ne: "" },
+            isDeleted: false // Only send to active users
+        }).select('fcmToken').lean();
+
+        // Extract tokens and remove duplicates
+        const tokens = [...new Set(usersWithTokens.map(u => u.fcmToken))].filter(t => t);
+
+        console.log(`FCM: Target audience size is ${tokens.length} unique devices.`);
 
         if (tokens.length === 0) {
             console.log("FCM: No users subscribed. Skipping send.");

@@ -119,29 +119,43 @@ body {
 }
 
 /* --- GLOBAL FORM STYLES: Explicit Borders --- */
-.form-control, .form-select, input[type="text"], input[type="email"], input[type="password"], input[type="url"], input[type="tel"], input[type="number"], textarea, select {
+.form-control,
+.form-select,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="url"],
+input[type="tel"],
+input[type="number"],
+textarea,
+select {
   border: 1.5px solid #ced4da !important;
   transition: all 0.2s ease-in-out;
 }
 
-[data-bs-theme="dark"] .form-control, 
-[data-bs-theme="dark"] .form-select, 
-[data-bs-theme="dark"] input[type="text"], 
-[data-bs-theme="dark"] input[type="email"], 
-[data-bs-theme="dark"] input[type="password"], 
-[data-bs-theme="dark"] input[type="url"], 
-[data-bs-theme="dark"] input[type="tel"], 
-[data-bs-theme="dark"] input[type="number"], 
-[data-bs-theme="dark"] textarea, 
+[data-bs-theme="dark"] .form-control,
+[data-bs-theme="dark"] .form-select,
+[data-bs-theme="dark"] input[type="text"],
+[data-bs-theme="dark"] input[type="email"],
+[data-bs-theme="dark"] input[type="password"],
+[data-bs-theme="dark"] input[type="url"],
+[data-bs-theme="dark"] input[type="tel"],
+[data-bs-theme="dark"] input[type="number"],
+[data-bs-theme="dark"] textarea,
 [data-bs-theme="dark"] select {
   border: 1.5px solid #475569 !important;
 }
 
-.form-control:focus, .form-select:focus, input:focus, textarea:focus, select:focus {
+.form-control:focus,
+.form-select:focus,
+input:focus,
+textarea:focus,
+select:focus {
   border-color: var(--primary) !important;
   box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25) !important;
   outline: none;
 }
+
 /* ------------------------------------------- */
 
 /* Base App Container */
@@ -591,6 +605,34 @@ body {
 
 .fancy-search .btn:active {
   transform: scale(0.95);
+}
+
+/* --- REMOVE BORDERS FROM SEARCH BARS --- */
+.fancy-search,
+.fancy-search input,
+.search-bar-wrapper .search-glass-container,
+.search-bar-wrapper input {
+  border: none !important;
+}
+
+/* Ensure no border appears on dark mode either */
+[data-bs-theme="dark"] .fancy-search,
+[data-bs-theme="dark"] .fancy-search input,
+[data-bs-theme="dark"] .search-bar-wrapper .search-glass-container,
+[data-bs-theme="dark"] .search-bar-wrapper input {
+  border: none !important;
+}
+
+/* Remove focus borders and shadows for search only */
+.fancy-search input:focus,
+.search-bar-wrapper input:focus {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Optional: If you want a very faint glow instead of a border when searching */
+.search-glass-container:focus-within {
+  box-shadow: 0 8px 30px rgba(99, 102, 241, 0.15) !important;
 }
 
 /* Categories Sidebar */
@@ -1451,14 +1493,17 @@ body {
   .announcement-item {
     padding: 1rem !important;
   }
+
   .announcement-item .alert-heading {
     font-size: 1rem !important;
   }
+
   .announcement-item .content-text {
     font-size: 0.85rem !important;
     line-height: 1.4;
   }
-  .announcement-item .date-text, 
+
+  .announcement-item .date-text,
   .announcement-item .btn-view-details {
     font-size: 0.75rem !important;
   }
@@ -1468,11 +1513,12 @@ body {
 .x-small {
   font-size: 0.75rem !important;
 }
+
 .tracking-wider {
   letter-spacing: 0.1em;
 }
 
-.heart{
+.heart {
   display: inline-block;
   animation: heartbeat 1s infinite;
 }
@@ -1481,24 +1527,29 @@ body {
 .transition-all {
   transition: all 0.3s ease-in-out !important;
 }
+
 .hover-translate-x-left:hover {
   transform: translateX(-5px) !important;
 }
 
 @keyframes heartbeat {
-  0%{
+  0% {
     transform: scale(1);
   }
-  25%{
+
+  25% {
     transform: scale(1.2);
   }
-  40%{
+
+  40% {
     transform: scale(1);
   }
-  60%{
+
+  60% {
     transform: scale(1.2);
   }
-  100%{
+
+  100% {
     transform: scale(1);
   }
 }

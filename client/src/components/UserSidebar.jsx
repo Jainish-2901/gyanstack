@@ -15,29 +15,32 @@ export default function UserSidebar({ show, onMobileClose }) {
 
     return (
         <aside className={`dashboard-sidebar ${show ? 'show' : ''}`}>
-            <div className="sidebar-brand d-flex align-items-center justify-content-between">
+            {/* SIDEBAR HEADER: Brand Left, Close Right */}
+            <div className="sidebar-brand d-flex align-items-center justify-content-between px-3 py-2 border-bottom border-opacity-10">
                 <Link className="navbar-brand d-flex align-items-center" to="/" onClick={onMobileClose}>
-                    <img src="/logo.png" alt="Logo" className="me-2" style={{ height: '35px' }} />
-                    <span>GyanStack</span>
+                    <img src="/logo.png" alt="Logo" className="me-2" style={{ height: '32px' }} />
+                    <span className="fw-bold fs-5">GyanStack</span>
                 </Link>
-                {/* Close button for Mobile (<= 490px) */}
-                <button 
-                  className="btn btn-link text-primary d-lg-none sidebar-close-btn p-0" 
-                  onClick={onMobileClose}
+
+                {/* Mobile Close Button (Visible only on small screens) */}
+                <button
+                    className="btn btn-link text-muted d-lg-none p-0 border-0 shadow-none"
+                    onClick={onMobileClose}
                 >
-                  <i className="bi bi-x-lg fs-4"></i>
+                    <i className="bi bi-x-lg fs-4"></i>
                 </button>
             </div>
 
-            <div className="sidebar-nav-container flex-grow-1 overflow-y-auto py-3">
+            {/* NAVIGATION LINKS */}
+            <div className="sidebar-nav-container flex-grow-1 overflow-y-auto py-4">
                 <div className="px-4 mb-3">
-                    <small className="text-muted fw-bold text-uppercase tracking-wider">Student Portal</small>
+                    <small className="text-muted fw-bold text-uppercase x-small tracking-wider">Student Portal</small>
                 </div>
-                
+
                 {navLinks.filter(link => link.roles.includes(user?.role)).map((link, index) => (
-                    <NavLink 
-                        key={index} 
-                        to={link.path} 
+                    <NavLink
+                        key={index}
+                        to={link.path}
                         className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`}
                         onClick={onMobileClose}
                     >
@@ -54,31 +57,57 @@ export default function UserSidebar({ show, onMobileClose }) {
                 </div>
             </div>
 
-            <div className="p-3 border-top border-opacity-10">
-                <div className="glass-panel p-3 d-flex align-items-center">
-                    <Link 
-                        to="/settings" 
-                        onClick={onMobileClose} 
-                        className="d-flex align-items-center flex-grow-1 text-decoration-none text-reset overflow-hidden hover-opacity transition-all"
-                        style={{ cursor: 'pointer' }}
+            {/* USER PROFILE CARD (BOTTOM) */}
+            <div className="p-3 border-top border-opacity-10 bg-light bg-opacity-10">
+                <div className="glass-panel p-2 d-flex align-items-center border-0 shadow-sm" style={{ background: 'rgba(255,255,255,0.5)' }}>
+                    <Link
+                        to="/settings"
+                        onClick={onMobileClose}
+                        className="d-flex align-items-center flex-grow-1 text-decoration-none text-reset overflow-hidden transition-all"
                     >
-                        <div className="rounded-circle overflow-hidden shadow-sm border border-primary border-2 bg-primary me-3 d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '40px', height: '40px' }}>
+                        <div className="rounded-circle overflow-hidden border border-primary border-2 bg-primary me-2 d-flex align-items-center justify-content-center flex-shrink-0 shadow-xs" style={{ width: '38px', height: '38px' }}>
                             {user?.profileImage ? (
                                 <img src={user.profileImage} alt="Profile" className="w-100 h-100 object-fit-cover" />
                             ) : (
-                                <span className="text-white fw-bold">{user?.username.charAt(0).toUpperCase()}</span>
+                                <span className="text-white fw-bold x-small">{user?.username.charAt(0).toUpperCase()}</span>
                             )}
                         </div>
                         <div className="flex-grow-1 overflow-hidden">
-                            <h6 className="mb-0 text-truncate small fw-bold">{user?.username}</h6>
-                            <small className="text-muted text-uppercase" style={{ fontSize: '0.65rem' }}>{user?.role}</small>
+                            <h6 className="mb-0 text-truncate small fw-bold text-dark">{user?.username}</h6>
+                            <small className="text-muted text-uppercase x-small">{user?.role}</small>
                         </div>
                     </Link>
-                    <button className="btn btn-link text-danger p-0 ms-2" onClick={logout} title="Logout" id="client-logout-btn">
+
+                    <button className="btn btn-link text-danger p-1 ms-1 border-0 shadow-none" onClick={logout} title="Logout">
                         <i className="bi bi-box-arrow-right fs-5"></i>
                     </button>
                 </div>
             </div>
+
+            <style>{`
+                .sidebar-nav-link {
+                    display: flex;
+                    align-items: center;
+                    padding: 0.8rem 1.5rem;
+                    color: var(--text-secondary);
+                    text-decoration: none;
+                    font-weight: 500;
+                    transition: all 0.2s ease;
+                    gap: 12px;
+                }
+                .sidebar-nav-link i { font-size: 1.1rem; }
+                .sidebar-nav-link.active {
+                    background: rgba(99, 102, 241, 0.1);
+                    color: var(--primary);
+                    border-left: 4px solid var(--primary);
+                    font-weight: 700;
+                }
+                .sidebar-nav-link:hover:not(.active) {
+                    background: rgba(0,0,0,0.03);
+                    transform: translateX(4px);
+                }
+                .x-small { font-size: 0.7rem; }
+            `}</style>
         </aside>
     );
 }
