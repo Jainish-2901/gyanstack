@@ -10,6 +10,7 @@ export default function ContentList({ categoryId, searchTerm, uploaderName }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
     const fetchContent = async () => {
       setLoading(true);
       try {
@@ -35,13 +36,21 @@ export default function ContentList({ categoryId, searchTerm, uploaderName }) {
         // API call to backend
         const { data } = await api.get(url, { params }); 
 
-        setContent(data.content); // Backend se 'content' array aayega
+        if (active) {
+          setContent(data.content); // Backend se 'content' array aayega
+        }
       } catch (error) {
-        console.error("Error fetching content:", error);
+        if (active) {
+          console.error("Error fetching content:", error);
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
       }
-      setLoading(false);
     };
     fetchContent();
+    return () => { active = false; };
   }, [categoryId, searchTerm, uploaderName]); // Jab bhi filter badlega, yeh dobara chalega
 
   if (loading) {

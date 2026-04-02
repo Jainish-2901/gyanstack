@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-export default function SearchBar({ onSearch, initialValue = '' }) {
+export default function SearchBar({ onSearch, initialValue = '', placeholder = '' }) {
   const [searchTerm, setSearchTerm] = useState(initialValue);
 
   useEffect(() => {
@@ -31,7 +31,7 @@ export default function SearchBar({ onSearch, initialValue = '' }) {
           <input
             type="text"
             className="form-control border-0 bg-transparent shadow-none py-2"
-            placeholder="Search across all academic resources or use @username..."
+            placeholder={placeholder || "Search across all academic resources or use @username..."}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{

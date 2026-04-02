@@ -146,7 +146,7 @@ export default function AdminDashboard() {
           <div className="card border-0 shadow-sm rounded-4">
             <div className="card-body p-4">
               <h6 className="fw-bold mb-4 small text-uppercase text-muted">Action Distribution Analysis</h6>
-              <div style={{ height: '350px' }}>
+              <div style={{ height: '360px' }}>
                 <Bar
                   data={engagementChart}
                   options={{

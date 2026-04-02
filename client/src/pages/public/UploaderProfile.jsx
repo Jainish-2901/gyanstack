@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
-import ContentCard from '../../components/ContentCard';
+import ContentList from '../../components/ContentList';
 import LoadingScreen from '../../components/LoadingScreen';
 import ShareButton from '../../components/ShareButton';
 import SearchBar from '../../components/SearchBar';
@@ -9,69 +9,23 @@ import NotFound from './NotFound';
 
 export default function UploaderProfile() {
   const { id } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
   const [profile, setProfile] = useState(null);
-  const [fullTree, setFullTree] = useState([]);
-  const [allContents, setAllContents] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [currentPath, setCurrentPath] = useState([]);
-  const [displayData, setDisplayData] = useState({ subCats: [], items: [] });
+  const [displaySubCats, setDisplaySubCats] = useState([]);
   const [uploaderStats, setUploaderStats] = useState({ totalDocs: 0, catCount: 0 });
 
-  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-  const [loadingItems, setLoadingItems] = useState(false);
   const [error, setError] = useState(null);
   const [copySuccess, setCopySuccess] = useState(false);
 
-  const cache = useRef({});
+  // URL values derivation
+  const categoryId = searchParams.get('category')?.trim() || null;
+  const searchTerm = searchParams.get('search')?.trim() || '';
 
-  const isSearchActive = searchTerm.trim().length > 0;
-
-  const searchResults = useMemo(() => {
-    if (!isSearchActive) return [];
-    const q = searchTerm.toLowerCase();
-    return allContents.filter(item =>
-      item.title?.toLowerCase().includes(q) ||
-      (item.tags || []).some(t => t.toLowerCase().includes(q))
-    );
-  }, [searchTerm, allContents, isSearchActive]);
-
-  const navigateToFolder = useCallback(async (catId, catName, children = null) => {
-    setSearchTerm('');
-    if (catId === null) {
-      setCurrentPath([]);
-    } else {
-      setCurrentPath(prev => {
-        const existingIdx = prev.findIndex(p => p.id === catId);
-        if (existingIdx !== -1) return prev.slice(0, existingIdx + 1);
-        return [...prev, { id: catId, name: catName, children }];
-      });
-    }
-
-    const subFolders = children || [];
-    let folderItems = [];
-
-    if (catId) {
-      if (cache.current[catId]) {
-        folderItems = cache.current[catId];
-        setDisplayData({ subCats: subFolders, items: folderItems });
-      } else {
-        setLoadingItems(true);
-        try {
-          const { data } = await api.get(`/content?uploaderId=${id}&categoryId=${catId}&limit=24`);
-          folderItems = data.content || data;
-          cache.current[catId] = folderItems;
-          setDisplayData({ subCats: subFolders, items: folderItems });
-        } catch (err) {
-          setDisplayData({ subCats: subFolders, items: [] });
-        } finally {
-          setLoadingItems(false);
-        }
-      }
-    } else {
-      setDisplayData({ subCats: subFolders, items: [] });
-    }
-  }, [id]);
-
+  // 1. Initial Fetch: Profile + All Categories
   useEffect(() => {
     const fetchInitialData = async () => {
       setLoading(true);
@@ -85,11 +39,13 @@ export default function UploaderProfile() {
         const rootCats = catRes.data.categories || catRes.data;
 
         setProfile(user);
-        setAllContents(contents);
         const distinctCats = new Set(contents.map(c => c.categoryId));
         setUploaderStats({ totalDocs: contents.length, catCount: distinctCats.size });
-        setFullTree(rootCats);
-        setDisplayData({ subCats: rootCats, items: [] });
+        setCategories(rootCats);
+        
+        if (!categoryId) {
+          setDisplaySubCats(rootCats);
+        }
       } catch (err) {
         setError(true);
       } finally {
@@ -98,6 +54,59 @@ export default function UploaderProfile() {
     };
     fetchInitialData();
   }, [id]);
+
+  // 2. Sync UI when URL changes (Category Path building)
+  useEffect(() => {
+    if (categories.length > 0 && categoryId) {
+      const path = [];
+      const findAndBuildPath = (cats, cid) => {
+        for (const c of cats) {
+          if (c._id === cid) {
+            path.push({ id: c._id, name: c.name, children: c.children });
+            return true;
+          }
+          if (c.children && findAndBuildPath(c.children, cid)) {
+            path.unshift({ id: c._id, name: c.name, children: c.children });
+            return true;
+          }
+        }
+        return false;
+      };
+
+      findAndBuildPath(categories, categoryId);
+      setCurrentPath(path);
+      const leaf = path[path.length - 1];
+      setDisplaySubCats(leaf?.children || []);
+    } else if (!categoryId) {
+      setCurrentPath([]);
+      setDisplaySubCats(categories);
+    }
+  }, [categoryId, categories]);
+
+  // 3. Navigation Actions
+  const handleFolderClick = (cid) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('category', cid);
+    setSearchParams(params);
+  };
+
+  const handleGoRoot = () => {
+    const params = new URLSearchParams(searchParams);
+    params.delete('category');
+    setSearchParams(params);
+  };
+
+  const handleSearch = (term) => {
+    const params = new URLSearchParams(searchParams);
+    if (!term.trim()) {
+      params.delete('search');
+    } else {
+      params.set('search', term.trim());
+    }
+    setSearchParams(params);
+  };
+
+
 
   const handleCopyEmail = (e, email) => {
     e.preventDefault(); e.stopPropagation();
@@ -180,71 +189,92 @@ export default function UploaderProfile() {
 
         {/* --- MAIN AREA: Explorer & Search --- */}
         <div className="col-12 col-lg-8 col-xl-9">
+          
+          <div className="glass-panel p-3 p-md-4 rounded-4 border-0 shadow-sm mb-4">
+             <div className="d-flex align-items-center gap-2 mb-3">
+               <i className="bi bi-person-workspace text-primary fs-4"></i>
+               <h5 className="fw-bold mb-0">Resource Explorer</h5>
+             </div>
+             <SearchBar
+               onSearch={handleSearch}
+               initialValue={searchTerm}
+               placeholder={currentPath.length > 0 ? `Search items of ${profile?.username || 'uploader'} in ${currentPath[currentPath.length-1].name}...` : `Search across all files of ${profile?.username || 'uploader'}...`}
+             />
+          </div>
 
-          <SearchBar
-            onSearch={(term) => setSearchTerm(term)}
-            initialValue={searchTerm}
-          />
+          <div className="fade-in mt-2">
+            {/* Breadcrumbs */}
+            <div className="glass-panel p-2 px-3 rounded-pill mb-4 d-flex align-items-center gap-2 shadow-sm border-0 overflow-auto no-scrollbar" style={{ background: 'rgba(255,255,255,0.7)' }}>
+              <button 
+                onClick={handleGoRoot} 
+                className={`btn btn-sm rounded-pill flex-shrink-0 ${!categoryId ? 'btn-primary shadow-sm' : 'btn-link text-decoration-none text-dark'}`}
+              >
+                <i className="bi bi-house-door-fill"></i>
+              </button>
+              {currentPath.map((path, idx) => (
+                <React.Fragment key={path.id}>
+                  <i className="bi bi-chevron-right text-muted opacity-50 x-small flex-shrink-0"></i>
+                  <button 
+                    onClick={() => handleFolderClick(path.id)} 
+                    className={`btn btn-sm rounded-pill text-nowrap flex-shrink-0 ${idx === currentPath.length - 1 && !searchTerm ? 'btn-primary shadow-sm' : 'btn-link text-decoration-none text-dark'}`}
+                  >
+                    <span className="small">{path.name}</span>
+                  </button>
+                </React.Fragment>
+              ))}
 
-          {isSearchActive ? (
-            <div className="fade-in row g-3 mt-2">
-              <div className="col-12"><h6 className="fw-bold small px-2">Results for "{searchTerm}"</h6></div>
-              {searchResults.length > 0 ? (
-                searchResults.map(item => (
-                  <div key={item._id} className="col-12 col-md-6 col-xl-4"><ContentCard item={item} /></div>
-                ))
-              ) : (
-                <div className="col-12 text-center py-5">
-                  <p className="text-muted">No files matched your search.</p>
-                </div>
+              {(categoryId || searchTerm) && (
+                <button 
+                  onClick={() => setSearchParams({})} 
+                  className="btn btn-sm btn-outline-danger border-0 rounded-pill ms-auto flex-shrink-0 small"
+                  title="Reset Library"
+                >
+                  <i className="bi bi-arrow-counterclockwise me-1"></i>Reset
+                </button>
               )}
             </div>
-          ) : (
-            <div className="fade-in mt-2">
-              {/* Breadcrumbs */}
-              <div className="glass-panel p-2 px-3 rounded-pill mb-4 d-flex align-items-center gap-2 shadow-sm border-0 overflow-auto no-scrollbar">
-                <button onClick={() => navigateToFolder(null, "Root", fullTree)} className={`btn btn-sm rounded-pill flex-shrink-0 ${currentPath.length === 0 ? 'btn-primary shadow-sm' : 'btn-light'}`}>
-                  <i className="bi bi-house-door-fill"></i>
-                </button>
-                {currentPath.map((path, idx) => (
-                  <React.Fragment key={path.id}>
-                    <i className="bi bi-chevron-right text-muted opacity-50 x-small flex-shrink-0"></i>
-                    <button onClick={() => navigateToFolder(path.id, path.name, path.children)} className={`btn btn-sm rounded-pill text-nowrap flex-shrink-0 ${idx === currentPath.length - 1 ? 'btn-primary shadow-sm' : 'btn-light'}`}>
-                      <span className="small">{path.name}</span>
-                    </button>
-                  </React.Fragment>
-                ))}
-              </div>
 
-              {/* Grid */}
-              <div className="row g-3">
-                {displayData.subCats.map(cat => (
+            {/* FOLDERS GRID */}
+            {!searchTerm && displaySubCats.length > 0 && (
+              <div className="row g-3 mb-5">
+                <div className="col-12"><h6 className="fw-bold text-primary x-small text-uppercase tracking-wider mb-0">Folders</h6></div>
+                {displaySubCats.map(cat => (
                   <div key={cat._id} className="col-12 col-md-6 col-xl-4">
-                    <div onClick={() => navigateToFolder(cat._id, cat.name, cat.children)} className="folder-card glass-panel p-3 rounded-4 border-0 d-flex align-items-center gap-3 cursor-pointer shadow-sm h-100">
-                      <div className="folder-icon bg-warning bg-opacity-10 rounded-3 p-2">
+                    <div 
+                      onClick={() => handleFolderClick(cat._id)} 
+                      className="folder-card glass-panel p-3 rounded-4 border-0 d-flex align-items-center gap-3 cursor-pointer shadow-sm h-100"
+                    >
+                      <div className="folder-icon bg-warning bg-opacity-10 rounded-3 p-2 d-flex align-items-center justify-content-center cursor-pointer">
                         <i className="bi bi-folder-fill text-warning fs-3"></i>
                       </div>
-                      <div className="flex-grow-1" style={{ minWidth: 0 }}>
-                        <div className="fw-bold small text-dark" style={{ lineHeight: '1.2' }}>{cat.name}</div>
+                      <div className="flex-grow-1 overflow-hidden cursor-pointer" style={{ minWidth: 0 }}>
+                        <div className="fw-bold small text-dark text-truncate" style={{ lineHeight: '1.2' }}>{cat.name}</div>
                         <small className="text-muted x-small">{cat.children?.length || 0} folders</small>
                       </div>
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
 
-                {loadingItems ? (
-                  <div className="col-12 text-center py-5"><div className="spinner-border text-primary border-3"></div></div>
-                ) : (
-                  <>
-                    {displayData.items.length > 0 && <div className="col-12 mt-4 mb-2"><h6 className="fw-bold text-muted x-small text-uppercase tracking-wider">Documents</h6></div>}
-                    {displayData.items.map(item => (
-                      <div key={item._id} className="col-12 col-md-6 col-xl-4"><ContentCard item={item} /></div>
-                    ))}
-                  </>
-                )}
+            {/* DOCUMENTS GRID (ContentList) */}
+            <div className="d-flex align-items-center mb-4 pb-2 border-bottom border-light flex-wrap gap-2">
+              <div className="me-auto">
+                <h5 className="fw-bold mb-0 text-dark">
+                  {searchTerm 
+                    ? <span>Showing <span className="text-primary">"{searchTerm}"</span></span>
+                    : (currentPath.length > 0 ? currentPath[currentPath.length - 1].name : "All Shared Resources")
+                  }
+                </h5>
               </div>
             </div>
-          )}
+
+            <ContentList
+              categoryId={categoryId}
+              searchTerm={searchTerm}
+              uploaderName={profile.username}
+            />
+          </div>
         </div>
       </div>
 

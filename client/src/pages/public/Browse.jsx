@@ -16,9 +16,9 @@ export default function Browse() {
   const [displaySubCats, setDisplaySubCats] = useState([]);
 
   // URL values derivation
-  const categoryId = searchParams.get('category') || null;
-  const searchTerm = searchParams.get('search') || '';
-  const uploaderFilter = searchParams.get('uploader') || '';
+  const categoryId = searchParams.get('category')?.trim() || null;
+  const searchTerm = searchParams.get('search')?.trim() || '';
+  const uploaderFilter = searchParams.get('uploader')?.trim() || '';
 
   // 1. Initial Fetch: Get the Root Categories
   useEffect(() => {
@@ -72,27 +72,37 @@ export default function Browse() {
   }, [categoryId, categories]);
 
   // 3. Navigation Logic (Folder Click)
-  const handleFolderClick = (id, name, children) => {
-    setSearchParams({ category: id });
-    // Path and displaySubCats will update via the useEffect above
+  const handleFolderClick = (id) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('category', id);
+    setSearchParams(params);
   };
 
   const handleGoRoot = () => {
-    setSearchParams({});
+    const params = new URLSearchParams(searchParams);
+    params.delete('category');
+    setSearchParams(params);
   };
 
   const handleSearch = (term) => {
+    const params = new URLSearchParams(searchParams);
+
     if (!term.trim()) {
-      setSearchParams({});
+      params.delete('search');
+      params.delete('uploader');
+      setSearchParams(params);
       return;
     }
-    const params = {};
+
     if (term.includes('@')) {
       const [s, u] = term.split('@');
-      if (s.trim()) params.search = s.trim();
-      if (u.trim()) params.uploader = u.trim();
+      if (s.trim()) params.set('search', s.trim());
+      else params.delete('search');
+      if (u.trim()) params.set('uploader', u.trim());
+      else params.delete('uploader');
     } else {
-      params.search = term;
+      params.set('search', term);
+      params.delete('uploader');
     }
     setSearchParams(params);
   };
@@ -111,7 +121,11 @@ export default function Browse() {
             <h2 className="fw-bold mb-4" style={{ color: 'var(--text-primary)' }}>
               <i className="bi bi-search-heart text-primary me-2"></i>Browse Library
             </h2>
-            <SearchBar onSearch={handleSearch} />
+            <SearchBar
+              onSearch={handleSearch}
+              initialValue={searchTerm + (uploaderFilter ? `@${uploaderFilter}` : '')}
+              placeholder={pageTitle !== 'All Content' ? `Search inside ${pageTitle}...` : "Search across all resources or use @username..."}
+            />
           </div>
 
           {/* FOLDER EXPLORER BREADCRUMB */}
@@ -127,13 +141,23 @@ export default function Browse() {
               <React.Fragment key={path.id}>
                 <i className="bi bi-chevron-right text-muted opacity-50 small flex-shrink-0"></i>
                 <button
-                  onClick={() => handleFolderClick(path.id, path.name, path.children)}
-                  className={`btn btn-sm rounded-pill text-nowrap flex-shrink-0 ${idx === currentPath.length - 1 ? 'btn-primary shadow' : 'btn-link text-decoration-none text-dark'}`}
+                  onClick={() => handleFolderClick(path.id)}
+                  className={`btn btn-sm rounded-pill text-nowrap flex-shrink-0 ${idx === currentPath.length - 1 && !searchTerm ? 'btn-primary shadow' : 'btn-link text-decoration-none text-dark'}`}
                 >
                   {path.name}
                 </button>
               </React.Fragment>
             ))}
+
+            {(categoryId || searchTerm || uploaderFilter) && (
+              <button
+                onClick={() => setSearchParams({})}
+                className="btn btn-sm btn-outline-danger border-0 rounded-pill ms-auto flex-shrink-0 small"
+                title="Clear All Filters"
+              >
+                <i className="bi bi-x-circle me-1"></i>Reset
+              </button>
+            )}
           </div>
         </div>
 
@@ -148,13 +172,13 @@ export default function Browse() {
               {displaySubCats.map(cat => (
                 <div key={cat._id} className="col-12 col-md-6 col-lg-4 col-xl-3">
                   <div
-                    onClick={() => handleFolderClick(cat._id, cat.name, cat.children)}
+                    onClick={() => handleFolderClick(cat._id)}
                     className="folder-card glass-panel p-3 rounded-4 border-0 d-flex align-items-center gap-3 cursor-pointer shadow-sm h-100"
                   >
-                    <div className="folder-icon bg-warning bg-opacity-10 rounded-3 p-2 d-flex align-items-center justify-content-center">
+                    <div className="folder-icon bg-warning bg-opacity-10 rounded-3 p-2 d-flex align-items-center justify-content-center cursor-pointer">
                       <i className="bi bi-folder-fill text-warning fs-4"></i>
                     </div>
-                    <div className="overflow-hidden">
+                    <div className="overflow-hidden cursor-pointer">
                       <div className="fw-bold small text-dark" style={{ wordBreak: 'break-word' }}>{cat.name}</div>
                       <small className="text-muted extra-small">{cat.children?.length || 0} sub-folders</small>
                     </div>
@@ -168,7 +192,12 @@ export default function Browse() {
           <div className="d-flex align-items-center mb-4 pb-2 border-bottom border-light flex-wrap gap-2">
             <div className="me-auto">
               <h4 className="fw-bold mb-0 text-dark">
-                {searchTerm ? `Search Results: ${searchTerm}` : pageTitle}
+                {searchTerm
+                  ? (categoryId && pageTitle !== "All Content"
+                    ? <span><span className="text-primary">"{searchTerm}"</span> in <span className="text-secondary">{pageTitle}</span></span>
+                    : `Search Results: "${searchTerm}"`)
+                  : pageTitle
+                }
               </h4>
               {uploaderFilter && <small className="text-primary fw-bold">By Uploader: {uploaderFilter}</small>}
             </div>

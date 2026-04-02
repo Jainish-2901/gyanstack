@@ -378,11 +378,12 @@ exports.getContent = async (req, res) => {
     const query = {};
     
     // Recursive Category Fetch Logic
-    if (req.query.categoryId) { 
+    if (req.query.categoryId && req.query.categoryId !== 'root') { 
       // Helper function to get all sub-category IDs
       const getAllChildIds = async (pId) => {
-        let childIds = [pId];
-        const subCategories = await Category.find({ parentId: pId });
+        if (!pId) return [];
+        let childIds = [pId.toString()];
+        const subCategories = await Category.find({ parentId: pId.toString() });
         for (const sub of subCategories) {
           const nestedIds = await getAllChildIds(sub._id.toString());
           childIds = childIds.concat(nestedIds);
@@ -391,7 +392,8 @@ exports.getContent = async (req, res) => {
       };
 
       const allCatIds = await getAllChildIds(req.query.categoryId);
-      query.categoryId = { $in: allCatIds }; 
+      // Safety: Use unique set to avoid massive arrays if there are cycles (shouldn't be)
+      query.categoryId = { $in: [...new Set(allCatIds)] }; 
     }
 
     if (req.query.uploadedBy) { query.uploadedBy = req.query.uploadedBy; }
@@ -403,6 +405,9 @@ exports.getContent = async (req, res) => {
       });
       if (uploaderUser) {
         query.uploadedBy = uploaderUser._id;
+      } else {
+        // If uploader name was specified but not found, NO content should match
+        query.uploadedBy = 'non-existent-id-placeholder'; 
       }
     }
 
