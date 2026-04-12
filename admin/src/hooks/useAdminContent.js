@@ -48,7 +48,7 @@ export const useAdminContentMutation = () => {
 
   const updateContent = useMutation({
     mutationFn: async ({ id, updatedData }) => {
-      const { data } = await api.patch(`/content/${id}`, updatedData);
+      const { data } = await api.put(`/content/${id}`, updatedData);
       return data;
     },
     onSuccess: (data, { id }) => {

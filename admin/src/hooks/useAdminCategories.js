@@ -94,16 +94,29 @@ export const useCategoryMap = () => {
   return useQuery({
     queryKey: ['category-map'],
     queryFn: async () => {
-      const { data } = await api.get('/categories/all-nested');
-      const map = {};
-      const buildMap = (categories) => {
-        categories.forEach(cat => {
-          map[cat._id] = cat.name;
-          if (cat.children) buildMap(cat.children);
-        });
-      };
-      buildMap(data.categories || data);
-      return map;
+      try {
+        const { data } = await api.get('/categories/all-nested');
+        const map = { 'root': 'Root / General' }; // Default root entry
+        
+        const buildMap = (categories) => {
+          if (!categories || !Array.isArray(categories)) return;
+          categories.forEach(cat => {
+            if (cat && cat._id) {
+              map[cat._id] = cat.name;
+              if (cat.children) buildMap(cat.children);
+            }
+          });
+        };
+        
+        // Handle both { categories: [] } and raw [] response
+        const categoriesData = data.categories || data;
+        buildMap(categoriesData);
+        
+        return map;
+      } catch (err) {
+        console.error("Failed to build category map:", err);
+        return { 'root': 'Root / General' };
+      }
     },
   });
 };

@@ -90,13 +90,16 @@ export default function EditContentModal({ item, onClose, onUpdate, categories }
                     onChange={(e) => setCategoryId(e.target.value)}
                     required
                   >
-                    <option value="" disabled>Select a category</option>
+                    <option value="root">Root / General</option>
                     {/* categories map (object) se loop karein */}
-                    {Object.entries(categories || {}).map(([catId, catName]) => (
-                      <option key={catId} value={catId}>
-                        {catName}
-                      </option>
-                    ))}
+                    {Object.entries(categories || {}).map(([catId, catName]) => {
+                      if (catId === 'root') return null; // Skip if already added
+                      return (
+                        <option key={catId} value={catId}>
+                          {catName}
+                        </option>
+                      );
+                    })}
                   </select>
                   <label htmlFor="editCategory">Category</label>
                 </div>

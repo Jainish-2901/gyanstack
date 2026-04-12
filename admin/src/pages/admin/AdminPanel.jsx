@@ -239,11 +239,13 @@ export default function AdminPanel() {
     });
   };
 
-  const filteredContent = myContent.filter(item =>
-    item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    categoryMap[item.categoryId]?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.type?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredContent = myContent.filter(item => {
+    const titleMatch = item.title?.toLowerCase().includes(searchTerm.toLowerCase());
+    const catName = categoryMap[item.categoryId] || 'Root / General';
+    const catMatch = catName.toLowerCase().includes(searchTerm.toLowerCase());
+    const typeMatch = item.type?.toLowerCase().includes(searchTerm.toLowerCase());
+    return titleMatch || catMatch || typeMatch;
+  });
 
   const toggleSelectAll = () => {
     if (selectedIds.length === filteredContent.length) {
@@ -735,7 +737,7 @@ export default function AdminPanel() {
 
                               <td>
                                 <span className="fw-medium text-dark">
-                                  {categoryMap[item.categoryId] || <span className='text-danger'>Unknown</span>}
+                                  {categoryMap[item.categoryId] || 'Uncategorized'}
                                 </span>
                               </td>
 

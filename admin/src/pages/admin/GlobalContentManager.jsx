@@ -21,7 +21,7 @@ const ContentCardMobile = memo(({ item, categoryMap, isSelected, onToggle, onEdi
                         <span className="badge bg-light text-primary border text-uppercase" style={{ fontSize: '0.6rem' }}>{item.type}</span>
                     </div>
                     <div className="text-muted small">
-                        {categoryMap[item.categoryId] || 'Resources'}
+                        {categoryMap[item.categoryId] || 'General'}
                     </div>
                 </div>
                 <h6 className="fw-bold text-dark mb-1 text-truncate">{item.title}</h6>
@@ -65,7 +65,7 @@ const GlobalContentRow = memo(({ item, categoryMap, isSelected, onToggle, onEdit
                 <span className="badge bg-light text-dark border" style={{ wordBreak: 'break-word', whiteSpace: 'normal', maxWidth: '75px', display: 'inline-block' }}>{item.type}</span>
             </td>
             <td style={{ maxWidth: '120px' }}>
-                <span className="text-muted small d-block" style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{categoryMap[item.categoryId] || 'General'}</span>
+                <span className="text-muted small d-block" style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{categoryMap[item.categoryId] || 'Uncategorized'}</span>
             </td>
             <td className="pe-4 text-end">
                 <div className="d-flex gap-2 justify-content-end align-items-center">
