@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import AnnouncementBanner from '../../components/AnnouncementBanner';
-import api from '../../services/api';
+import { useStats, useTopUploaders } from '../../hooks/useStats';
+import { useNestedCategories } from '../../hooks/useCategories';
+import { useCategoryContent } from '../../hooks/useContent';
 import ContentCard from '../../components/ContentCard';
 import { StatsSkeleton, CardSkeleton, ListSkeleton } from '../../components/SkeletonLoaders';
 // Feature Card Component (Styling ke liye)
@@ -40,22 +42,18 @@ const HomeTreeNode = ({ cat, depth = 0 }) => {
 
   // ALL hooks declared unconditionally (React rules of hooks)
   const [open, setOpen] = React.useState(false);
-  const [items, setItems] = React.useState(null); // leaf-only: fetched content
-  const [loading, setLoading] = React.useState(false);
-  const fetched = React.useRef(false);
+  
+  // Use TanStack Query for lazy fetching
+  const { data: items, isLoading: loading, refetch } = useCategoryContent(cat._id, false);
+  const [hasRefetched, setHasRefetched] = React.useState(false);
 
-  // Leaf toggle: lazy-fetch content on first open
+  // Leaf toggle: trigger fetch on first open
   const toggleLeaf = async () => {
     const next = !open;
     setOpen(next);
-    if (next && !fetched.current) {
-      fetched.current = true;
-      setLoading(true);
-      try {
-        const { data } = await api.get(`/content?categoryId=${cat._id}&limit=8`);
-        setItems(data.content || []);
-      } catch { setItems([]); }
-      setLoading(false);
+    if (next && !hasRefetched) {
+      setHasRefetched(true);
+      refetch();
     }
   };
 
@@ -73,7 +71,7 @@ const HomeTreeNode = ({ cat, depth = 0 }) => {
           <i className={`bi bi-chevron-${open ? 'down' : 'right'} me-2 text-muted`} style={{ fontSize: '0.65rem' }}></i>
           <i className="bi bi-folder2 me-2 text-primary" style={{ fontSize: '0.82rem' }}></i>
           <span className="small fw-semibold text-dark flex-grow-1">{cat.name}</span>
-          {items !== null && <span className="badge rounded-pill bg-primary bg-opacity-10 text-primary ms-1" style={{ fontSize: '0.62rem' }}>{items.length}</span>}
+          {items !== undefined && <span className="badge rounded-pill bg-primary bg-opacity-10 text-primary ms-1" style={{ fontSize: '0.62rem' }}>{items?.length || 0}</span>}
         </button>
 
         {open && (
@@ -332,33 +330,14 @@ const ContributorSection = ({ uploaders }) => {
 
 export default function Home() {
   const { user } = useAuth();
-  const [stats, setStats] = useState({ contentCount: '...', studentCount: '...', viewsCount: '...' });
-  const [uploaders, setUploaders] = useState([]);
-  const [nestedCategories, setNestedCategories] = useState(null); // null = loading
-  const [loading, setLoading] = useState(true);
+  
+  // Use TanStack Query hooks
+  const { data: statsData, isLoading: statsLoading } = useStats();
+  const { data: uploaders, isLoading: uploadersLoading } = useTopUploaders();
+  const { data: nestedCategories, isLoading: categoriesLoading } = useNestedCategories();
 
-  useEffect(() => {
-    const fetchHomeData = async () => {
-      try {
-        const [statsRes, uploadersRes, catRes] = await Promise.all([
-          api.get('/auth/stats'),
-          api.get('/auth/top-uploaders'),
-          api.get('/categories/all-nested'),
-          // Removed: api.get('/content') — content is now fetched lazily per category
-        ]);
-
-        setStats(statsRes.data);
-        setUploaders(uploadersRes.data.uploaders);
-        // Pass nested categories directly (no flattening needed for the tree)
-        setNestedCategories(catRes.data.categories || []);
-      } catch (err) {
-        console.error('Home data fetch error:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchHomeData();
-  }, []);
+  const stats = statsData || { contentCount: '...', studentCount: '...', viewsCount: '...' };
+  const loading = statsLoading || uploadersLoading || categoriesLoading;
 
   // Dynamic CTA (Call to Action) button based on login status
   const CTALink = user ? "/dashboard" : "/signup";

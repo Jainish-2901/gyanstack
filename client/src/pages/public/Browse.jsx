@@ -1,46 +1,25 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useNestedCategories } from '../../hooks/useCategories';
 import SearchBar from '../../components/SearchBar';
 import ContentList from '../../components/ContentList';
-import api from '../../services/api';
 import ShareButton from '../../components/ShareButton';
 import LoadingScreen from '../../components/LoadingScreen';
 
 export default function Browse() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [categories, setCategories] = useState([]);
-  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const categoryId = searchParams.get('category');
+  const searchTerm = searchParams.get('search') || '';
+  const uploaderFilter = searchParams.get('uploader') || '';
+  const sortBy = searchParams.get('sortBy') || 'date';
+  const order = searchParams.get('order') || 'desc';
+  
+  // Use TanStack Query hook
+  const { data: categories = [], isLoading: categoriesLoading } = useNestedCategories();
 
   // Breadcrumb Path Tracking: [{id, name, children}]
   const [currentPath, setCurrentPath] = useState([]);
   const [displaySubCats, setDisplaySubCats] = useState([]);
-
-  // URL values derivation
-  const categoryId = searchParams.get('category')?.trim() || null;
-  const searchTerm = searchParams.get('search')?.trim() || '';
-  const uploaderFilter = searchParams.get('uploader')?.trim() || '';
-
-  // 1. Initial Fetch: Get the Root Categories
-  useEffect(() => {
-    const fetchRoot = async () => {
-      setCategoriesLoading(true);
-      try {
-        const { data } = await api.get('/categories/all-nested');
-        const rootCats = data.categories || data;
-        setCategories(rootCats);
-
-        // If no category in URL, show Root
-        if (!categoryId) {
-          setDisplaySubCats(rootCats);
-        }
-      } catch (err) {
-        console.error("Failed to fetch categories", err);
-      } finally {
-        setCategoriesLoading(false);
-      }
-    };
-    fetchRoot();
-  }, []);
 
   // 2. Sync UI when URL changes (Direct Link support)
   useEffect(() => {
@@ -81,6 +60,21 @@ export default function Browse() {
   const handleGoRoot = () => {
     const params = new URLSearchParams(searchParams);
     params.delete('category');
+    setSearchParams(params);
+  };
+
+  const handleSortChange = (e) => {
+    const value = e.target.value;
+    const params = new URLSearchParams(searchParams);
+    
+    if (value === 'date_desc') {
+        params.delete('sortBy');
+        params.delete('order');
+    } else {
+        const [sort, ord] = value.split('_');
+        params.set('sortBy', sort);
+        params.set('order', ord);
+    }
     setSearchParams(params);
   };
 
@@ -189,8 +183,8 @@ export default function Browse() {
           )}
 
           {/* TITLE & SHARE BAR */}
-          <div className="d-flex align-items-center mb-4 pb-2 border-bottom border-light flex-wrap gap-2">
-            <div className="me-auto">
+          <div className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between mb-4 pb-3 border-bottom border-light gap-3">
+            <div className="flex-grow-1">
               <h4 className="fw-bold mb-0 text-dark">
                 {searchTerm
                   ? (categoryId && pageTitle !== "All Content"
@@ -199,13 +193,34 @@ export default function Browse() {
                   : pageTitle
                 }
               </h4>
-              {uploaderFilter && <small className="text-primary fw-bold">By Uploader: {uploaderFilter}</small>}
+              {uploaderFilter && <small className="text-primary fw-bold d-block mt-1">By Uploader: {uploaderFilter}</small>}
             </div>
-            <ShareButton
-              title={`Explore ${pageTitle} on GyanStack`}
-              url={window.location.href}
-              className="btn btn-outline-primary rounded-pill btn-sm px-4"
-            />
+
+            <div className="d-flex align-items-center gap-2 w-100 w-sm-auto justify-content-between justify-content-sm-end">
+              <div className="d-flex align-items-center gap-2">
+                <i className="bi bi-filter-left text-muted d-none d-md-block"></i>
+                <select 
+                    className="form-select form-select-sm rounded-pill border-light shadow-sm"
+                    style={{ width: 'auto', minWidth: '140px', background: 'rgba(255,255,255,0.7)', paddingRight: '2rem' }}
+                    value={`${sortBy}_${order}`}
+                    onChange={handleSortChange}
+                >
+                    <option value="date_desc">Recently Added</option>
+                    <option value="views_desc">Most Visited</option>
+                    <option value="likes_desc">Most Liked</option>
+                    <option value="saves_desc">Most Saved</option>
+                    <option value="downloads_desc">Most Downloaded</option>
+                    <option value="title_asc">A - Z</option>
+                </select>
+              </div>
+
+              <ShareButton
+                title={`Explore ${pageTitle} on GyanStack`}
+                url={window.location.href}
+                className="btn btn-outline-primary rounded-circle btn-sm p-2 d-flex align-items-center justify-content-center"
+                style={{ width: '38px', height: '38px' }}
+              />
+            </div>
           </div>
 
           {/* ACTUAL CONTENT LIST */}
@@ -213,6 +228,8 @@ export default function Browse() {
             categoryId={categoryId}
             searchTerm={searchTerm}
             uploaderName={uploaderFilter}
+            sortBy={sortBy}
+            order={order}
           />
         </div>
       </div>

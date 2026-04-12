@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import api from '../../services/api'; 
-// DashboardLayout removed
+import { useMyRequests } from '../../hooks/useRequests';
 
 // Main content component (Student specific)
 const StudentDashboardView = ({ user, requests, fetching }) => (
@@ -136,29 +135,13 @@ const StudentDashboardView = ({ user, requests, fetching }) => (
   </>
 );
 
-
 export default function Dashboard() {
-  const { user, loading } = useAuth();
-  const [requests, setRequests] = useState([]);
-  const [fetching, setFetching] = useState(true);
+  const { user, loading: authLoading } = useAuth();
   
-  useEffect(() => {
-    if (user) {
-      const fetchRequests = async () => {
-        try {
-          const { data } = await api.get('/requests/my-requests');
-          setRequests(data.requests);
-        } catch (err) {
-          console.error("Failed to fetch dashboard requests:", err);
-        } finally {
-          setFetching(false);
-        }
-      };
-      fetchRequests();
-    }
-  }, [user]);
-
-  if (loading || !user) return null; 
+  // Use TanStack Query hook
+  const { data: requests = [], isLoading: fetching } = useMyRequests();
+  
+  if (authLoading || !user) return null; 
   
   return (
     <StudentDashboardView user={user} requests={requests} fetching={fetching} />

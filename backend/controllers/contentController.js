@@ -7,6 +7,7 @@ const fs = require('fs');
 const sharp = require('sharp');
 const path = require('path');
 const ffmpeg = require('fluent-ffmpeg');
+const ContentAggregator = require('../aggregators/contentAggregator');
 
 // Cloudinary Configuration
 cloudinary.config({
@@ -415,14 +416,35 @@ exports.getContent = async (req, res) => {
       query.$text = { $search: req.query.search };
     }
     
-    let sortObj = { createdAt: -1 };
+    // --- DYNAMIC SORTING LOGIC ---
+    let sortObj = { createdAt: -1 }; // Default: Recently Added
+    const { sortBy, order } = req.query;
+    const sortOrder = order === 'asc' ? 1 : -1;
+
+    if (req.query.search) {
+      // Priority: Text score for searches
+      sortObj = { score: { $meta: "textScore" } };
+    } else if (sortBy) {
+      // Use mapping to prevent unauthorized sort fields
+      const sortMap = {
+        date: 'createdAt',
+        views: 'viewsCount',
+        likes: 'likesCount',
+        saves: 'savesCount',
+        downloads: 'downloadsCount',
+        title: 'title'
+      };
+      
+      const targetField = sortMap[sortBy] || 'createdAt';
+      sortObj = { [targetField]: sortOrder };
+    }
+
     let projectObj = {};
     if (req.query.search) {
-      sortObj = { score: { $meta: "textScore" } };
       projectObj = { score: { $meta: "textScore" } };
     }
 
-    const limit = parseInt(req.query.limit) || 0; // 0 = no limit (default for backwards compat)
+    const limit = parseInt(req.query.limit) || 0; 
     const content = await Content.find(query, projectObj).sort(sortObj).limit(limit);
     res.json({ content, hasMore: limit > 0 && content.length === limit });
   } catch (err) {
@@ -437,24 +459,28 @@ exports.getSingleContent = async (req, res) => {
   try {
     const skipView = req.query.skipView === 'true';
 
-    let content;
+    let contentDoc;
     if (skipView) {
       // Just fetch — no view increment
-      content = await Content.findById(req.params.id)
+      contentDoc = await Content.findById(req.params.id)
         .populate('uploadedBy', 'username email');
     } else {
       // First visit: fetch + increment view count atomically
-      content = await Content.findByIdAndUpdate(
+      contentDoc = await Content.findByIdAndUpdate(
         req.params.id,
         { $inc: { viewsCount: 1 } },
         { new: true }
       ).populate('uploadedBy', 'username email');
     }
 
-    if (!content) {
+    if (!contentDoc) {
       return res.status(404).json({ message: 'Content not found' });
     }
-    res.json(content);
+
+    // --- AGGREGATOR PATTERN: Enrich data from external providers ---
+    const aggregatedData = await ContentAggregator.aggregate(contentDoc);
+
+    res.json(aggregatedData);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error');

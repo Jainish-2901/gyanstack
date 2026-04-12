@@ -4,6 +4,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import LoadingScreen from '../../components/LoadingScreen';
 import { useAuth } from '../../context/AuthContext';
+import { useContentDetail, useRelatedContent, useContentMutation } from '../../hooks/useContent';
 import ShareButton from '../../components/ShareButton';
 import ContentCard from '../../components/ContentCard';
 import NotFound from './NotFound';
@@ -258,123 +259,74 @@ const DetailPreview = ({ item }) => {
 
 
 
+const formatBytes = (bytes, decimals = 2) => {
+  if (!bytes || bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+};
+
 // --- Main Page Component ---
 export default function ContentDetailPage() {
+// ...
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [item, setItem] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  // 1. Data Fetching Hooks
+  const { data: item, isLoading: contentLoading } = useContentDetail(id);
+  const { data: relatedItems = [] } = useRelatedContent(item?.categoryId, id);
+  const { toggleLike, toggleSave, incrementDownload } = useContentMutation();
 
-  const [isLiked, setIsLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
-  const [isSaved, setIsSaved] = useState(false);
-  const [savesCount, setSavesCount] = useState(0);
-  const [downloadsCount, setDownloadsCount] = useState(0);
-  const [relatedItems, setRelatedItems] = useState([]);
-
-  // --- View count guard (ref-based, no storage) ---
-  // Every genuine content open → +1. No user/timing restrictions.
-  // The ONLY guard: React.StrictMode in dev intentionally mounts → unmounts → remounts
-  // components to detect side-effects, which would fire this effect twice per real visit.
-  // Storing the last-counted ID in a ref (not state) prevents that StrictMode artifact
-  // without affecting real users: navigating to a new ID always counts +1 fresh.
+  // --- View count guard (ref-based) ---
   const lastCountedId = useRef(null);
 
   useEffect(() => {
-    // If we already counted for this exact ID in this render cycle, skip.
-    // (Only triggers in StrictMode's double-mount; never blocks real navigations.)
+    // We still want to increment view count on entry, but we don't need a state for it
+    // since the 'item' query will fetch the updated count, or we can just fire and forget.
     if (lastCountedId.current === id) return;
     lastCountedId.current = id;
+    
+    // Note: The backend handles the increment on the GET request usually, 
+    // but if it's a separate call, we'd fire it here.
+    // Based on original code, it was part of the GET /content/:id call.
+  }, [id]);
 
-    const fetchContent = async () => {
-      setLoading(true);
-      try {
-        // Simple fetch — backend always does $inc: { viewsCount: 1 }
-        const { data } = await api.get(`/content/${id}`);
-
-        setItem(data);
-        setLikeCount(data.likesCount);
-        setSavesCount(data.savesCount || 0);
-        setDownloadsCount(data.downloadsCount || 0);
-
-        // Fetch related items
-        try {
-          const relRes = await api.get(`/content?categoryId=${data.categoryId}&limit=5`);
-          const filtered = relRes.data.content.filter(i => i._id !== id).slice(0, 4);
-          setRelatedItems(filtered);
-        } catch (relErr) {
-          console.error('Related fetch error:', relErr);
-        }
-
-      } catch (err) {
-        console.error('Content fetch error:', err);
-        setError('Content not found or failed to load.');
-        setItem(null);
-      }
-      setLoading(false);
-    };
-
-    if (id) fetchContent();
-  }, [id]); // [id] only — triggers fresh fetch+count on every new content page
-
-  // Effect 2: Set user-specific state (like/save) separately, with NO view count
-  useEffect(() => {
-    if (item && user) {
-      setIsLiked(item.likedBy?.includes(user.id));
-      setIsSaved(item.savedBy?.includes(user.id));
-    }
-  }, [item, user]);
-
-  const handleLike = async () => {
+  const handleLike = () => {
     if (!user) { alert('Please log in to like content.'); return; }
-    try {
-      const { data } = await api.put(`/content/${id}/like`);
-      setIsLiked(data.isLiked);
-      setLikeCount(data.likesCount);
-    } catch (err) { setError('Failed to update like status.'); }
+    toggleLike.mutate(id);
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!user) { alert('Please log in to save content.'); return; }
-    try {
-      const { data } = await api.put(`/content/${id}/save`);
-      setIsSaved(data.isSaved);
-      setSavesCount(data.savesCount);
-    } catch (err) { setError('Failed to update save status.'); }
+    toggleSave.mutate(id);
   };
 
   const handleDownload = async () => {
     if (!user) { alert('Please log in to download content.'); return; }
-    try {
-      const { data } = await api.put(`/content/${id}/download`);
-      setDownloadsCount(data.downloadsCount);
-
-      const downloadUrl = getDownloadUrl(item);
-
-      // Trigger download using a temporary hidden link
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.setAttribute('download', item.title || 'download');
-      link.setAttribute('target', '_blank');
-      link.setAttribute('rel', 'noopener noreferrer');
-
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-    } catch (err) {
-      console.error('Download logic error', err);
-      // Clean fallback
-      window.open(item.url, '_blank');
-    }
+    incrementDownload.mutate(id, {
+      onSuccess: () => {
+        const downloadUrl = getDownloadUrl(item);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.setAttribute('download', item.title || 'download');
+        link.setAttribute('target', '_blank');
+        link.setAttribute('rel', 'noopener noreferrer');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      },
+      onError: () => {
+        window.open(item.url, '_blank');
+      }
+    });
   };
 
   const handleGoBack = () => { navigate(-1); };
 
-  if (loading) return <LoadingScreen text="Loading content..." />;
+  if (contentLoading) return <LoadingScreen text="Loading content..." />;
 
   if (!item) {
     return <NotFound />;
@@ -408,8 +360,8 @@ export default function ContentDetailPage() {
 
             <div className="d-flex flex-wrap gap-3 mb-2">
               <div className="d-flex align-items-center"><i className="bi bi-eye-fill me-2 text-info"></i>{item.viewsCount} Views</div>
-              <div className="d-flex align-items-center"><i className="bi bi-heart-fill me-2 text-danger"></i>{likeCount} Likes</div>
-              <div className="d-flex align-items-center"><i className="bi bi-cloud-download-fill me-2 text-success"></i>{downloadsCount} Downloads</div>
+              <div className="d-flex align-items-center"><i className="bi bi-heart-fill me-2 text-danger"></i>{item.likesCount} Likes</div>
+              <div className="d-flex align-items-center"><i className="bi bi-cloud-download-fill me-2 text-success"></i>{item.downloadsCount} Downloads</div>
             </div>
           </header>
 
@@ -425,27 +377,79 @@ export default function ContentDetailPage() {
             <DetailPreview item={item} />
           </div>
 
+          {/* AGGREGATED METADATA SECTION (from Aggregator Pattern) */}
+          {(item.externalMetadata?.googleDrive || item.externalMetadata?.cloudinary) && (
+            <div className="mb-4 glass-panel p-3 p-md-4 rounded-4 border-0 shadow-sm animate-slide-up" style={{ background: 'rgba(255,255,255,0.6)' }}>
+              <h6 className="fw-bold text-dark mb-3 d-flex align-items-center">
+                <i className="bi bi-info-square-fill text-primary me-2"></i>Resource Intelligence
+              </h6>
+              <div className="row g-3">
+                {/* Google Drive Info */}
+                {item.externalMetadata.googleDrive && (
+                  <div className="col-md-6">
+                    <div className="d-flex align-items-start gap-3">
+                      <div className="bg-primary bg-opacity-10 p-2 rounded-3">
+                        <i className="bi bi-google-drive text-primary"></i>
+                      </div>
+                      <div>
+                        <div className="text-muted small">Drive Status</div>
+                        <div className="fw-bold small">
+                          {formatBytes(item.externalMetadata.googleDrive.size)} • {item.externalMetadata.googleDrive.mimeType?.split('/')[1]?.toUpperCase() || 'File'}
+                        </div>
+                        <div className="extra-small text-muted">Created: {new Date(item.externalMetadata.googleDrive.createdTime).toLocaleDateString()}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Cloudinary Colors/OCR */}
+                {item.externalMetadata.cloudinary && (
+                  <div className="col-md-6">
+                    <div className="d-flex align-items-start gap-3">
+                      <div className="bg-info bg-opacity-10 p-2 rounded-3">
+                        <i className="bi bi-palette-fill text-info"></i>
+                      </div>
+                      <div>
+                        <div className="text-muted small">Visual Profile</div>
+                        <div className="d-flex gap-1 mt-1">
+                          {item.externalMetadata.cloudinary.colors?.slice(0, 5).map((color, idx) => (
+                            <div key={idx} className="rounded-circle border" style={{ width: '16px', height: '16px', background: color[0], cursor: 'default' }} title={color[0]}></div>
+                          ))}
+                        </div>
+                        {item.externalMetadata.cloudinary.ocr?.adv_ocr?.data?.[0]?.textAnnotations?.[0]?.description && (
+                           <div className="extra-small text-muted mt-1 text-truncate" style={{ maxWidth: '200px' }}>
+                             OCR: {item.externalMetadata.cloudinary.ocr.adv_ocr.data[0].textAnnotations[0].description.substring(0, 50)}...
+                           </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Action Buttons Section */}
           <div className="row g-3 mb-5">
             <div className="col-12 col-sm-6 col-md-3">
               <button
-                className={`btn w-100 py-3 d-flex align-items-center justify-content-center h-100 ${isLiked ? 'btn-danger' : 'btn-outline-danger'}`}
+                className={`btn w-100 py-3 d-flex align-items-center justify-content-center h-100 ${item.likedBy?.includes(user?.id) ? 'btn-danger' : 'btn-outline-danger'}`}
                 onClick={handleLike}
-                disabled={!user}
+                disabled={!user || toggleLike.isPending}
               >
-                <i className={`bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'} fs-5 me-2`}></i>
-                {isLiked ? 'Liked' : 'Like'}
+                <i className={`bi ${item.likedBy?.includes(user?.id) ? 'bi-heart-fill' : 'bi-heart'} fs-5 me-2`}></i>
+                {item.likedBy?.includes(user?.id) ? 'Liked' : 'Like'}
               </button>
             </div>
 
             <div className="col-12 col-sm-6 col-md-3">
               <button
-                className={`btn w-100 py-3 d-flex align-items-center justify-content-center h-100 ${isSaved ? 'btn-success' : 'btn-outline-success'}`}
+                className={`btn w-100 py-3 d-flex align-items-center justify-content-center h-100 ${item.savedBy?.includes(user?.id) ? 'btn-success' : 'btn-outline-success'}`}
                 onClick={handleSave}
-                disabled={!user}
+                disabled={!user || toggleSave.isPending}
               >
-                <i className={`bi ${isSaved ? 'bi-bookmark-fill' : 'bi-bookmark'} fs-5 me-2`}></i>
-                {isSaved ? 'Saved' : 'Save'}
+                <i className={`bi ${item.savedBy?.includes(user?.id) ? 'bi-bookmark-fill' : 'bi-bookmark'} fs-5 me-2`}></i>
+                {item.savedBy?.includes(user?.id) ? 'Saved' : 'Save'}
               </button>
             </div>
 

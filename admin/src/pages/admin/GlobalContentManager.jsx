@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import React, { useState, useMemo, memo } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import api from '../../services/api';
+import { useManageAllContent, useAdminContentMutation } from '../../hooks/useAdminContent';
+import { useCategoryMap } from '../../hooks/useAdminCategories';
+import { useAllUsers } from '../../hooks/useAdminUsers';
 import LoadingScreen from '../../components/LoadingScreen';
 import EditContentModal from '../../components/EditContentModal';
 
@@ -79,21 +81,21 @@ const GlobalContentRow = memo(({ item, categoryMap, isSelected, onToggle, onEdit
 // 🚀 HELPER: Handover Ownership Modal
 const HandoverModal = ({ show, onClose, selectedIds, admins, onSuccess, onError }) => {
     const [targetId, setTargetId] = useState('');
-    const [loading, setLoading] = useState(false);
+    const { reassignContent } = useAdminContentMutation();
+
     if (!show) return null;
 
-    const executeHandover = async () => {
+    const executeHandover = () => {
         if (!targetId) return;
-        setLoading(true);
-        try {
-            const { data } = await api.post('/content/reassign', { contentIds: selectedIds, newUploaderId: targetId });
-            onSuccess(data.message);
-            onClose();
-        } catch (err) {
-            onError(err.response?.data?.message || 'Handover failed.');
-        } finally {
-            setLoading(false);
-        }
+        reassignContent.mutate({ contentIds: selectedIds, newUploaderId: targetId }, {
+            onSuccess: (data) => {
+                onSuccess(data.message);
+                onClose();
+            },
+            onError: (err) => {
+                onError(err.response?.data?.message || 'Handover failed.');
+            }
+        });
     };
 
     return (
@@ -102,14 +104,14 @@ const HandoverModal = ({ show, onClose, selectedIds, admins, onSuccess, onError 
                 <div className="modal-content border-0 rounded-4 shadow-lg">
                     <div className="modal-header bg-primary text-white border-0 py-3">
                         <h5 className="modal-title fw-bold">Handover Platform Content</h5>
-                        <button type="button" className="btn-close btn-close-white" onClick={onClose} disabled={loading}></button>
+                        <button type="button" className="btn-close btn-close-white" onClick={onClose} disabled={reassignContent.isPending}></button>
                     </div>
                     <div className="modal-body p-4 text-center">
                         <div className="mb-4">
                             <i className="bi bi-arrow-left-right display-4 text-primary"></i>
                             <p className="mt-2 fw-bold">Reassigning {selectedIds?.length} Items</p>
                         </div>
-                        <select className="form-select rounded-pill mb-3" value={targetId} onChange={(e) => setTargetId(e.target.value)} disabled={loading}>
+                        <select className="form-select rounded-pill mb-3" value={targetId} onChange={(e) => setTargetId(e.target.value)} disabled={reassignContent.isPending}>
                             <option value="">Select Recipient Admin...</option>
                             {(admins || []).filter(u => u && !u.isDeleted).map(u => (
                                 <option key={u._id} value={u._id}>{u.username} ({u.role})</option>
@@ -118,9 +120,9 @@ const HandoverModal = ({ show, onClose, selectedIds, admins, onSuccess, onError 
                         <p className="small text-muted bg-light p-2 rounded">Warning: This action transfers content management rights to the selected administrator.</p>
                     </div>
                     <div className="modal-footer border-0 p-4 pt-0 gap-2">
-                        <button className="btn btn-light rounded-pill px-4 border flex-grow-1" onClick={onClose} disabled={loading}>Cancel</button>
-                        <button className="btn btn-primary rounded-pill px-4 fw-bold flex-grow-1 shadow-sm" onClick={executeHandover} disabled={!targetId || loading}>
-                            {loading ? <span className="spinner-border spinner-border-sm me-2"></span> : 'Transfer Ownership'}
+                        <button className="btn btn-light rounded-pill px-4 border flex-grow-1" onClick={onClose} disabled={reassignContent.isPending}>Cancel</button>
+                        <button className="btn btn-primary rounded-pill px-4 fw-bold flex-grow-1 shadow-sm" onClick={executeHandover} disabled={!targetId || reassignContent.isPending}>
+                            {reassignContent.isPending ? <span className="spinner-border spinner-border-sm me-2"></span> : 'Transfer Ownership'}
                         </button>
                     </div>
                 </div>
@@ -131,10 +133,16 @@ const HandoverModal = ({ show, onClose, selectedIds, admins, onSuccess, onError 
 
 export default function GlobalContentManager() {
     const { user } = useAuth();
-    const [content, setContent] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [categoryMap, setCategoryMap] = useState({});
-    const [admins, setAdmins] = useState([]);
+
+    // 1. Data Fetching Hooks
+    const { data: content = [], isLoading: loading, refetch: refreshData } = useManageAllContent();
+    const { data: categoryMap = {} } = useCategoryMap();
+    const { data: users = [] } = useAllUsers();
+    
+    // Derived state
+    const admins = useMemo(() => users.filter(u => u && u.role !== 'student'), [users]);
+    
+    const { deleteContent, bulkDeleteContent } = useAdminContentMutation();
     
     const [selectedIds, setSelectedIds] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -146,36 +154,7 @@ export default function GlobalContentManager() {
     const [currentItem, setCurrentItem] = useState(null);
     const [showHandover, setShowHandover] = useState(false);
 
-    const loadData = useCallback(async () => {
-        setLoading(true);
-        setAlert({ type: '', msg: '' });
-        try {
-            const [cRes, uRes, coRes] = await Promise.all([
-                api.get('/categories/all-nested'),
-                api.get('/admin/users'),
-                api.get('/content/manage-all')
-            ]);
-            
-            const map = {};
-            const flatten = (data) => {
-                if (!Array.isArray(data)) return;
-                data.forEach(item => {
-                    if (item?._id) map[item._id] = item.name;
-                    if (item?.children) flatten(item.children);
-                });
-            };
-            flatten(cRes.data.categories || cRes.data || []);
-            setCategoryMap(map);
-            setAdmins((uRes.data?.users || []).filter(u => u && u.role !== 'student'));
-            setContent(coRes.data?.content || []);
-        } catch (err) {
-            setAlert({ type: 'danger', msg: 'Failed to synchronize administrative library data.' });
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => { loadData(); }, [loadData]);
+    // loadData is gone as TanStack Query handles it
 
     const filtered = useMemo(() => {
         return (content || []).filter(item => {
@@ -193,29 +172,25 @@ export default function GlobalContentManager() {
         setIsEditing(true);
     };
 
-    const handleDeleteAction = async (id) => {
+    const handleDeleteAction = (id) => {
         if (!window.confirm('Erase this resource permanently?')) return;
-        try {
-            await api.delete(`/content/${id}`);
-            setContent(prev => prev.filter(c => c._id !== id));
-            setAlert({ type: 'success', msg: 'Resource cleared from platform.' });
-        } catch (err) {
-            setAlert({ type: 'danger', msg: 'Purge failed.' });
-        }
+        deleteContent.mutate(id, {
+            onSuccess: () => setAlert({ type: 'success', msg: 'Resource cleared from platform.' }),
+            onError: () => setAlert({ type: 'danger', msg: 'Purge failed.' }),
+        });
     };
 
-    const handleBulkDelete = async () => {
+    const handleBulkDelete = () => {
         if (!selectedIds.length) return;
         if (!window.confirm(`Permanently erase ${selectedIds.length} resources from the platform?`)) return;
         
-        try {
-            await api.delete('/content/bulk-delete', { data: { ids: selectedIds } });
-            setContent(prev => prev.filter(c => !selectedIds.includes(c._id)));
-            setAlert({ type: 'success', msg: `${selectedIds.length} resources cleared successfully.` });
-            setSelectedIds([]);
-        } catch (err) {
-            setAlert({ type: 'danger', msg: 'Bulk purge failed.' });
-        }
+        bulkDeleteContent.mutate(selectedIds, {
+            onSuccess: () => {
+                setAlert({ type: 'success', msg: `${selectedIds.length} resources cleared successfully.` });
+                setSelectedIds([]);
+            },
+            onError: () => setAlert({ type: 'danger', msg: 'Bulk purge failed.' }),
+        });
     };
 
     if (loading) return <LoadingScreen text="Syncing Global Library..." />;
@@ -227,7 +202,7 @@ export default function GlobalContentManager() {
                     <h1 className="h3 fw-bold text-primary mb-1">Global Platform Library</h1>
                     <p className="text-muted small mb-0">Total visibility and management of all uploaded resources.</p>
                 </div>
-                <button className="btn btn-primary rounded-circle shadow-sm d-flex align-items-center justify-content-center" style={{ width: '38px', height: '38px' }} onClick={loadData} title="Sync"><i className="bi bi-arrow-clockwise"></i></button>
+                <button className="btn btn-primary rounded-circle shadow-sm d-flex align-items-center justify-content-center" style={{ width: '38px', height: '38px' }} onClick={() => refreshData()} title="Sync"><i className="bi bi-arrow-clockwise"></i></button>
             </div>
 
             {alert.msg && <div className={`alert alert-${alert.type} shadow-sm border-0 rounded-4 mb-4`} onClick={() => setAlert({ type: '', msg: '' })}>{alert.msg}</div>}
@@ -309,13 +284,13 @@ export default function GlobalContentManager() {
             </div>
 
             {/* Modals */}
-            <HandoverModal show={showHandover} onClose={() => setShowHandover(false)} selectedIds={selectedIds} admins={admins} onSuccess={(m) => { setAlert({ type: 'success', msg: m }); setSelectedIds([]); loadData(); }} onError={(e) => setAlert({ type: 'danger', msg: e })} />
+            <HandoverModal show={showHandover} onClose={() => setShowHandover(false)} selectedIds={selectedIds} admins={admins} onSuccess={(m) => { setAlert({ type: 'success', msg: m }); setSelectedIds([]); }} onError={(e) => setAlert({ type: 'danger', msg: e })} />
             
             {isEditing && (
                 <EditContentModal
                     item={currentItem}
                     onClose={() => setIsEditing(false)}
-                    onUpdate={(u) => { setContent(prev => prev.map(c => c._id === u._id ? { ...c, ...u } : c)); setAlert({ type: 'success', msg: 'Updated successfully.' }); setIsEditing(false); }}
+                    onUpdate={(u) => { setAlert({ type: 'success', msg: 'Updated successfully.' }); setIsEditing(false); }}
                     categories={categoryMap}
                 />
             )}

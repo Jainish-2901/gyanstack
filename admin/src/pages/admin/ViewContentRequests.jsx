@@ -1,116 +1,57 @@
-import React, { useState, useEffect } from 'react';
-import api from '../../services/api';
+import React from 'react';
+import { useContentRequests, useRequestMutation } from '../../hooks/useAdminRequests';
 import LoadingScreen from '../../components/LoadingScreen';
-// -------------------
 
-// --- 1. HELPER COMPONENT: Request Card for Mobile View ---
-const RequestCardMobile = ({ req, updateStatus, handleDelete }) => (
-  <div className="card mb-2 border border-light rounded-3 shadow-none overflow-hidden transition-all bg-white">
-    <div className="card-body p-2 px-3">
-      <div className="d-flex justify-content-between align-items-center mb-1">
-        <div className="fw-bold text-dark text-truncate" style={{ fontSize: '0.9rem' }}>{req.topic}</div>
-        <span className={`badge rounded-pill ${
-          req.status === 'fulfilled' ? 'bg-success bg-opacity-10 text-success' : 'bg-warning bg-opacity-10 text-warning'
-        }`} style={{ fontSize: '0.65rem', padding: '4px 8px' }}>
-          {req.status === 'fulfilled' ? 'Fulfilled' : 'Pending'}
-        </span>
-      </div>
-      
-      <div className="d-flex align-items-center gap-2 mb-2">
-        <div className="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '24px', height: '24px' }}>
-          <i className="bi bi-person-fill" style={{ fontSize: '0.75rem' }}></i>
-        </div>
-        <div className="min-w-0">
-          <p className="mb-0 fw-medium text-dark text-truncate" style={{ fontSize: '0.8rem' }}>{req.requestedBy?.username || 'Unknown'}</p>
-        </div>
-        <div className="ms-auto text-muted" style={{ fontSize: '0.7rem' }}>
-          {new Date(req.createdAt).toLocaleDateString()}
-        </div>
-      </div>
+// 🚀 HELPER: Mobile Request Card
+const RequestCardMobile = ({ req, handleUpdateStatus, handleDelete }) => (
+    <div className="card mb-3 border-0 rounded-4 shadow-sm overflow-hidden bg-white mx-1">
+        <div className="card-body p-3">
+            <div className="d-flex justify-content-between align-items-start mb-2">
+                <div className="d-flex align-items-center gap-2">
+                    <div className="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style={{ width: '32px', height: '32px' }}>
+                        <i className="bi bi-person-fill"></i>
+                    </div>
+                    <div className="overflow-hidden">
+                        <div className="fw-bold small text-dark text-truncate" style={{ maxWidth: '120px' }}>{req.requestedBy?.username || 'Unknown'}</div>
+                        <div className="text-muted extra-small" style={{ fontSize: '0.65rem' }}>{req.requestedBy?.email}</div>
+                    </div>
+                </div>
+                <span className={`badge rounded-pill ${req.status === 'fulfilled' ? 'bg-success bg-opacity-10 text-success' : 'bg-warning bg-opacity-10 text-warning'}`} style={{ fontSize: '0.6rem' }}>
+                    {req.status.toUpperCase()}
+                </span>
+            </div>
+            
+            <div className="bg-light p-2 rounded-3 mb-2">
+                <div className="fw-bold small mb-1">{req.topic}</div>
+                <div className="small text-muted" style={{ fontSize: '0.75rem' }}>{req.message || 'No additional details.'}</div>
+            </div>
 
-      <div className="bg-light rounded p-2 mb-2" style={{ fontSize: '0.75rem' }}>
-        <p className="mb-0 text-secondary" style={{ display: '-webkit-box', WebkitLineClamp: '2', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-          {req.message || <span className="fst-italic opacity-50">No message provided.</span>}
-        </p>
-      </div>
-
-      <div className="d-flex gap-2 align-items-center">
-        {req.status === 'pending' ? (
-          <button 
-            onClick={() => updateStatus(req._id, 'fulfilled')}
-            className="btn btn-sm btn-primary py-1 px-3 rounded-pill fw-bold w-100"
-            style={{ fontSize: '0.75rem' }}
-          >
-            <i className="bi bi-check-circle me-1"></i>Mark Fulfilled
-          </button>
-        ) : (
-          <button 
-            onClick={() => updateStatus(req._id, 'pending')}
-            className="btn btn-sm btn-outline-warning py-1 px-3 rounded-pill fw-bold w-100"
-            style={{ fontSize: '0.75rem' }}
-          >
-            <i className="bi bi-arrow-counterclockwise me-1"></i>Reopen
-          </button>
-        )}
-        <button 
-          onClick={() => handleDelete(req._id)}
-          className="btn btn-sm btn-outline-danger py-1 px-2 rounded-pill fw-bold flex-shrink-0"
-          style={{ fontSize: '0.75rem' }}
-          title="Delete Request"
-        >
-          <i className="bi bi-trash"></i>
-        </button>
-      </div>
+            <div className="d-flex justify-content-between align-items-center">
+                <small className="text-muted" style={{ fontSize: '0.65rem' }}>{new Date(req.createdAt).toLocaleDateString()}</small>
+                <div className="d-flex gap-2">
+                    <button onClick={() => handleUpdateStatus(req._id, req.status === 'pending' ? 'fulfilled' : 'pending')} className="btn btn-sm btn-primary rounded-pill px-3 py-1 extra-small" style={{ fontSize: '0.7rem' }}>
+                        {req.status === 'pending' ? 'Fulfill' : 'Reopen'}
+                    </button>
+                    <button onClick={() => handleDelete(req._id)} className="btn btn-sm btn-outline-danger rounded-pill px-2 py-1 extra-small">
+                        <i className="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 );
 
-
 export default function ViewContentRequests() {
-  const [requests, setRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { data: requests = [], isLoading: loading, error: fetchError, refetch: refreshRequests } = useContentRequests();
+  const { updateStatus: mutateStatus, deleteRequest: mutateDelete } = useRequestMutation();
 
-  useEffect(() => {
-    fetchRequests();
-  }, []);
-
-  const fetchRequests = async () => {
-    try {
-      setLoading(true);
-      const { data } = await api.get('/requests');
-      setRequests(data.requests);
-      setError(null);
-    } catch (err) {
-      console.error("Failed to fetch requests:", err);
-      setError("Failed to load content requests.");
-    } finally {
-      setLoading(false);
-    }
+  const handleUpdateStatus = (id, newStatus) => {
+    mutateStatus.mutate({ id, status: newStatus });
   };
 
-  const updateStatus = async (id, newStatus) => {
-    try {
-      await api.put(`/requests/${id}`, { status: newStatus });
-      // Update local state
-      setRequests(requests.map(req => 
-        req._id === id ? { ...req, status: newStatus } : req
-      ));
-    } catch (err) {
-      console.error("Status update error:", err);
-      alert("Failed to update status.");
-    }
-  };
-
-  const handleDelete = async (id) => {
+  const handleDelete = (id) => {
     if (!window.confirm("Are you sure you want to PERMANENTLY delete this request?")) return;
-    try {
-      await api.delete(`/requests/${id}`);
-      setRequests(requests.filter(req => req._id !== id));
-    } catch (err) {
-      console.error("Delete error:", err);
-      alert("Failed to delete request.");
-    }
+    mutateDelete.mutate(id);
   };
 
   if (loading) return <LoadingScreen text="Fetching user requests..." />;
@@ -122,15 +63,15 @@ export default function ViewContentRequests() {
           <h5 className="fw-bold text-primary mb-0">Content Requests</h5>
           <p className="text-muted d-none d-md-block small mb-0">Manage and fulfill user requested topics</p>
         </div>
-        <button onClick={fetchRequests} className="btn btn-outline-primary btn-sm rounded-circle border-0 d-flex align-items-center justify-content-center" style={{ width: '32px', height: '32px' }}>
+        <button onClick={() => refreshRequests()} className="btn btn-outline-primary btn-sm rounded-circle border-0 d-flex align-items-center justify-content-center" style={{ width: '32px', height: '32px' }}>
           <i className="bi bi-arrow-clockwise fs-5"></i>
         </button>
       </div>
 
-        {error && (
+        {fetchError && (
           <div className="alert alert-danger border-0 rounded-4 d-flex align-items-center mx-1">
             <i className="bi bi-exclamation-octagon-fill me-2"></i>
-            <div className="small">{error}</div>
+            <div className="small">Failed to load content requests.</div>
           </div>
         )}
 
@@ -191,7 +132,7 @@ export default function ViewContentRequests() {
                       <td className="pe-4 py-3 text-end">
                         <div className="d-flex gap-2 justify-content-end">
                           <button 
-                            onClick={() => updateStatus(req._id, req.status === 'pending' ? 'fulfilled' : 'pending')}
+                            onClick={() => handleUpdateStatus(req._id, req.status === 'pending' ? 'fulfilled' : 'pending')}
                             className={`btn btn-sm rounded-pill px-3 py-1 ${req.status === 'pending' ? 'btn-primary' : 'btn-outline-warning'}`}
                           >
                             {req.status === 'pending' ? 'Mark Fulfilled' : 'Reopen'}
@@ -214,7 +155,7 @@ export default function ViewContentRequests() {
             {/* MOBILE VIEW: Cards */}
             <div className="d-lg-none px-1 pb-4">
               {requests.map((req) => (
-                <RequestCardMobile key={req._id} req={req} updateStatus={updateStatus} handleDelete={handleDelete} />
+                <RequestCardMobile key={req._id} req={req} handleUpdateStatus={handleUpdateStatus} handleDelete={handleDelete} />
               ))}
             </div>
           </div>

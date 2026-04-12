@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext'; // Sahi import path
-import api from '../../services/api'; // Sahi import path
+import React, { useState, useEffect, useRef } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { useMyContent, useAdminContentMutation } from '../../hooks/useAdminContent';
+import { useCategoryMap } from '../../hooks/useAdminCategories';
 import { Link } from 'react-router-dom';
-import LoadingScreen from '../../components/LoadingScreen'; // Sahi import path
-import EditContentModal from '../../components/EditContentModal'; // Sahi import path
-import CategoryManager from '../../components/CategoryManager'; // Sahi import path
-// -------------------
+import LoadingScreen from '../../components/LoadingScreen';
+import EditContentModal from '../../components/EditContentModal';
+import CategoryManager from '../../components/CategoryManager';
 
 // --- 1. HELPER COMPONENT: Content Card for Mobile View ---
 const SITE_URL = import.meta.env.VITE_SITE_URL || 'http://localhost:5173';
@@ -92,15 +92,18 @@ const ContentCardMobile = ({ item, categoryMap, handleEditClick, handleDelete, i
   </div>
 );
 
-
-
 export default function AdminPanel() {
   const { user } = useAuth();
+
+  // 1. Data Fetching Hooks
+  const { data: myContent = [], isLoading: loadingContent, refetch: refreshContent } = useMyContent();
+  const { data: categoryMap = {} } = useCategoryMap();
+  const { uploadContent, deleteContent, bulkDeleteContent } = useAdminContentMutation();
 
   // States for Upload Form
   const [title, setTitle] = useState('');
   const [type, setType] = useState('note');
-  const [files, setFiles] = useState(null); // Ab files array store karega (Batch Upload)
+  const [files, setFiles] = useState(null); 
   const [link, setLink] = useState('');
   const [note, setNote] = useState('');
   const [tags, setTags] = useState('');
@@ -109,78 +112,28 @@ export default function AdminPanel() {
   const [categoryId, setCategoryId] = useState('');
   const [categoryName, setCategoryName] = useState('None Selected');
 
-  const [uploadMode, setUploadMode] = useState('single'); // 'single', 'batch', or 'external'
-  const [externalMimeType, setExternalMimeType] = useState('application/pdf'); // for external Drive links
-
-  // --- NAYA STATE: Category Map ---
-  const [categoryMap, setCategoryMap] = useState({});
-  // ------------------------------
+  const [uploadMode, setUploadMode] = useState('single'); 
+  const [externalMimeType, setExternalMimeType] = useState('application/pdf'); 
 
   const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0); // For progress bar
-  const [statusPhase, setStatusPhase] = useState(''); // '', 'uploading', 'processing', 'saving'
+  const [uploadProgress, setUploadProgress] = useState(0); 
+  const [statusPhase, setStatusPhase] = useState(''); 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   // States for Content Management
-  const [myContent, setMyContent] = useState([]);
-  const [loadingContent, setLoadingContent] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [currentItem, setCurrentItem] = useState(null);
-
-  // --- NAYA STATE: Bulk Selection & Search ---
   const [selectedIds, setSelectedIds] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  // ----------------------------------
 
-  // Fetch content, announcements, AND categories
-  const fetchData = async () => {
-    setLoadingContent(true);
-
-    // --- CHANGE: Ab hum Categories ko bhi fetch karenge (Map banane ke liye) ---
-    try {
-      const { data: categoryData } = await api.get('/categories/all-nested');
-
-      const map = {};
-      const buildMap = (categories) => {
-        for (const cat of categories) {
-          map[cat._id] = cat.name;
-          if (cat.children && cat.children.length > 0) {
-            buildMap(cat.children);
-          }
-        }
-      };
-      const categoriesList = categoryData.categories || categoryData;
-      buildMap(categoriesList);
-      setCategoryMap(map);
-
-    } catch (err) {
-      console.warn('Could not fetch category map. Using simple list.');
-      // Fallback
-      try {
-        const { data: categoryData } = await api.get('/categories');
-        const map = {};
-        const categoriesList = categoryData.categories || categoryData;
-        categoriesList.forEach(cat => { map[cat._id] = cat.name; });
-        setCategoryMap(map);
-      } catch (catErr) {
-        setError('Failed to fetch categories. Content table might show IDs.');
-      }
-    }
-    // --------------------------------------------------
-
-    try {
-      const { data: contentData } = await api.get('/content/my-content');
-      setMyContent(contentData.content);
-    } catch (err) {
-      setError('Failed to fetch your content.');
-    }
-    setLoadingContent(false);
-  };
-
+  // Initial fetch effect no longer needed for data, but can be used for error cleanup
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (error || success) {
+      const timer = setTimeout(() => { setError(''); setSuccess(''); }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error, success]);
 
   // --- BATCH UPLOAD CHANGE ---
   const handleFileChange = (e) => {
@@ -207,28 +160,22 @@ export default function AdminPanel() {
     formData.append('categoryId', categoryId);
     formData.append('tags', tags);
     formData.append('uploadMode', uploadMode);
-    // Send explicit MIME type for external links so backend doesn't have to guess
+    
     if (type === 'file' && uploadMode === 'external') {
       formData.append('externalMimeType', externalMimeType);
     }
 
-    // --- BATCH UPLOAD LOGIC ---
     if (type === 'file' && uploadMode !== 'external' && files && files.length > 0) {
-      // Single mode validation
       if (uploadMode === 'single' && files.length > 1) {
         setError('Please select only one file for Single Upload mode.');
         setUploading(false);
         return;
       }
-
-      // Batch mode validation (Limit: 10 files)
       if (uploadMode === 'batch' && files.length > 10) {
         setError('Maximum 10 files allowed per batch for stability.');
         setUploading(false);
         return;
       }
-
-      // Har file ko FormData mein 'files' field ke naam se append karein
       for (let i = 0; i < files.length; i++) {
         formData.append('files', files[i]);
       }
@@ -237,7 +184,6 @@ export default function AdminPanel() {
     } else if (type === 'note') {
       formData.append('textNote', note);
     }
-    // --------------------------
 
     try {
       const { data } = await api.post('/content', formData, {
@@ -252,12 +198,11 @@ export default function AdminPanel() {
       setStatusPhase('');
       setSuccess(data.message || 'Content uploaded successfully!');
 
-      // Form reset karein
       setTitle(''); setType('note'); setFiles(null); setLink(''); setNote(''); setTags('');
       setCategoryId(''); setCategoryName('None Selected');
       setExternalMimeType('application/pdf');
       setUploadProgress(0);
-      fetchData(); // Sabkuch refresh karein
+      refreshContent(); 
     } catch (err) {
       setError(err.response?.data?.message || 'Upload failed. Check server.');
       setUploadProgress(0);
@@ -266,32 +211,29 @@ export default function AdminPanel() {
   };
 
   // Delete Logic
-  const handleDelete = async (id) => {
+  const handleDelete = (id) => {
     if (!window.confirm('Are you sure you want to delete this content?')) return;
-    try {
-      await api.delete(`/content/${id}`);
-      setSelectedIds(selectedIds.filter(itemId => itemId !== id));
-      fetchData();
-    } catch (err) {
-      setError('Failed to delete content.');
-    }
+    deleteContent.mutate(id, {
+        onSuccess: () => {
+            setSelectedIds(prev => prev.filter(itemId => itemId !== id));
+        }
+    });
   };
 
-  // --- NAYA: Bulk Delete Logic ---
-  const handleBulkDelete = async () => {
+  // Bulk Delete Logic
+  const handleBulkDelete = () => {
     if (!selectedIds.length) return;
     if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} items?`)) return;
 
-    try {
-      setLoadingContent(true);
-      await api.delete('/content/bulk-delete', { data: { ids: selectedIds } });
-      setSelectedIds([]);
-      setSuccess(`${selectedIds.length} items deleted successfully.`);
-      fetchData();
-    } catch (err) {
-      setError(err.response?.data?.message || 'Bulk delete failed.');
-      setLoadingContent(false);
-    }
+    bulkDeleteContent.mutate(selectedIds, {
+        onSuccess: () => {
+            setSelectedIds([]);
+            setSuccess(`${selectedIds.length} items deleted successfully.`);
+        },
+        onError: (err) => {
+            setError(err.response?.data?.message || 'Bulk delete failed.');
+        }
+    });
   };
 
   const filteredContent = myContent.filter(item =>
@@ -319,9 +261,9 @@ export default function AdminPanel() {
 
   // Edit Logic
   const handleEditClick = (item) => { setCurrentItem(item); setIsEditing(true); };
-  const handleUpdateItem = (updatedItem) => {
-    setMyContent(myContent.map(item => item._id === updatedItem._id ? updatedItem : item));
+  const handleUpdateItem = () => {
     setSuccess('Content updated successfully!');
+    setIsEditing(false);
   };
 
 

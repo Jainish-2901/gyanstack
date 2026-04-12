@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useSearchParams } from 'react-router-dom';
-import api from '../../services/api';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { useUploaderProfile } from '../../hooks/useUsers';
+import { useNestedCategories } from '../../hooks/useCategories';
 import ContentList from '../../components/ContentList';
 import LoadingScreen from '../../components/LoadingScreen';
 import ShareButton from '../../components/ShareButton';
@@ -10,50 +11,20 @@ import NotFound from './NotFound';
 export default function UploaderProfile() {
   const { id } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
+  const categoryId = searchParams.get('category');
+  const searchTerm = searchParams.get('search') || '';
   
-  const [profile, setProfile] = useState(null);
-  const [categories, setCategories] = useState([]);
+  // 1. Data Fetching Hooks
+  const { data: profileData, isLoading: profileLoading, error: profileError } = useUploaderProfile(id);
+  const { data: categories = [], isLoading: categoriesLoading } = useNestedCategories();
+
+  const profile = profileData?.user;
+  const contents = profileData?.contents || [];
+  
+  // Breadcrumb Path Tracking
   const [currentPath, setCurrentPath] = useState([]);
   const [displaySubCats, setDisplaySubCats] = useState([]);
-  const [uploaderStats, setUploaderStats] = useState({ totalDocs: 0, catCount: 0 });
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [copySuccess, setCopySuccess] = useState(false);
-
-  // URL values derivation
-  const categoryId = searchParams.get('category')?.trim() || null;
-  const searchTerm = searchParams.get('search')?.trim() || '';
-
-  // 1. Initial Fetch: Profile + All Categories
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      setLoading(true);
-      try {
-        const [uploaderRes, catRes] = await Promise.all([
-          api.get(`/auth/uploader/${id}`),
-          api.get('/categories/all-nested')
-        ]);
-        const user = uploaderRes.data.user;
-        const contents = uploaderRes.data.contents || [];
-        const rootCats = catRes.data.categories || catRes.data;
-
-        setProfile(user);
-        const distinctCats = new Set(contents.map(c => c.categoryId));
-        setUploaderStats({ totalDocs: contents.length, catCount: distinctCats.size });
-        setCategories(rootCats);
-        
-        if (!categoryId) {
-          setDisplaySubCats(rootCats);
-        }
-      } catch (err) {
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchInitialData();
-  }, [id]);
 
   // 2. Sync UI when URL changes (Category Path building)
   useEffect(() => {
@@ -115,8 +86,13 @@ export default function UploaderProfile() {
     setTimeout(() => setCopySuccess(false), 2000);
   };
 
-  if (loading) return <LoadingScreen text="Fetching profile..." />;
-  if (error) return <NotFound />;
+  if (profileLoading || categoriesLoading) return <LoadingScreen text="Fetching profile..." />;
+  if (profileError || !profile) return <NotFound />;
+
+  const uploaderStats = {
+    totalDocs: contents.length,
+    catCount: new Set(contents.map(c => c.categoryId)).size
+  };
 
   return (
     <div className="container-fluid py-3 py-md-5 fade-in px-2 px-md-4 px-lg-5">

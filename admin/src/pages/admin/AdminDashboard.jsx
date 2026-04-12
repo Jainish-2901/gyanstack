@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import api from '../../services/api';
+import React, { useState, useMemo } from 'react';
+import { useAdminStats } from '../../hooks/useAdminStats';
 import LoadingScreen from '../../components/LoadingScreen';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import {
@@ -45,24 +45,16 @@ const MetricTile = ({ title, value, icon, color }) => (
 );
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [period, setPeriod] = useState('all');
+  
+  // Use TanStack Query hook
+  const { 
+    data: stats, 
+    isLoading: loading, 
+    error: fetchError 
+  } = useAdminStats(period);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      setLoading(true);
-      try {
-        const { data } = await api.get(`/admin/stats?period=${period}`);
-        setStats(data);
-      } catch (err) {
-        setError('Connection failed. Please check server status.');
-      }
-      setLoading(false);
-    };
-    fetchDashboardData();
-  }, [period]);
+  const error = fetchError ? 'Connection failed. Please check server status.' : '';
 
   const engagementChart = useMemo(() => {
     if (!stats) return null;

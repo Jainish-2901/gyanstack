@@ -7,10 +7,13 @@ import LoadingScreen from './components/LoadingScreen';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 // Always-loaded (app-wide, tiny footprint — NOT lazy)
-import PWAInstallPrompt from './components/PWAInstallPrompt';
+// Always-loaded (app-wide, tiny footprint — NOT lazy)
 import OfflineNotice from './components/OfflineNotice';
 import ScrollToTop from './components/ScrollToTop';
-import ChatWidget from './components/ChatWidget';
+
+// Lazy-loaded app-wide components
+const PWAInstallPrompt = lazy(() => import('./components/PWAInstallPrompt'));
+const ChatWidget       = lazy(() => import('./components/ChatWidget'));
 
 // Lazy-loaded pages — each becomes a separate JS chunk, downloaded only on first visit.
 // This cuts the initial bundle from ~one large file to small per-page chunks.
@@ -38,10 +41,10 @@ export default function App() {
     <div className="App">
       <ScrollToTop />
       <OfflineNotice />
-      <PWAInstallPrompt />
 
-      {/* Suspense wraps ALL routes — shows LoadingScreen while a page chunk downloads */}
-      <Suspense fallback={<LoadingScreen text="Loading page..." />}>
+      <Suspense fallback={<LoadingScreen text="Loading GyanStack..." />}>
+        <PWAInstallPrompt />
+
         <Routes>
           {/* 1. Public Pages (Header + Footer) */}
           <Route element={<PublicLayout />}>
@@ -69,9 +72,9 @@ export default function App() {
             <Route path="/request"             element={<RequestContent />} />
           </Route>
         </Routes>
-      </Suspense>
 
-      <ChatWidget />
+        <ChatWidget />
+      </Suspense>
     </div>
   );
 }

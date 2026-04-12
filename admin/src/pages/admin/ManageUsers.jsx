@@ -1,88 +1,76 @@
-import React, { useState, useEffect } from 'react';
-import api from '../../services/api'; 
+import React, { useState } from 'react';
+import { useAllUsers, useAdminUserMutation } from '../../hooks/useAdminUsers';
 import LoadingScreen from '../../components/LoadingScreen';
-// -------------------
 
+// 🚀 HELPER: Mobile User Card
 const UserCardMobile = ({ user, handleRoleChange, handleUserDelete }) => (
-    <div className="card mb-3 border border-light rounded-3 transition-all">
-        <div className="card-body p-3">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-                <div className="data-item fw-bold text-dark d-flex align-items-center gap-2" style={{ fontSize: '1rem' }}>
-                    <span className={user.isDeleted ? 'text-decoration-line-through text-muted' : ''}>{user.username}</span>
-                    {user.isDeleted && <span className="badge bg-danger bg-opacity-10 text-danger" style={{ fontSize: '0.6rem' }}>Deactivated</span>}
-                    {user.googleId ? (
-                        <i className="bi bi-google text-danger" style={{ fontSize: '0.8rem' }} title="Google Sign-In"></i>
-                    ) : (
-                        <i className="bi bi-person-badge text-primary" style={{ fontSize: '0.8rem' }} title="Manual Sign-In"></i>
-                    )}
-                </div>
-                <span className={`badge rounded-pill ${user.role === 'superadmin' ? 'bg-danger' : user.role === 'admin' ? 'bg-warning text-dark' : 'bg-secondary'}`} style={{ fontSize: '0.7rem' }}>{user.role}</span>
-            </div>
-            <div className="data-item small text-muted mb-3">{user.email}</div>
-            
-            <div className="d-flex gap-2 align-items-center">
-                <div className="scroll-selection-container flex-grow-1">
-                    <div className="d-flex gap-1 overflow-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-                        <button className={`btn btn-xs ${user.role === 'student' ? 'btn-success' : 'btn-outline-success'} border-0`} style={{ fontSize: '0.75rem', padding: '4px 10px' }} onClick={() => handleRoleChange(user._id, 'student')}>Student</button>
-                        <button className={`btn btn-xs ${user.role === 'admin' ? 'btn-warning' : 'btn-outline-warning'} border-0`} style={{ fontSize: '0.75rem', padding: '4px 10px' }} onClick={() => handleRoleChange(user._id, 'admin')}>Admin</button>
-                        <button className={`btn btn-xs ${user.role === 'superadmin' ? 'btn-danger' : 'btn-outline-danger'} border-0`} style={{ fontSize: '0.75rem', padding: '4px 10px' }} onClick={() => handleRoleChange(user._id, 'superadmin')} disabled={user.role === 'superadmin'}>Super</button>
-                    </div>
-                </div>
-                <button 
-                  className="btn btn-sm btn-outline-danger border-0 rounded-circle" 
-                  style={{ width: '32px', height: '32px', padding: '0' }}
-                  onClick={() => handleUserDelete(user._id)}
-                  disabled={user.role === 'superadmin'}
-                >
-                  <i className="bi bi-trash3 fs-6"></i>
-                </button>
-            </div>
+  <div className="card mb-3 border-0 rounded-4 shadow-sm overflow-hidden bg-white">
+    <div className="card-body p-3">
+      <div className="d-flex justify-content-between align-items-start mb-2">
+        <div className="d-flex align-items-center gap-2">
+          <div className="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style={{ width: '32px', height: '32px' }}>
+            <i className="bi bi-person-fill"></i>
+          </div>
+          <div>
+            <div className={`fw-bold small ${user.isDeleted ? 'text-decoration-line-through text-muted' : 'text-dark'}`}>{user.username}</div>
+            <div className="text-muted" style={{ fontSize: '0.65rem' }}>{user.email}</div>
+          </div>
         </div>
+        <span className={`badge rounded-pill ${user.role === 'superadmin' ? 'bg-danger' : user.role === 'admin' ? 'bg-warning text-dark' : 'bg-secondary'}`} style={{ fontSize: '0.6rem' }}>{user.role.toUpperCase()}</span>
+      </div>
+      
+      <div className="bg-light p-2 rounded-3 mb-3 d-flex justify-content-between align-items-center">
+        <span className="small text-muted">Auth:</span>
+        {user.googleId ? (
+          <span className="badge bg-white text-danger border border-danger border-opacity-25 rounded-pill small"><i className="bi bi-google me-1"></i> Google</span>
+        ) : (
+          <span className="badge bg-white text-primary border border-primary border-opacity-25 rounded-pill small"><i className="bi bi-person-badge me-1"></i> Manual</span>
+        )}
+      </div>
+
+      <div className="d-flex gap-2">
+        <div className="dropdown flex-grow-1">
+          <button className="btn btn-sm btn-outline-primary w-100 rounded-pill dropdown-toggle" type="button" data-bs-toggle="dropdown" disabled={user.role === 'superadmin'}>
+            Change Role
+          </button>
+          <ul className="dropdown-menu shadow border-0 rounded-3">
+            <li><button className="dropdown-item small" onClick={() => handleRoleChange(user._id, 'student')}>Make Student</button></li>
+            <li><button className="dropdown-item small" onClick={() => handleRoleChange(user._id, 'admin')}>Make Admin</button></li>
+          </ul>
+        </div>
+        <button 
+          className="btn btn-sm btn-outline-danger rounded-pill px-3" 
+          onClick={() => handleUserDelete(user._id)}
+          disabled={user.role === 'superadmin'}
+        >
+          <i className="bi bi-trash3"></i>
+        </button>
+      </div>
     </div>
+  </div>
 );
 
 export default function ManageUsers() {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: users = [], isLoading: loading, refetch: refreshUsers } = useAllUsers();
+  const { changeRole, deactivateUser } = useAdminUserMutation();
+
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const fetchUsers = async () => {
-    setLoading(true);
-    try {
-      const { data } = await api.get('/admin/users');
-      setUsers(data.users);
-    } catch (err) {
-      console.error("Error fetching users:", err);
-      setError('Failed to load users.');
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
   const handleRoleChange = async (userId, newRole) => {
     if (!window.confirm(`Are you sure you want to change role to ${newRole}?`)) return;
-    try {
-      await api.put(`/admin/users/${userId}/role`, { role: newRole });
-      fetchUsers();
-      setSuccess(`Role changed to ${newRole} updated successfully.`);
-    } catch (err) {
-      setError("Failed to update user role.");
-    }
+    changeRole.mutate({ userId, role: newRole }, {
+      onSuccess: () => setSuccess(`Role changed to ${newRole} updated successfully.`),
+      onError: () => setError("Failed to update user role."),
+    });
   };
 
   const handleUserDelete = async (userId) => {
     if (!window.confirm('Are you sure you want to deactivate this user? Their account will be blocked, but their UPLOADED CONTENT and names will remain safe in the library.')) return;
-    try {
-      await api.delete(`/admin/users/${userId}`);
-      fetchUsers(); 
-      setSuccess("User deleted successfully.");
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to delete user.");
-    }
+    deactivateUser.mutate(userId, {
+      onSuccess: () => setSuccess("User deactivated successfully."),
+      onError: (err) => setError(err.response?.data?.message || "Failed to deactivate user."),
+    });
   };
 
   if (loading) return <LoadingScreen text="Loading User Roles..." />;
@@ -93,7 +81,7 @@ export default function ManageUsers() {
         <h4 className="fw-bold text-danger mb-0">
             <i className="bi bi-people-fill me-2"></i>Manage User Roles
         </h4>
-        <button className="btn btn-sm btn-outline-primary border-0 rounded-circle" style={{ width: '32px', height: '32px' }} onClick={fetchUsers} title="Refresh">
+        <button className="btn btn-sm btn-outline-primary border-0 rounded-circle" style={{ width: '32px', height: '32px' }} onClick={() => refreshUsers()} title="Refresh">
             <i className="bi bi-arrow-clockwise fs-5"></i>
         </button>
       </div>

@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import api from '../services/api'; // Path ko wapas fix kiya gaya hai
-// --- NAYE IMPORTS (Library change ho gayi hai) ---
+import React, { useState } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-// -----------------------------------------------
+import { useAdminCategories, useAllCategoriesFlat, useCategoryMutation } from '../hooks/useAdminCategories';
 
-// --- Updated EditCategoryForm with Parent Selection ---
+// --- Updated EditCategoryForm ---
 const EditCategoryForm = ({ category, allCategories, onSave, onCancel }) => {
   const [name, setName] = useState(category.name);
   const [parentId, setParentId] = useState(category.parentId);
@@ -51,67 +49,39 @@ const EditCategoryForm = ({ category, allCategories, onSave, onCancel }) => {
   );
 };
 
-// --- CategoryItem Component (Ab Draggable) ---
-const CategoryItem = ({ category, index, allCategories, onSelect, selectedId, onDelete, onUpdate, isSelectOnly }) => {
-  const [subCategories, setSubCategories] = useState([]);
+// --- CategoryItem Component ---
+const CategoryItem = ({ category, index, allCategories, onSelect, selectedId, onDelete, onUpdate, isSelectOnly, reorderAction }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Sub-categories fetch karein (Order ke hisaab se)
-  const fetchSubCategories = async () => {
-    try {
-      const { data } = await api.get(`/categories?parentId=${category._id}`);
-      // Sort by 'order' field
-      const sortedSubCats = data.categories.sort((a, b) => a.order - b.order);
-      setSubCategories(sortedSubCats);
-    } catch (error) {
-      console.error("Failed to fetch sub-categories", error);
-    }
-  };
+  // Use TanStack Query for sub-categories
+  const { data: subCategories = [], isLoading: loadingSubs } = useAdminCategories(category._id);
 
   const handleToggle = () => {
-    if (!isOpen) { fetchSubCategories(); }
     setIsOpen(!isOpen);
   };
   
   const isSelected = selectedId === category._id;
 
   const handleSaveEdit = (id, newName, newParentId) => {
-    onUpdate(id, newName, newParentId); 
+    onUpdate({ id, name: newName, parentId: newParentId });
     setIsEditing(false);
   };
   
-  // --- NAYA FUNCTION: Sub-category Drag End ---
   const onSubDragEnd = (result) => {
     const { destination, source } = result;
-    if (!destination) return; // Drop zone se bahar drop kiya
-    if (destination.droppableId === source.droppableId && destination.index === source.index) return; // Jagah change nahi hui
+    if (!destination) return;
+    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
 
-    const newSubCategories = Array.from(subCategories);
-    const [reorderedItem] = newSubCategories.splice(source.index, 1);
-    newSubCategories.splice(destination.index, 0, reorderedItem);
+    const newSubs = Array.from(subCategories);
+    const [reorderedItem] = newSubs.splice(source.index, 1);
+    newSubs.splice(destination.index, 0, reorderedItem);
 
-    // Naye order ke saath array banayein
-    const orderedData = newSubCategories.map((item, index) => ({
-      _id: item._id,
-      order: index
-    }));
-    
-    // UI turant update karein
-    setSubCategories(newSubCategories);
-    
-    // Backend ko call karein
-    api.patch('/categories/reorder', { orderedCategories: orderedData })
-      .catch(err => {
-        console.error("Failed to reorder sub-categories", err);
-        const msg = err.response?.data?.message || "Failed to save order";
-        alert(`Error: ${msg}. Please refresh page.`);
-        fetchSubCategories(); // Revert state by re-fetching
-      });
+    const orderedData = newSubs.map((item, idx) => ({ _id: item._id, order: idx }));
+    reorderAction({ orderedCategories: orderedData, parentId: category._id });
   };
 
   return (
-    // Step 3: <Draggable>
     <Draggable draggableId={category._id} index={index} isDragDisabled={isSelectOnly}>
       {(provided, snapshot) => (
         <div
@@ -137,7 +107,6 @@ const CategoryItem = ({ category, index, allCategories, onSelect, selectedId, on
               onClick={() => onSelect(category)}
             >
               <span className="flex-grow-1 text-break pe-2">
-                {/* Drag Handle */}
                 {!isSelectOnly && (
                   <i className="bi bi-grip-vertical me-2 d-none d-md-inline-block" {...provided.dragHandleProps}></i>
                 )}
@@ -161,16 +130,15 @@ const CategoryItem = ({ category, index, allCategories, onSelect, selectedId, on
             </div>
           )}
 
-          {/* Sub-categories (Ab ye bhi ek Drag-and-Drop list hai) */}
           {isOpen && (
-            // Step 1: <DragDropContext> (Nested)
             <DragDropContext onDragEnd={onSubDragEnd}>
               <div className="list-group ps-2 ps-md-4 border-start ms-2 ms-md-3 overflow-hidden">
-                {/* Step 2: <Droppable> (Nested) */}
                 <Droppable droppableId={category._id} type="SUB_CATEGORY">
                   {(provided) => (
                     <div ref={provided.innerRef} {...provided.droppableProps}>
-                      {subCategories.length > 0 ? (
+                      {loadingSubs ? (
+                        <div className="p-2 small text-muted">Loading...</div>
+                      ) : subCategories.length > 0 ? (
                         subCategories.map((subCat, subIndex) => (
                           <CategoryItem 
                             key={subCat._id} 
@@ -182,10 +150,11 @@ const CategoryItem = ({ category, index, allCategories, onSelect, selectedId, on
                             onDelete={onDelete}
                             onUpdate={onUpdate}
                             isSelectOnly={isSelectOnly}
+                            reorderAction={reorderAction}
                           />
                         ))
                       ) : (
-                        <span className="list-group-item list-group-item-action border-0 ps-3 fst-italic small">No sub-categories</span>
+                        <span className="list-group-item border-0 ps-3 fst-italic small">No sub-categories</span>
                       )}
                       {provided.placeholder}
                     </div>
@@ -202,102 +171,42 @@ const CategoryItem = ({ category, index, allCategories, onSelect, selectedId, on
 
 // --- Updated CategoryManager Component ---
 export default function CategoryManager({ onSelectCategory, isSelectOnly = false }) {
-  const [rootCategories, setRootCategories] = useState([]);
-  const [allCategoriesFlattened, setAllCategoriesFlattened] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState({ _id: 'root', name: 'Root' });
   const [newCatName, setNewCatName] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState({ _id: 'root', name: 'Root' });
 
-  // Fetch all for dropdown
-  const fetchAllForDropdown = async () => {
-    try {
-      const { data } = await api.get('/categories/all-nested');
-      // Flatten the nested structure for select dropdown
-      const flattened = [];
-      const flatten = (cats) => {
-        cats.forEach(c => {
-          flattened.push({ _id: c._id, name: c.name });
-          if (c.children) flatten(c.children);
-        });
-      };
-      flatten(data.categories);
-      setAllCategoriesFlattened(flattened);
-    } catch (err) {
-      console.error("Failed to fetch flat list", err);
-    }
-  };
-
-  // Fetch root categories (Order ke hisaab se)
-  const fetchRootCategories = async () => {
-    setLoading(true);
-    try {
-      const { data } = await api.get('/categories?parentId=root');
-      // Sort by 'order' field
-      const sortedCats = data.categories.sort((a, b) => a.order - b.order);
-      setRootCategories(sortedCats);
-    } catch (err) {
-      setError('Failed to load categories.');
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => { 
-    fetchRootCategories(); 
-    fetchAllForDropdown();
-  }, []);
+  // Use TanStack Query hooks
+  const { data: rootCategories = [], isLoading: loadingRoots } = useAdminCategories('root');
+  const { data: allCategoriesFlattened = [] } = useAllCategoriesFlat();
+  const { createCategory, updateCategory, deleteCategory, reorderCategories } = useCategoryMutation();
 
   // Create
-  const handleCreateCategory = async (e) => {
+  const handleCreateCategory = (e) => {
     e.preventDefault();
-    setError('');
-    if (!newCatName) return setError('Category name is required.');
+    if (!newCatName) return;
     
-    // Nayi category ko list ke end me order dein
-    const newOrder = selectedCategory._id === 'root' 
-      ? rootCategories.length 
-      : 0; // TODO: Sub-category length check
-      
-    try {
-      await api.post('/categories', {
-        name: newCatName,
-        parentId: selectedCategory._id,
-        order: newOrder, // Naya order set karein
-      });
-      setNewCatName('');
-      fetchRootCategories(); // TODO: Better state management
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create category.');
-    }
+    createCategory.mutate({
+      name: newCatName,
+      parentId: selectedCategory._id,
+      order: selectedCategory._id === 'root' ? rootCategories.length : 0,
+    }, {
+      onSuccess: () => setNewCatName(''),
+    });
   };
 
-  // Delete
-  const handleDeleteCategory = async (id) => {
-    if (!window.confirm('Are you sure?')) return;
-    try {
-      await api.delete(`/categories/${id}`);
-      fetchRootCategories();
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to delete category.');
-    }
+  // Reorder
+  const onRootDragEnd = (result) => {
+    const { destination, source } = result;
+    if (!destination) return;
+    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
+
+    const newRoots = Array.from(rootCategories);
+    const [reorderedItem] = newRoots.splice(source.index, 1);
+    newRoots.splice(destination.index, 0, reorderedItem);
+
+    const orderedData = newRoots.map((item, idx) => ({ _id: item._id, order: idx }));
+    reorderCategories.mutate({ orderedCategories: orderedData, parentId: 'root' });
   };
 
-  // Update
-  const handleUpdateCategory = async (id, newName, newParentId) => {
-    setError('');
-    if (!newName) return setError('Category name is required.');
-    try {
-      await api.put(`/categories/${id}`, { name: newName, parentId: newParentId });
-      
-      // Full refresh ensures tree is correctly updated after move
-      fetchRootCategories();
-      fetchAllForDropdown();
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update category.');
-    }
-  };
-
-  // Select
   const handleSelect = (category) => {
     setSelectedCategory(category);
     if (onSelectCategory) {
@@ -305,63 +214,26 @@ export default function CategoryManager({ onSelectCategory, isSelectOnly = false
     }
   };
 
-  // --- NAYA FUNCTION: Root Drag End ---
-  const onRootDragEnd = (result) => {
-    const { destination, source } = result;
-    if (!destination) return;
-    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
-
-    // 1. Naya array banayein (state ko mutate na karein)
-    const newRootCategories = Array.from(rootCategories);
-    // 2. Item ko purani jagah se hatayein
-    const [reorderedItem] = newRootCategories.splice(source.index, 1);
-    // 3. Item ko nayi jagah daalein
-    newRootCategories.splice(destination.index, 0, reorderedItem);
-
-    // 4. Naye order ke saath data banayein (backend ke liye)
-    const orderedData = newRootCategories.map((item, index) => ({
-      _id: item._id,
-      order: index
-    }));
-    
-    // 5. UI ko turant update karein
-    setRootCategories(newRootCategories);
-    
-    // 6. Backend ko call karke save karein
-    api.patch('/categories/reorder', { orderedCategories: orderedData })
-      .catch(err => {
-        console.error("Failed to reorder root categories", err);
-        const msg = err.response?.data?.message || "Connection Error";
-        setError(`Failed to save order: ${msg}. Please refresh.`);
-        // Error hua to purana state wapas laayein
-        fetchRootCategories();
-      });
-  };
-
   return (
-    <div className="card">
+    <div className="card border-0 shadow-sm">
       <div className="card-body">
         {!isSelectOnly && (
           <>
             <h5 className="card-title fw-bold">Manage Categories</h5>
-            {error && <div className="alert alert-danger p-2 small">{error}</div>}
             <form onSubmit={handleCreateCategory} className="mb-3">
               <label className="form-label small">Creating in: <span className="fw-bold">{selectedCategory.name}</span></label>
               <div className="input-group">
                 <input type="text" className="form-control" placeholder="New Category Name..." value={newCatName} onChange={(e) => setNewCatName(e.target.value)} />
-                <button className="btn btn-primary px-3" type="submit">
-                    <i className="bi bi-plus-lg fw-bold"></i>
+                <button className="btn btn-primary px-3" type="submit" disabled={createCategory.isPending}>
+                    {createCategory.isPending ? <span className="spinner-border spinner-border-sm"></span> : <i className="bi bi-plus-lg fw-bold"></i>}
                 </button>
               </div>
             </form>
           </>
         )}
         
-        {/* --- YAHAN DRAG-AND-DROP ADD HUA HAI --- */}
-        {/* Step 1: <DragDropContext> */}
-        <DragDropContext onRootDragEnd={onRootDragEnd}>
+        <DragDropContext onDragEnd={onRootDragEnd}>
           <div className="list-group category-tree" style={{ maxHeight: '450px', overflowY: 'auto', overflowX: 'auto', width: '100%' }}>
-            {/* Root level (consistent styling) */}
             <div 
               className={`d-flex align-items-center p-2 ps-3 fw-bold rounded-3 mb-2 transition-all ${selectedCategory._id === 'root' ? 'bg-primary text-white' : 'text-secondary hover-bg-light'}`}
               style={{ cursor: 'pointer' }}
@@ -370,8 +242,7 @@ export default function CategoryManager({ onSelectCategory, isSelectOnly = false
               <i className="bi bi-diagram-3-fill me-2"></i> Root
             </div>
             
-            {loading ? ( <p>Loading tree...</p> ) : (
-              // Step 2: <Droppable>
+            {loadingRoots ? ( <p className="p-3 text-center">Loading tree...</p> ) : (
               <Droppable droppableId="root" type="ROOT_CATEGORY">
                 {(provided) => (
                   <div ref={provided.innerRef} {...provided.droppableProps}>
@@ -383,9 +254,10 @@ export default function CategoryManager({ onSelectCategory, isSelectOnly = false
                         allCategories={allCategoriesFlattened}
                         onSelect={handleSelect}
                         selectedId={selectedCategory._id}
-                        onDelete={handleDeleteCategory}
-                        onUpdate={handleUpdateCategory}
+                        onDelete={(id) => deleteCategory.mutate(id)}
+                        onUpdate={(data) => updateCategory.mutate(data)}
                         isSelectOnly={isSelectOnly}
+                        reorderAction={(data) => reorderCategories.mutate(data)}
                       />
                     ))}
                     {provided.placeholder}
@@ -395,8 +267,6 @@ export default function CategoryManager({ onSelectCategory, isSelectOnly = false
             )}
           </div>
         </DragDropContext>
-        {/* --- END OF DRAG-AND-DROP --- */}
-
       </div>
     </div>
   );

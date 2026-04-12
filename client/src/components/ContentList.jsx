@@ -1,57 +1,21 @@
-import React, { useState, useEffect } from 'react';
-// Ab yeh MongoDB API se content fetch karega
-import api from '../services/api'; // FIX: ../services/api
-import ContentCard from './ContentCard'; // FIX: ./ContentCard (Same folder me)
+import React from 'react';
+import { useContentList } from '../hooks/useContent';
+import ContentCard from './ContentCard';
 import { CardSkeleton } from './SkeletonLoaders';
 
-// NOTE: MERN mein content fetch karne ke liye humein CategoryId ko query parameter se bhejna padega
-export default function ContentList({ categoryId, searchTerm, uploaderName }) {
-  const [content, setContent] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function ContentList({ categoryId, searchTerm, uploaderName, sortBy, order }) {
+  // Memoize params to prevent excessive re-renders if necessary, 
+  // though React Query handles key changes efficiently.
+  const params = {
+    limit: 30,
+    categoryId: categoryId !== 'root' ? categoryId : undefined,
+    search: searchTerm || undefined,
+    uploader: uploaderName || undefined,
+    sortBy,
+    order
+  };
 
-  useEffect(() => {
-    let active = true;
-    const fetchContent = async () => {
-      setLoading(true);
-      try {
-        let url = '/content';
-        const params = {
-          limit: 30, // PERF: Limit initial fetch; prevents rendering 100+ cards at once
-        };
-
-        // --- FIX: Logic: Agar categoryId 'root' hai, to koi filter na lagayein ---
-        if (categoryId && categoryId !== 'root') {
-          params.categoryId = categoryId;
-        }
-        
-        if (searchTerm) {
-          params.search = searchTerm;
-        }
-
-        if (uploaderName) {
-          params.uploader = uploaderName;
-        }
-        // --------------------------------------------------------------------------
-        
-        // API call to backend
-        const { data } = await api.get(url, { params }); 
-
-        if (active) {
-          setContent(data.content); // Backend se 'content' array aayega
-        }
-      } catch (error) {
-        if (active) {
-          console.error("Error fetching content:", error);
-        }
-      } finally {
-        if (active) {
-          setLoading(false);
-        }
-      }
-    };
-    fetchContent();
-    return () => { active = false; };
-  }, [categoryId, searchTerm, uploaderName]); // Jab bhi filter badlega, yeh dobara chalega
+  const { data: content = [], isLoading: loading } = useContentList(params);
 
   if (loading) {
     return (

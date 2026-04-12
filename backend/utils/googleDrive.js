@@ -273,7 +273,7 @@ const getDriveFileMetadata = async (fileId) => {
         const drive = await getDriveInstance();
         const response = await drive.files.get({
             fileId: fileId,
-            fields: 'id, name, mimeType, trashed',
+            fields: 'id, name, mimeType, size, createdTime, md5Checksum, webViewLink, iconLink, trashed',
             supportsAllDrives: true
         });
         return response.data;

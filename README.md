@@ -44,7 +44,7 @@ Built with a focus on modern aesthetics (Glassmorphism), speed, and offline capa
 | **Frontend** | React, Vite, Bootstrap 5, Axios, React Router DOM |
 | **Backend** | Node.js, Express.js, MongoDB (Mongoose) |
 | **AI Brain** | Groq SDK (Llama 3.1 - 8b & 70b models) |
-| **Storage** | Google Drive API, Cloudinary (Media/Profiles) |
+| **Storage** | Google Drive API(Files), Cloudinary (Media/Profiles), MongoDB (Links/Notes) |
 | **Security** | Express Rate Limit, JWT, BcryptJS, Express Validator |
 | **DevOps** | Vite-Plugin-PWA, Dotenv, CORS |
 
