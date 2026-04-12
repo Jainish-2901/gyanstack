@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 import api from '../services/api';
 import ShareButton from './ShareButton';
 
@@ -83,16 +84,24 @@ const ContentPreview = ({ item }) => {
   if (item.type === 'link') {
     const embedUrl = getYoutubeEmbedUrl(item.url);
     if (embedUrl) {
-      // YouTube Video
+      // YouTube Video - USe high-res thumbnail instead of heavy iframe in card
+      const videoId = embedUrl.split('/').pop();
+      const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+      
       return (
-        <div className="preview-box youtube-embed ratio ratio-16x9">
-          <iframe
-            src={embedUrl}
-            title={item.title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            loading="lazy"
-          ></iframe>
+        <div className="preview-box youtube-thumbnail position-relative overflow-hidden">
+          <img 
+            src={thumbnailUrl} 
+            alt={item.title} 
+            className="w-100 h-100 object-fit-cover"
+            onError={(e) => { e.target.src = `https://img.youtube.com/vi/${videoId}/0.jpg`; }}
+          />
+          <div className="position-absolute top-50 left-50 translate-middle">
+             <i className="bi bi-play-circle-fill text-white display-4 opacity-75"></i>
+          </div>
+          <div className="position-absolute bottom-0 end-0 m-2">
+             <span className="badge bg-dark bg-opacity-75 rounded-pill small">Video</span>
+          </div>
         </div>
       );
     }
@@ -144,7 +153,7 @@ export default function ContentCard({ item }) {
   const handleLike = async (e) => {
     e.stopPropagation(); // Card click trigger na ho
     if (!user) {
-      alert("Please log in to like content.");
+      toast.error("Please log in to like content.");
       return;
     }
     setLoading(true);
@@ -196,18 +205,40 @@ export default function ContentCard({ item }) {
             </div>
             <div className='flex-grow-1 overflow-hidden'>
               <h5 className="card-title fw-bold text-dark mb-1" style={{ fontSize: '1rem', lineHeight: '1.3' }}>{cleanTitle(item.title)}</h5>
-              <p className="card-text small text-muted mb-0">
-                <i className="bi bi-eye text-primary me-1"></i>{item.viewsCount} &nbsp;&nbsp; <i className={`bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'} me-1`}></i>{likesCount}
-              </p>
+              <div className="d-flex flex-wrap gap-2 align-items-center">
+                <p className="card-text small text-muted mb-0">
+                  <i className="bi bi-eye text-primary me-1"></i>{item.viewsCount} &nbsp;&nbsp; <i className={`bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'} me-1`}></i>{likesCount}
+                </p>
+                {item.categoryId && (
+                  <Link 
+                    to={`/browse?category=${item.categoryId?._id || item.categoryId}`} 
+                    className="text-primary text-decoration-none extra-small fw-bold border-start ps-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <i className="bi bi-tag-fill me-1"></i>{item.categoryId?.name || 'Category'}
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
         ) : (
           // Naya 'Note/Link' waala layout (bina icon)
           <div className="mb-3 overflow-hidden">
             <h5 className="card-title fw-bold mt-2 text-dark" style={{ fontSize: '1rem', lineHeight: '1.3' }}>{cleanTitle(item.title)}</h5>
-            <p className="card-text small text-muted">
-               <i className="bi bi-eye text-primary me-1"></i>{item.viewsCount} &nbsp;&nbsp; <i className={`bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'} me-1`}></i>{likesCount}
-            </p>
+            <div className="d-flex flex-wrap gap-2 mb-2">
+               <p className="card-text small text-muted mb-0">
+                  <i className="bi bi-eye text-primary me-1"></i>{item.viewsCount} &nbsp;&nbsp; <i className={`bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'} me-1`}></i>{likesCount}
+               </p>
+               {item.categoryId && (
+                 <Link 
+                   to={`/browse?category=${item.categoryId?._id || item.categoryId}`} 
+                   className="text-primary text-decoration-none extra-small fw-bold"
+                   onClick={(e) => e.stopPropagation()}
+                 >
+                   <i className="bi bi-tag-fill me-1"></i>{item.categoryId?.name || 'Category'}
+                 </Link>
+               )}
+            </div>
           </div>
         )}
         {/* ----------------------------------------------------------- */}

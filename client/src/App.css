@@ -312,6 +312,17 @@ select:focus {
   color: var(--primary) !important;
 }
 
+/* --- RESPONSIVE UTILITIES --- */
+.text-md-nowrap-custom {
+  white-space: normal;
+}
+
+@media (min-width: 768px) {
+  .text-md-nowrap-custom {
+    white-space: nowrap !important;
+  }
+}
+
 .nav-link::after {
   content: '';
   position: absolute;

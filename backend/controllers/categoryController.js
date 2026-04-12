@@ -1,4 +1,5 @@
 const Category = require('../models/categoryModel'); // Apne model ka path check karein
+const Content = require('../models/contentModel');
 const { updateDriveFile } = require('../utils/googleDrive');
 
 // --- RECURSIVE CHECK HELPER ---
@@ -26,6 +27,10 @@ const fetchNestedCategories = async (parentId, depth = 0) => {
   for (let category of categories) {
     const categoryObj = category.toObject();
     
+    // Get count of items specifically in this category
+    const itemCount = await Content.countDocuments({ categoryId: categoryObj._id.toString() });
+    categoryObj.itemCount = itemCount;
+
     // Recursive call to get children with depth increment
     const children = await fetchNestedCategories(categoryObj._id.toString(), depth + 1);
     if (children.length > 0) {

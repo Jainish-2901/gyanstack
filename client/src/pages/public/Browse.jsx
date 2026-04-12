@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useNestedCategories } from '../../hooks/useCategories';
 import SearchBar from '../../components/SearchBar';
@@ -8,12 +8,13 @@ import LoadingScreen from '../../components/LoadingScreen';
 
 export default function Browse() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const activeBreadcrumbRef = useRef(null);
   const categoryId = searchParams.get('category')?.trim();
   const searchTerm = searchParams.get('search') || '';
   const uploaderFilter = searchParams.get('uploader') || '';
   const sortBy = searchParams.get('sortBy') || 'date';
   const order = searchParams.get('order') || 'desc';
-  
+
   // Use TanStack Query hook
   const { data: categories = [], isLoading: categoriesLoading } = useNestedCategories();
 
@@ -23,32 +24,52 @@ export default function Browse() {
 
   // 2. Sync UI when URL changes (Direct Link support)
   useEffect(() => {
-    if (categories.length > 0 && categoryId) {
-      const path = [];
+    if (!categories || categories.length === 0) return;
+
+    let newPath = [];
+    if (categoryId) {
       const findAndBuildPath = (cats, id) => {
         for (const c of cats) {
           if (c._id === id) {
-            path.push({ id: c._id, name: c.name, children: c.children });
+            newPath.push({ id: c._id, name: c.name, children: c.children });
             return true;
           }
           if (c.children && findAndBuildPath(c.children, id)) {
-            path.unshift({ id: c._id, name: c.name, children: c.children });
+            newPath.unshift({ id: c._id, name: c.name, children: c.children });
             return true;
           }
         }
         return false;
       };
-
       findAndBuildPath(categories, categoryId);
-      setCurrentPath(path);
-
-      const leaf = path[path.length - 1];
-      setDisplaySubCats(leaf?.children || []);
-    } else if (!categoryId) {
-      setCurrentPath([]);
-      setDisplaySubCats(categories);
     }
+
+    // Only update if path OR sub-categories actually changed to prevent infinite loop
+    const leaf = newPath[newPath.length - 1];
+    const newSubCats = leaf ? (leaf.children || []) : categories;
+
+    // Guard: Compare with current state before updating
+    setCurrentPath(prev => {
+      if (JSON.stringify(prev) === JSON.stringify(newPath)) return prev;
+      return newPath;
+    });
+
+    setDisplaySubCats(prev => {
+      if (JSON.stringify(prev) === JSON.stringify(newSubCats)) return prev;
+      return newSubCats;
+    });
   }, [categoryId, categories]);
+
+  // Handle auto-scroll for breadcrumbs
+  useEffect(() => {
+    if (activeBreadcrumbRef.current) {
+      activeBreadcrumbRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center'
+      });
+    }
+  }, [categoryId, currentPath]);
 
   // 3. Navigation Logic (Folder Click)
   const handleFolderClick = (id) => {
@@ -66,14 +87,14 @@ export default function Browse() {
   const handleSortChange = (e) => {
     const value = e.target.value;
     const params = new URLSearchParams(searchParams);
-    
+
     if (value === 'date_desc') {
-        params.delete('sortBy');
-        params.delete('order');
+      params.delete('sortBy');
+      params.delete('order');
     } else {
-        const [sort, ord] = value.split('_');
-        params.set('sortBy', sort);
-        params.set('order', ord);
+      const [sort, ord] = value.split('_');
+      params.set('sortBy', sort);
+      params.set('order', ord);
     }
     setSearchParams(params);
   };
@@ -135,6 +156,7 @@ export default function Browse() {
               <React.Fragment key={path.id}>
                 <i className="bi bi-chevron-right text-muted opacity-50 small flex-shrink-0"></i>
                 <button
+                  ref={idx === currentPath.length - 1 && !searchTerm ? activeBreadcrumbRef : null}
                   onClick={() => handleFolderClick(path.id)}
                   className={`btn btn-sm rounded-pill text-nowrap flex-shrink-0 ${idx === currentPath.length - 1 && !searchTerm ? 'btn-primary shadow' : 'btn-link text-decoration-none text-dark'}`}
                 >
@@ -164,17 +186,19 @@ export default function Browse() {
                 <h6 className="fw-bold text-primary small text-uppercase tracking-wider mb-0">Folders</h6>
               </div>
               {displaySubCats.map(cat => (
-                <div key={cat._id} className="col-12 col-md-6 col-lg-4 col-xl-3">
+                <div key={cat._id} className="col-6 col-md-6 col-lg-4 col-xl-3">
                   <div
                     onClick={() => handleFolderClick(cat._id)}
-                    className="folder-card glass-panel p-3 rounded-4 border-0 d-flex align-items-center gap-3 cursor-pointer shadow-sm h-100"
+                    className="folder-card glass-panel p-2 p-md-3 rounded-4 border-0 d-flex flex-column flex-md-row align-items-center align-items-md-center gap-2 gap-md-3 cursor-pointer shadow-sm h-100 text-center text-md-start"
                   >
-                    <div className="folder-icon bg-warning bg-opacity-10 rounded-3 p-2 d-flex align-items-center justify-content-center cursor-pointer">
-                      <i className="bi bi-folder-fill text-warning fs-4"></i>
+                    <div className="folder-icon bg-warning bg-opacity-10 rounded-3 p-1 p-md-2 d-flex align-items-center justify-content-center cursor-pointer">
+                      <i className="bi bi-folder-fill text-warning fs-5 fs-md-4"></i>
                     </div>
-                    <div className="overflow-hidden cursor-pointer">
-                      <div className="fw-bold small text-dark" style={{ wordBreak: 'break-word' }}>{cat.name}</div>
-                      <small className="text-muted extra-small">{cat.children?.length || 0} sub-folders</small>
+                    <div className="overflow-hidden cursor-pointer w-100">
+                      <div className="fw-bold extra-small-title text-dark text-break" style={{ fontSize: '0.85rem' }}>{cat.name}</div>
+                      <small className="text-muted extra-small d-block">
+                        {cat.children?.length || 0} {cat.children?.length === 1 ? 'folder' : 'folders'} • {cat.itemCount || 0} {cat.itemCount === 1 ? 'item' : 'items'}
+                      </small>
                     </div>
                   </div>
                 </div>
@@ -185,12 +209,12 @@ export default function Browse() {
           {/* TITLE & SHARE BAR */}
           <div className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between mb-4 pb-3 border-bottom border-light gap-3">
             <div className="flex-grow-1">
-              <h4 className="fw-bold mb-0 text-dark">
+              <h4 className="fw-bold mb-0 text-md-nowrap-custom">
                 {searchTerm
                   ? (categoryId && pageTitle !== "All Content"
-                    ? <span><span className="text-primary">"{searchTerm}"</span> in <span className="text-secondary">{pageTitle}</span></span>
+                    ? <span><span className="text-primary">"{searchTerm}"</span> in <span className="text-secondary border-bottom border-secondary border-opacity-25 cursor-pointer" onClick={() => handleFolderClick(categoryId)}>{pageTitle}</span></span>
                     : `Search Results: "${searchTerm}"`)
-                  : pageTitle
+                  : <span className={categoryId ? "cursor-pointer text-primary" : ""} onClick={() => categoryId && handleFolderClick(categoryId)}>{pageTitle}</span>
                 }
               </h4>
               {uploaderFilter && <small className="text-primary fw-bold d-block mt-1">By Uploader: {uploaderFilter}</small>}
@@ -199,18 +223,18 @@ export default function Browse() {
             <div className="d-flex align-items-center gap-2 w-100 w-sm-auto justify-content-between justify-content-sm-end">
               <div className="d-flex align-items-center gap-2">
                 <i className="bi bi-filter-left text-muted d-none d-md-block"></i>
-                <select 
-                    className="form-select form-select-sm rounded-pill border-light shadow-sm"
-                    style={{ width: 'auto', minWidth: '140px', background: 'rgba(255,255,255,0.7)', paddingRight: '2rem' }}
-                    value={`${sortBy}_${order}`}
-                    onChange={handleSortChange}
+                <select
+                  className="form-select form-select-sm rounded-pill border-light shadow-sm"
+                  style={{ width: 'auto', minWidth: '140px', background: 'rgba(255,255,255,0.7)', paddingRight: '2rem' }}
+                  value={`${sortBy}_${order}`}
+                  onChange={handleSortChange}
                 >
-                    <option value="date_desc">Recently Added</option>
-                    <option value="views_desc">Most Visited</option>
-                    <option value="likes_desc">Most Liked</option>
-                    <option value="saves_desc">Most Saved</option>
-                    <option value="downloads_desc">Most Downloaded</option>
-                    <option value="title_asc">A - Z</option>
+                  <option value="date_desc">Recently Added</option>
+                  <option value="views_desc">Most Visited</option>
+                  <option value="likes_desc">Most Liked</option>
+                  <option value="saves_desc">Most Saved</option>
+                  <option value="downloads_desc">Most Downloaded</option>
+                  <option value="title_asc">A - Z</option>
                 </select>
               </div>
 

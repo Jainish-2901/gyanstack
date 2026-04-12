@@ -1,5 +1,6 @@
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import toast, { Toaster, ToastBar } from 'react-hot-toast';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicLayout from './components/PublicLayout';
 import UserLayout from './components/UserLayout';
@@ -41,6 +42,54 @@ export default function App() {
     <div className="App">
       <ScrollToTop />
       <OfflineNotice />
+      <Toaster 
+        position="top-right" 
+        containerStyle={{ top: 80 }}
+        toastOptions={{
+          duration: 5000,
+          style: {
+            background: 'rgba(255, 255, 255, 0.8)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            color: '#1a1a1a',
+            borderRadius: '16px',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+            padding: '12px 20px',
+            maxWidth: '400px',
+            fontSize: '14px',
+            fontWeight: '500'
+          },
+          success: {
+            iconTheme: { primary: '#0d6efd', secondary: '#fff' },
+            style: { borderLeft: '5px solid #0d6efd' }
+          },
+          error: {
+            iconTheme: { primary: '#dc3545', secondary: '#fff' },
+            style: { borderLeft: '5px solid #dc3545' }
+          }
+        }}
+      >
+        {(t) => (
+          <ToastBar toast={t}>
+            {({ icon, message }) => (
+              <>
+                {icon}
+                <div className="flex-grow-1 px-2">{message}</div>
+                {t.type !== 'loading' && (
+                  <button 
+                    onClick={() => toast.dismiss(t.id)}
+                    className="btn btn-sm btn-link text-muted p-0 ms-2 text-decoration-none"
+                    style={{ fontSize: '18px', lineHeight: '1' }}
+                  >
+                    <i className="bi bi-x"></i>
+                  </button>
+                )}
+              </>
+            )}
+          </ToastBar>
+        )}
+      </Toaster>
 
       <Suspense fallback={<LoadingScreen text="Loading GyanStack..." />}>
         <PWAInstallPrompt />

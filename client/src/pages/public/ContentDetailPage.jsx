@@ -8,6 +8,7 @@ import { useContentDetail, useRelatedContent, useContentMutation } from '../../h
 import ShareButton from '../../components/ShareButton';
 import ContentCard from '../../components/ContentCard';
 import NotFound from './NotFound';
+import toast from 'react-hot-toast';
 // ---------------------------------------------
 
 // --- Helper Functions ---
@@ -87,46 +88,47 @@ const DrivePreview = ({ previewUrl, item }) => {
 
   if (blocked) {
     return (
-      <div className="text-center p-4 p-md-5 rounded-3 border bg-light">
-        <div className="mb-3">
+      <div className="text-center p-4 p-md-5 rounded-4 border-0 shadow-sm animate-pulse" style={{ background: 'rgba(255,255,255,0.4)', backdropFilter: 'blur(10px)' }}>
+        <div className="mb-4">
           <div className="bg-primary bg-opacity-10 rounded-circle d-inline-flex p-4 mb-3">
-            <i className="bi bi-google-drive display-5 text-primary"></i>
+            <i className="bi bi-shield-lock-fill display-5 text-primary"></i>
           </div>
-          <h5 className="fw-bold">Google Drive Secure File</h5>
-          <p className="text-muted small mb-0">
-            Preview is restricted by Google's security policy. Open the file directly to view or download it.
+          <h4 className="fw-bold text-dark">Google Drive Secure View</h4>
+          <p className="text-muted mx-auto" style={{ maxWidth: '400px' }}>
+            To protect your privacy, Google restricts embedding this file type. No worries! You can view it directly on Google Drive.
           </p>
         </div>
         <div className="d-flex justify-content-center gap-3 flex-wrap mt-4">
-          <a href={viewUrl || previewUrl.replace('/preview', '/view')} target="_blank" rel="noopener noreferrer" className="btn btn-primary rounded-pill px-4">
-            <i className="bi bi-box-arrow-up-right me-2"></i>Open in Google Drive
+          <a href={item.url} target="_blank" rel="noopener noreferrer" className="btn btn-primary rounded-pill px-4 py-2 shadow-sm">
+            <i className="bi bi-box-arrow-up-right me-2"></i>View on Google Drive
           </a>
-          <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className="btn btn-outline-primary rounded-pill px-4">
-            <i className="bi bi-download me-2"></i>Download
-          </a>
+          {item.googleDriveId && (
+            <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className="btn btn-outline-primary rounded-pill px-4 py-2">
+              <i className="bi bi-cloud-arrow-down-fill me-2"></i>Download
+            </a>
+          )}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="shadow-sm rounded overflow-hidden">
+    <div className="shadow-sm rounded-4 overflow-hidden border-0">
       {!loaded && (
-        <div className="d-flex align-items-center justify-content-center bg-light" style={{ height: '300px' }}>
-          <div className="text-center">
-            <div className="spinner-border text-primary mb-2" role="status"></div>
-            <p className="small text-muted mb-0">Loading preview...</p>
-          </div>
+        <div className="d-flex flex-column align-items-center justify-content-center bg-light" style={{ height: '400px' }}>
+          <div className="spinner-grow text-primary mb-3" role="status" style={{ width: '3rem', height: '3rem' }}></div>
+          <h6 className="fw-bold text-muted">Establishing Secure Connection...</h6>
+          <p className="small text-muted opacity-75">Connecting to Google Cloud Services</p>
         </div>
       )}
-      <div className="ratio ratio-4x3" style={{ minHeight: '300px', maxHeight: '70vh', display: loaded ? 'block' : 'none' }}>
+      <div className="ratio ratio-4x3" style={{ minHeight: '400px', maxHeight: '80vh', display: loaded ? 'block' : 'none', borderRadius: '1rem' }}>
         <iframe
           src={previewUrl}
           title={item.title}
           allow="autoplay; encrypted-media"
           allowFullScreen
           onLoad={() => setLoaded(true)}
-          onError={() => setBlocked(true)}
+          style={{ border: 'none' }}
         ></iframe>
       </div>
     </div>
@@ -295,17 +297,26 @@ export default function ContentDetailPage() {
   }, [id]);
 
   const handleLike = () => {
-    if (!user) { alert('Please log in to like content.'); return; }
+    if (!user) {
+      toast.error("Please log in to like content.");
+      return;
+    }
     toggleLike.mutate(id);
   };
 
   const handleSave = () => {
-    if (!user) { alert('Please log in to save content.'); return; }
+    if (!user) {
+      toast.error("Please log in to save content.");
+      return;
+    }
     toggleSave.mutate(id);
   };
 
   const handleDownload = async () => {
-    if (!user) { alert('Please log in to download content.'); return; }
+    if (!user) {
+      toast.error("Please log in to download content.");
+      return;
+    }
     incrementDownload.mutate(id, {
       onSuccess: () => {
         const downloadUrl = getDownloadUrl(item);
@@ -352,6 +363,15 @@ export default function ContentDetailPage() {
                   {item.uploadedBy?.username || 'Admin'}
                 </Link>
               </div>
+              {item.categoryId && (
+                <div className="bg-light px-3 py-1 rounded-pill d-flex align-items-center">
+                  <i className="bi bi-tag-fill me-2 text-primary"></i>
+                  <span>Category: </span>
+                  <Link to={`/browse?category=${item.categoryId?._id || item.categoryId}`} className="ms-1 text-primary text-decoration-none fw-bold">
+                    {item.categoryId?.name || 'View Category'}
+                  </Link>
+                </div>
+              )}
               <div className="bg-light px-3 py-1 rounded-pill">
                 <i className="bi bi-calendar-check me-2"></i>
                 {new Date(item.createdAt).toLocaleDateString()}
@@ -431,57 +451,75 @@ export default function ContentDetailPage() {
 
           {/* Action Buttons Section */}
           <div className="row g-3 mb-5">
-            <div className="col-12 col-sm-6 col-md-3">
-              <button
-                className={`btn w-100 py-3 d-flex align-items-center justify-content-center h-100 ${item.likedBy?.includes(user?.id) ? 'btn-danger' : 'btn-outline-danger'}`}
-                onClick={handleLike}
-                disabled={!user || toggleLike.isPending}
-              >
-                <i className={`bi ${item.likedBy?.includes(user?.id) ? 'bi-heart-fill' : 'bi-heart'} fs-5 me-2`}></i>
-                {item.likedBy?.includes(user?.id) ? 'Liked' : 'Like'}
-              </button>
-            </div>
+            {/* Logic for balanced alignment (3 buttons = col-md-4, 4 buttons = col-md-3) */}
+            {(() => {
+              const hasDownload = item.url && item.type !== 'note' && item.type !== 'link';
+              const colClass = hasDownload ? "col-12 col-sm-6 col-md-3" : "col-12 col-sm-4 col-md-4";
+              
+              return (
+                <>
+                  <div className={colClass}>
+                    <button
+                      className={`btn w-100 py-3 d-flex align-items-center justify-content-center h-100 ${item.likedBy?.includes(user?.id) ? 'btn-danger' : 'btn-outline-danger'}`}
+                      onClick={handleLike}
+                      disabled={toggleLike.isPending}
+                    >
+                      <i className={`bi ${item.likedBy?.includes(user?.id) ? 'bi-heart-fill' : 'bi-heart'} fs-5 me-2`}></i>
+                      {item.likedBy?.includes(user?.id) ? 'Liked' : 'Like'}
+                    </button>
+                  </div>
 
-            <div className="col-12 col-sm-6 col-md-3">
-              <button
-                className={`btn w-100 py-3 d-flex align-items-center justify-content-center h-100 ${item.savedBy?.includes(user?.id) ? 'btn-success' : 'btn-outline-success'}`}
-                onClick={handleSave}
-                disabled={!user || toggleSave.isPending}
-              >
-                <i className={`bi ${item.savedBy?.includes(user?.id) ? 'bi-bookmark-fill' : 'bi-bookmark'} fs-5 me-2`}></i>
-                {item.savedBy?.includes(user?.id) ? 'Saved' : 'Save'}
-              </button>
-            </div>
+                  <div className={colClass}>
+                    <button
+                      className={`btn w-100 py-3 d-flex align-items-center justify-content-center h-100 ${item.savedBy?.includes(user?.id) ? 'btn-success' : 'btn-outline-success'}`}
+                      onClick={handleSave}
+                      disabled={toggleSave.isPending}
+                    >
+                      <i className={`bi ${item.savedBy?.includes(user?.id) ? 'bi-bookmark-fill' : 'bi-bookmark'} fs-5 me-2`}></i>
+                      {item.savedBy?.includes(user?.id) ? 'Saved' : 'Save'}
+                    </button>
+                  </div>
 
-             <div className="col-12 col-sm-6 col-md-3">
-              <ShareButton 
-                title={item.title} 
-                url={window.location.href} 
-                className="btn btn-outline-primary w-100 py-3 d-flex align-items-center justify-content-center h-100"
-              />
-            </div>
+                  <div className={colClass}>
+                    <ShareButton 
+                      title={item.title} 
+                      url={window.location.href} 
+                      className="btn btn-outline-primary w-100 py-3 d-flex align-items-center justify-content-center h-100"
+                    />
+                  </div>
 
-            {item.url && item.type !== 'note' && item.type !== 'link' && (
-              <div className="col-12 col-md-3">
-                <button
-                  onClick={handleDownload}
-                  className="btn btn-info w-100 py-3 shadow-sm rounded-pill fw-bold text-white d-flex align-items-center justify-content-center"
-                >
-                  <i className="bi bi-cloud-arrow-down-fill me-2 fs-4"></i>
-                  Download
-                </button>
-              </div>
-            )}
+                  {hasDownload && (
+                    <div className="col-12 col-sm-6 col-md-3">
+                      <button
+                        onClick={handleDownload}
+                        className="btn btn-info w-100 py-3 shadow-sm rounded-pill fw-bold text-white d-flex align-items-center justify-content-center"
+                      >
+                        <i className="bi bi-cloud-arrow-down-fill me-2 fs-4"></i>
+                        Download
+                      </button>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
 
           {/* RELATED RESOURCES SECTION */}
           {relatedItems.length > 0 && (
             <section className="mt-5 pt-5 border-top">
-              <div className="d-flex align-items-center mb-4">
-                <div className="bg-primary bg-opacity-10 p-2 rounded-3 me-3">
-                  <i className="bi bi-collection-fill text-primary fs-4"></i>
+              <div className="d-flex align-items-center justify-content-between mb-4">
+                <div className="d-flex align-items-center">
+                  <div className="bg-primary bg-opacity-10 p-2 rounded-3 me-3">
+                    <i className="bi bi-collection-fill text-primary fs-4"></i>
+                  </div>
+                  <h3 className="fw-bold mb-0">Recommended for You</h3>
                 </div>
-                <h3 className="fw-bold mb-0">Recommended for You</h3>
+                <Link 
+                  to={`/browse?categoryId=${item.categoryId}`} 
+                  className="btn btn-primary btn-sm rounded-pill px-3 py-2 shadow-sm"
+                >
+                  View More <i className="bi bi-arrow-right ms-1"></i>
+                </Link>
               </div>
               <div className="row g-3 g-md-4">
                 {relatedItems.map(rel => (

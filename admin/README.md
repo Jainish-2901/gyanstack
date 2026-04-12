@@ -1,112 +1,46 @@
-# GyanStack — College Content Management & Analytics (MERN)
+# 🛡️ GyanStack — Admin & Moderator Panel
 
-Small, maintainable MERN app to manage and consume academic resources (Notes, PYQs, Assignments) with admin productivity features and real-time analytics.
+The GyanStack Admin Panel is the central governance hub for managing academic resources, overseeing community contributions, and maintaining platform security.
 
-Badges
-- Build / CI: TODO
-- License: Add your preferred license (e.g., MIT)
+## 🌟 Key Features
 
-Quick links
-- Frontend: /frontend
-- Backend: /backend
+### 📦 Content Lifecycle Management
+- **Auto-Sync Uploads**: High-speed batch uploads (up to 20 files) that automatically create and sync folders on Google Drive.
+- **Recursive Directory Control**: Full control over academic hierarchies (Semesters, Subjects, Units) with real-time backend verification.
+- **Smart Metadata Editing**: Update titles and categories on the platform with automated physical file renaming on Google Drive.
 
-Key features
-- Responsive admin dashboards (tables → vertical cards on mobile)
-- Batch uploads (up to 20 files) stored on Cloudinary
-- Cascading category filters on Browse page
-- Role-based redirects after login (Student → /dashboard, Admin → /admin-panel, SuperAdmin → /super-admin-panel)
-- Real-time analytics (Views, Likes, Saves, Downloads) with time filters (Week / Month / Year / All)
-- Engagement tracking (Likes, Bookmarks, Downloads)
-- FCM push notifications for approved announcements
-- Dark mode, notification bell with unread counts, persistent footer & branding
+### 🔍 System Health & Diagnostics
+- **Drive Diagnostic Tool**: Built-in `verify_drive.js` script to instantly troubleshoot `invalid_grant` errors and connectivity issues.
+- **Aggregated Analytics**: Real-time tracking of resource performance, user engagement, and download hotspots.
+- **Credential Integrity**: Secure management of OAuth2 tokens and service accounts.
 
-Tech stack
-- Frontend: React (Hooks, Context API), React Router, Vite
-- Styling: Bootstrap 5.3 + custom CSS
-- Charts: Chart.js, react-chartjs-2
-- Backend: Node.js, Express
-- Database: MongoDB / Mongoose
-- Storage: Cloudinary
-- Messaging: Firebase Cloud Messaging (FCM)
+### 👑 Governance & Security
+- **Role-Based Access (RBAC)**: Fine-grained permissions for Admins, Moderators, and Super-Admins.
+- **Announcement Pipeline**: Broadcast critical updates and resources via Firebase Cloud Messaging (FCM).
+- **Manual Verification**: Review and approve community-submitted resources before they go live.
 
-Prerequisites
-- Node.js (LTS) & npm or pnpm
-- MongoDB (local or Atlas)
-- Cloudinary account
-- Firebase project with Cloud Messaging enabled
+## 🛠️ Tech Stack
+- **Framework**: React 19 (Vite)
+- **Styling**: Bootstrap 5 + Dynamic Admin CSS
+- **Visualization**: Chart.js (Real-time Engagement Analytics)
+- **Integration**: Google Googleapis (Drive v3), Cloudinary SDK
+- **Backend Connectivity**: Express JWT-Guarded Endpoints
 
-Environment variables
+## 🚀 Getting Started
 
-Backend (backend/.env)
-```env
-MONGO_URI="YOUR_MONGO_CONNECTION_STRING"
-JWT_SECRET="A_STRONG_SECRET_KEY"
-
-CLOUDINARY_CLOUD_NAME="YOUR_CLOUDINARY_CLOUD_NAME"
-CLOUDINARY_API_KEY="YOUR_CLOUDINARY_API_KEY"
-CLOUDINARY_API_SECRET="YOUR_CLOUDINARY_API_SECRET"
-
-FCM_SERVER_KEY="YOUR_FIREBASE_SERVER_KEY_FROM_CLOUD_MESSAGING"
-PORT=5000
+### 1. Backend Diagnostics
+Before starting the admin panel, ensure your Google Drive connection is healthy:
+```bash
+cd backend
+node scripts/verify_drive.js
 ```
 
-Frontend (frontend/.env) — Vite variables
-```env
-VITE_API_URL="http://localhost:5000/api"
-
-VITE_FIREBASE_API_KEY="YOUR_API_KEY"
-VITE_FIREBASE_PROJECT_ID="YOUR_PROJECT_ID"
-VITE_FIREBASE_MESSAGING_SENDER_ID="YOUR_MESSAGING_SENDER_ID"
-VITE_FIREBASE_APP_ID="YOUR_APP_ID"
-
-VITE_VAPID_PUBLIC_KEY="YOUR_VAPID_PUBLIC_KEY_FROM_FIREBASE_CONSOLE"
+### 2. Panel Installation
+```bash
+cd admin
+npm install
+npm run dev
 ```
 
-Install & run (Windows)
-1. Install dependencies
-- Backend:
-    cd backend
-    npm install
-- Frontend:
-    cd ..\frontend
-    npm install
-
-2. Start servers (options)
-- Start backend:
-    cd backend
-    npm run start
-- Start frontend (Vite):
-    cd ..\frontend
-    npm run dev
-- Start both from repo root (if you add a root script using concurrently / npm-workspaces):
-    cd d:\web-apps\gyanstack-mern
-    npm run start:all
-
-Default URLs
-- Backend API: http://localhost:5000/api
-- Frontend: http://localhost:5173
-
-Project layout (high level)
-- /backend — Express server, routes, controllers, models
-- /frontend — React app (Vite)
-- /docs — optional documentation / diagrams
-- /scripts — helper scripts (db seeding, migrations)
-
-Tips & troubleshooting
-- Cloudinary: ensure credentials in backend/.env and that upload presets allow unsigned uploads if used.
-- Firebase/FCM: backend needs server key; frontend needs VAPID public key. Test notifications with a real device or the Firebase console.
-- MongoDB: if using Atlas, whitelist your IP or use 0.0.0.0/0 while testing (not recommended for production).
-
-Contributing
-- Create issues / PRs. Keep changes modular and include tests where applicable.
-- Add clear commit messages and update this README when adding new features or environment variables.
-
-License
-- Add your preferred license (e.g., MIT) and include a LICENSE file in the repo.
-
-If you'd like, I can:
-- Add badges and a LICENSE file,
-- Add a root package.json script to run frontend + backend concurrently,
-- Include a sample .env.example for both frontend and backend.
-
-Tell me which of the above to apply.
+---
+*Last Updated: April 12, 2026 (Diagnostic & Sync Update)*

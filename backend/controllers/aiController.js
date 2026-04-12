@@ -11,31 +11,42 @@ const groq = new Groq({
 
 exports.getAiResponse = async (req, res) => {
   try {
+    if (!req.body || !req.body.message) {
+      return res.status(400).json({ message: 'Message is required' });
+    }
     const { message, chatHistory, currentPath } = req.body;
 
     if (!process.env.GROQ_API_KEY) {
       return res.status(500).json({ message: 'Groq API Key (GROQ_API_KEY) is missing in backend .env' });
     }
 
-    // 1. Fetch context (Efficient Full Vision - 300 items)
+    // 1. Fetch context (Reduced to stay within 6000 TPM limit)
     const [categories, allContent] = await Promise.all([
       Category.find().select('name _id parentId'),
-      Content.find().select('title _id categoryId').sort({ createdAt: -1 }).limit(300)
+      Content.find().select('title _id categoryId').sort({ createdAt: -1 }).limit(100)
     ]);
 
-    // 1b. Build exact mapping (Key: Category_ID)
+    // 1b. Build exact mapping
     const catFiles = {};
     const catSubs = {};
-    const masterMap = {}; // Security mapping
+    const masterMap = {}; 
+
+    // Keyword optimization: Identify if user is asking about specific categories
+    const messageLower = message.toLowerCase();
+    const relevantCategoryIds = new Set();
+    
+    categories.forEach(c => {
+        if (messageLower.includes(c.name.toLowerCase())) {
+            relevantCategoryIds.add(c._id.toString());
+        }
+    });
 
     categories.forEach(c => {
         const id = c._id.toString();
         const pId = c.parentId?.toString();
         if (pId && pId !== 'root') {
             if (!catSubs[pId]) catSubs[pId] = [];
-            const item = { label: `📂 ${c.name}`, path: `/browse?category=${id}` };
-            catSubs[pId].push(item);
-            masterMap[item.path] = item.label;
+            catSubs[pId].push({ label: `📂 ${c.name}`, path: `/browse?category=${id}` });
         }
     });
 
@@ -49,14 +60,20 @@ exports.getAiResponse = async (req, res) => {
       }
     });
 
-    // 1c. Shorthand Knowledge Base (Restored)
+    // 1c. Intelligent Shorthand Knowledge Base (Filtered by relevance to save tokens)
     const kbStr = categories.map(c => {
         const id = c._id.toString();
-        const items = [...(catSubs[id] || []), ...(catFiles[id] || [])];
+        // If message is generic, only show categories. If specific, show files inside matching categories.
+        const isHighlyRelevant = relevantCategoryIds.has(id);
+        const subItems = catSubs[id] || [];
+        const fileItems = isHighlyRelevant ? (catFiles[id] || []) : []; // Only include files for relevant categories
+        
+        const items = [...subItems, ...fileItems];
         if (items.length === 0) return null;
+
         const list = items.map(i => `${i.label}|${i.path}`).join(',');
         return `SCOPE[${c.name}]::(${list})`;
-    }).filter(x => x).join('\n');
+    }).filter(x => x).slice(0, 15).join('\n'); // Limit to top 15 relevant scopes
 
     // 1e. Master Platform Routes (Precise Mapping)
     const platformRoutes = {
@@ -127,7 +144,7 @@ exports.getAiResponse = async (req, res) => {
     // 3. AI Completion
     const chatCompletion = await groq.chat.completions.create({
       messages,
-      model: "llama-3.1-8b-instant",
+      model: "llama-3.3-70b-versatile",
       temperature: 0.1, 
       max_tokens: 600,
     });
@@ -228,8 +245,6 @@ exports.getAiResponse = async (req, res) => {
 
     if (!reply && action) reply = "Action executed successfully! ✨";
     else if (!reply) reply = "How can I help you today? 📚";
-
-    return res.json({ reply, action });
 
     return res.json({ reply, action });
 

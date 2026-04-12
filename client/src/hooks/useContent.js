@@ -23,8 +23,14 @@ export const useContentList = (params) => {
   return useQuery({
     queryKey: ['content-list', params],
     queryFn: async () => {
-      const { data } = await api.get('/content', { params: { ...params, limit: params.limit || 30 } });
-      return data.content || [];
+      const { data } = await api.get('/content', { 
+        params: { 
+          ...params, 
+          limit: params.limit || 20,
+          skip: params.skip || 0
+        } 
+      });
+      return data; // Return whole object including hasMore/total
     },
     staleTime: 1000 * 60 * 5, // 5 minutes fresh for search results
   });

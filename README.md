@@ -10,7 +10,7 @@ Built with a focus on modern aesthetics (Glassmorphism), speed, and offline capa
 
 ## ✨ Key Features
 
-### 🤖 Spatial AI Assistant (Powered by Groq/Llama 3.1)
+### 🤖 Spatial AI Assistant (Powered by Groq/Llama 3.3)
 - **Contextual Intelligence**: Aware of the user's current page location to provide relevant, immediate help.
 - **Universal Navigator**: Can instantly open any public page or dashboard section (Saved, Settings, Requests) via direct commands.
 - **Auto-Request System**: Automatically detects if content is missing and allows users to submit formal requests to admin with one click.
@@ -20,8 +20,11 @@ Built with a focus on modern aesthetics (Glassmorphism), speed, and offline capa
 ### 📚 Resource Management
 - **Categorized Hub**: Quick-access categorized view on the homepage for recently uploaded materials.
 - **Multi-Format Support**: Native handling of PDFs, Video lectures, External links, and Image-based notes.
-- **Smart Directory**: 1-click navigation from AI chat directly to leaf categories or specific files.
-- **Batch Management**: Integration with **Google Drive API** for scalable storage and data integrity.
+- **🚀 Premium Interactions**: Real-time glassmorphism notifications for all user actions (Like, Save, Download).
+- **📱 Mobile-First Library**: Intelligent 2x2 folder grid and responsive header titles.
+- **🧭 Smart Navigation**: Breadcrumb auto-scrolling and direct category metadata links.
+- **📊 Resource Intelligence**: Folders display real-time item counts before you click them.
+- **🗂️ Google Drive Integration**: High-performance streaming and PDF previews with robust diagnostic tools.
 
 ### 👤 User & Social Features
 - **Contributor Ecosystem**: Real-time "Top Contributors" shelf highlighting community leaders.
@@ -41,9 +44,9 @@ Built with a focus on modern aesthetics (Glassmorphism), speed, and offline capa
 
 | Layer | Technologies |
 |---|---|
-| **Frontend** | React, Vite, Bootstrap 5, Axios, React Router DOM |
-| **Backend** | Node.js, Express.js, MongoDB (Mongoose) |
-| **AI Brain** | Groq SDK (Llama 3.1 - 8b & 70b models) |
+|  - Frontend: React (Vite), Bootstrap 5, Lucide Icons, React Hot Toast
+  - Backend: Node.js, Express, MongoDB, Google Drive API v3
+| **AI Brain** | Groq SDK (Llama 3.3 - 70b model) |
 | **Storage** | Google Drive API(Files), Cloudinary (Media/Profiles), MongoDB (Links/Notes) |
 | **Security** | Express Rate Limit, JWT, BcryptJS, Express Validator |
 | **DevOps** | Vite-Plugin-PWA, Dotenv, CORS |

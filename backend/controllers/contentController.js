@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const cloudinary = require('cloudinary').v2;
 const Content = require('../models/contentModel');
 const Category = require('../models/categoryModel');
@@ -444,9 +445,21 @@ exports.getContent = async (req, res) => {
       projectObj = { score: { $meta: "textScore" } };
     }
 
-    const limit = parseInt(req.query.limit) || 0; 
-    const content = await Content.find(query, projectObj).sort(sortObj).limit(limit);
-    res.json({ content, hasMore: limit > 0 && content.length === limit });
+    const limit = parseInt(req.query.limit) || 20; 
+    const skip = parseInt(req.query.skip) || 0;
+
+    const content = await Content.find(query, projectObj)
+      .sort(sortObj)
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Content.countDocuments(query);
+
+    res.json({ 
+      content, 
+      hasMore: (skip + content.length) < total,
+      total 
+    });
   } catch (err) {
     console.error("getContent error:", err.message);
     res.status(500).json({ message: 'Server error (getContent): ' + err.message });

@@ -1,112 +1,49 @@
-# GyanStack — College Content Management & Analytics (MERN)
+# 🎓 GyanStack — Student Portal (Client)
 
-Small, maintainable MERN app to manage and consume academic resources (Notes, PYQs, Assignments) with admin productivity features and real-time analytics.
+The GyanStack Student Portal is a premium academic resource discovery platform built for the modern student. It provides a sleek, glassmorphism-inspired interface for browsing notes, PYQs, and assignments with real-time analytics and intelligent navigation.
 
-Badges
-- Build / CI: TODO
-- License: Add your preferred license (e.g., MIT)
+## 🌟 Key Features
 
-Quick links
-- Frontend: /frontend
-- Backend: /backend
+### 💎 Premium User Experience
+- **Glassmorphism Design**: A high-fidelity UI featuring translucent panels, blurred backgrounds, and sleek shadows.
+- **Smart Notifications**: Integrated `react-hot-toast` for real-time, non-blocking feedback during Likes, Saves, and Downloads.
+- **Adaptive Typography**: Intelligent text handling that supports single-line headers on desktop and natural word-wrapping on mobile.
 
-Key features
-- Responsive admin dashboards (tables → vertical cards on mobile)
-- Batch uploads (up to 20 files) stored on Cloudinary
-- Cascading category filters on Browse page
-- Role-based redirects after login (Student → /dashboard, Admin → /admin-panel, SuperAdmin → /super-admin-panel)
-- Real-time analytics (Views, Likes, Saves, Downloads) with time filters (Week / Month / Year / All)
-- Engagement tracking (Likes, Bookmarks, Downloads)
-- FCM push notifications for approved announcements
-- Dark mode, notification bell with unread counts, persistent footer & branding
+### 🧭 Intelligent Navigation
+- **2x2 Mobile Grid**: Optimized folder display for mobile devices to maximize vertical space.
+- **Breadcrumb Auto-Scroll**: Deep navigation paths automatically center themselves to keep your current location in focus.
+- **Smart Breadcrumbs**: Clickable navigation badges for instant deep-linking through the academic hierarchy.
 
-Tech stack
-- Frontend: React (Hooks, Context API), React Router, Vite
-- Styling: Bootstrap 5.3 + custom CSS
-- Charts: Chart.js, react-chartjs-2
-- Backend: Node.js, Express
-- Database: MongoDB / Mongoose
-- Storage: Cloudinary
-- Messaging: Firebase Cloud Messaging (FCM)
+### 📊 Resource Intelligence
+- **Real-time Folder Stats**: Folders display exactly how many sub-folders and items they contain before you enter them.
+- **Enriched Previews**: Real-time file metadata (Size, Type, Created Date) pulled directly from the Google Drive API.
+- **Dynamic Sorting**: Effortlessly find materials by popularity, recency, or alphabetical order.
 
-Prerequisites
-- Node.js (LTS) & npm or pnpm
-- MongoDB (local or Atlas)
-- Cloudinary account
-- Firebase project with Cloud Messaging enabled
+## 🛠️ Tech Stack
+- **Framework**: React 19 (Vite)
+- **Styling**: Bootstrap 5 + Custom Modern CSS
+- **State Management**: TanStack Query (React Query)
+- **Interactions**: React Hot Toast, Bootstrap Icons
+- **Storage Connectivity**: Google Drive API v3
 
-Environment variables
+## 🚀 Getting Started
 
-Backend (backend/.env)
-```env
-MONGO_URI="YOUR_MONGO_CONNECTION_STRING"
-JWT_SECRET="A_STRONG_SECRET_KEY"
-
-CLOUDINARY_CLOUD_NAME="YOUR_CLOUDINARY_CLOUD_NAME"
-CLOUDINARY_API_KEY="YOUR_CLOUDINARY_API_KEY"
-CLOUDINARY_API_SECRET="YOUR_CLOUDINARY_API_SECRET"
-
-FCM_SERVER_KEY="YOUR_FIREBASE_SERVER_KEY_FROM_CLOUD_MESSAGING"
-PORT=5000
-```
-
-Frontend (frontend/.env) — Vite variables
+### 1. Environment Variables (`client/.env`)
 ```env
 VITE_API_URL="http://localhost:5000/api"
-
-VITE_FIREBASE_API_KEY="YOUR_API_KEY"
-VITE_FIREBASE_PROJECT_ID="YOUR_PROJECT_ID"
-VITE_FIREBASE_MESSAGING_SENDER_ID="YOUR_MESSAGING_SENDER_ID"
-VITE_FIREBASE_APP_ID="YOUR_APP_ID"
-
-VITE_VAPID_PUBLIC_KEY="YOUR_VAPID_PUBLIC_KEY_FROM_FIREBASE_CONSOLE"
+VITE_FIREBASE_API_KEY="..."
+VITE_FIREBASE_PROJECT_ID="..."
+VITE_FIREBASE_MESSAGING_SENDER_ID="..."
+VITE_FIREBASE_APP_ID="..."
+VITE_VAPID_PUBLIC_KEY="..."
 ```
 
-Install & run (Windows)
-1. Install dependencies
-- Backend:
-    cd backend
-    npm install
-- Frontend:
-    cd ..\frontend
-    npm install
+### 2. Installation
+```bash
+cd client
+npm install
+npm run dev
+```
 
-2. Start servers (options)
-- Start backend:
-    cd backend
-    npm run start
-- Start frontend (Vite):
-    cd ..\frontend
-    npm run dev
-- Start both from repo root (if you add a root script using concurrently / npm-workspaces):
-    cd d:\web-apps\gyanstack-mern
-    npm run start:all
-
-Default URLs
-- Backend API: http://localhost:5000/api
-- Frontend: http://localhost:5173
-
-Project layout (high level)
-- /backend — Express server, routes, controllers, models
-- /frontend — React app (Vite)
-- /docs — optional documentation / diagrams
-- /scripts — helper scripts (db seeding, migrations)
-
-Tips & troubleshooting
-- Cloudinary: ensure credentials in backend/.env and that upload presets allow unsigned uploads if used.
-- Firebase/FCM: backend needs server key; frontend needs VAPID public key. Test notifications with a real device or the Firebase console.
-- MongoDB: if using Atlas, whitelist your IP or use 0.0.0.0/0 while testing (not recommended for production).
-
-Contributing
-- Create issues / PRs. Keep changes modular and include tests where applicable.
-- Add clear commit messages and update this README when adding new features or environment variables.
-
-License
-- Add your preferred license (e.g., MIT) and include a LICENSE file in the repo.
-
-If you'd like, I can:
-- Add badges and a LICENSE file,
-- Add a root package.json script to run frontend + backend concurrently,
-- Include a sample .env.example for both frontend and backend.
-
-Tell me which of the above to apply.
+---
+*Last Updated: April 12, 2026 (Premium Interaction Update)*
