@@ -11,8 +11,10 @@ import NotFound from './NotFound';
 export default function UploaderProfile() {
   const { id } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
-  const categoryId = searchParams.get('category');
+  const categoryId = searchParams.get('category')?.trim();
   const searchTerm = searchParams.get('search') || '';
+  const sortBy = searchParams.get('sortBy') || 'date';
+  const order = searchParams.get('order') || 'desc';
   
   // 1. Data Fetching Hooks
   const { data: profileData, isLoading: profileLoading, error: profileError } = useUploaderProfile(id);
@@ -73,6 +75,21 @@ export default function UploaderProfile() {
       params.delete('search');
     } else {
       params.set('search', term.trim());
+    }
+    setSearchParams(params);
+  };
+
+  const handleSortChange = (e) => {
+    const value = e.target.value;
+    const params = new URLSearchParams(searchParams);
+    
+    if (value === 'date_desc') {
+        params.delete('sortBy');
+        params.delete('order');
+    } else {
+        const [sort, ord] = value.split('_');
+        params.set('sortBy', sort);
+        params.set('order', ord);
     }
     setSearchParams(params);
   };
@@ -234,14 +251,33 @@ export default function UploaderProfile() {
             )}
 
             {/* DOCUMENTS GRID (ContentList) */}
-            <div className="d-flex align-items-center mb-4 pb-2 border-bottom border-light flex-wrap gap-2">
-              <div className="me-auto">
+            <div className="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between mb-4 pb-3 border-bottom border-light gap-3">
+              <div className="flex-grow-1">
                 <h5 className="fw-bold mb-0 text-dark">
                   {searchTerm 
-                    ? <span>Showing <span className="text-primary">"{searchTerm}"</span></span>
+                    ? (categoryId && currentPath.length > 0
+                      ? <span>Showing <span className="text-primary">"{searchTerm}"</span> in <span className="text-secondary">{currentPath[currentPath.length-1].name}</span></span>
+                      : <span>Showing results for <span className="text-primary">"{searchTerm}"</span></span>)
                     : (currentPath.length > 0 ? currentPath[currentPath.length - 1].name : "All Shared Resources")
                   }
                 </h5>
+              </div>
+
+              <div className="d-flex align-items-center gap-2">
+                <i className="bi bi-filter-left text-muted d-none d-sm-block"></i>
+                <select 
+                    className="form-select form-select-sm rounded-pill border-light shadow-sm"
+                    style={{ width: 'auto', minWidth: '160px', background: 'rgba(255,255,255,0.7)', paddingRight: '2rem' }}
+                    value={`${sortBy}_${order}`}
+                    onChange={handleSortChange}
+                >
+                    <option value="date_desc">Recently Added</option>
+                    <option value="views_desc">Most Visited</option>
+                    <option value="likes_desc">Most Liked</option>
+                    <option value="saves_desc">Most Saved</option>
+                    <option value="downloads_desc">Most Downloaded</option>
+                    <option value="title_asc">A - Z</option>
+                </select>
               </div>
             </div>
 
@@ -249,6 +285,8 @@ export default function UploaderProfile() {
               categoryId={categoryId}
               searchTerm={searchTerm}
               uploaderName={profile.username}
+              sortBy={sortBy}
+              order={order}
             />
           </div>
         </div>

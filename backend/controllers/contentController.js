@@ -366,8 +366,8 @@ exports.uploadContent = async (req, res) => {
     console.error("FATAL Upload Error:", err);
     res.status(500).json({ 
         success: false, 
-        message: 'Internal Server Error during upload processing',
-        error: process.env.NODE_ENV === 'production' ? 'Upload Worker Failure' : err.message
+        message: 'Upload failed: ' + (err.message || 'Internal Server Error during processing'),
+        error: process.env.NODE_ENV === 'production' ? 'Detailed logs available on server' : err.stack
     });
   }
 };
@@ -382,7 +382,7 @@ exports.getContent = async (req, res) => {
     if (req.query.categoryId && req.query.categoryId !== 'root') { 
       // Helper function to get all sub-category IDs
       const getAllChildIds = async (pId) => {
-        if (!pId) return [];
+        if (!pId || !mongoose.Types.ObjectId.isValid(pId.toString())) return [];
         let childIds = [pId.toString()];
         const subCategories = await Category.find({ parentId: pId.toString() });
         for (const sub of subCategories) {

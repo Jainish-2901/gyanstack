@@ -8,15 +8,24 @@ export default function ContentList({ categoryId, searchTerm, uploaderName, sort
   // though React Query handles key changes efficiently.
   const params = {
     limit: 30,
-    categoryId: categoryId !== 'root' ? categoryId : undefined,
+    categoryId: (categoryId && categoryId !== 'root') ? categoryId.trim() : undefined,
     search: searchTerm || undefined,
     uploader: uploaderName || undefined,
     sortBy,
     order
   };
-
-  const { data: content = [], isLoading: loading } = useContentList(params);
-
+  
+  const { data: content = [], isLoading: loading, error } = useContentList(params);
+  
+  if (error) {
+    return (
+      <div className="alert alert-danger rounded-4 py-4 text-center">
+        <i className="bi bi-exclamation-triangle fs-3 d-block mb-2"></i>
+        <strong>Error reaching server:</strong> {error.response?.data?.message || 'Please check your connection.'}
+      </div>
+    );
+  }
+  
   if (loading) {
     return (
       <div className="row g-4">

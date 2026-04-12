@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import LoadingScreen from '../../components/LoadingScreen';
 import EditContentModal from '../../components/EditContentModal';
 import CategoryManager from '../../components/CategoryManager';
+import api from '../../services/api';
 
 // --- 1. HELPER COMPONENT: Content Card for Mobile View ---
 const SITE_URL = import.meta.env.VITE_SITE_URL || 'http://localhost:5173';
@@ -204,7 +205,9 @@ export default function AdminPanel() {
       setUploadProgress(0);
       refreshContent(); 
     } catch (err) {
-      setError(err.response?.data?.message || 'Upload failed. Check server.');
+      console.error("Upload Error Details:", err);
+      const msg = err.response?.data?.message || err.message || 'Upload failed. Check server.';
+      setError(msg);
       setUploadProgress(0);
     }
     setUploading(false);

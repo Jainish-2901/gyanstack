@@ -8,7 +8,7 @@ import LoadingScreen from '../../components/LoadingScreen';
 
 export default function Browse() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const categoryId = searchParams.get('category');
+  const categoryId = searchParams.get('category')?.trim();
   const searchTerm = searchParams.get('search') || '';
   const uploaderFilter = searchParams.get('uploader') || '';
   const sortBy = searchParams.get('sortBy') || 'date';
