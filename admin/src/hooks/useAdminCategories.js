@@ -11,6 +11,8 @@ export const useAdminCategories = (parentId = 'root') => {
       const { data } = await api.get(`/categories?parentId=${parentId}`);
       return data.categories.sort((a, b) => a.order - b.order);
     },
+    staleTime: 1000 * 60 * 10, // 10 minutes cache for category trees
+    gcTime: 1000 * 60 * 15,    // Keep in garbage collection for 15 mins
   });
 };
 
@@ -32,6 +34,7 @@ export const useAllCategoriesFlat = () => {
       flatten(data.categories || data);
       return flattened;
     },
+    staleTime: 1000 * 60 * 30, // Flat list rarely changes, cache for 30 mins
   });
 };
 
@@ -118,5 +121,6 @@ export const useCategoryMap = () => {
         return { 'root': 'Root / General' };
       }
     },
+    staleTime: 1000 * 60 * 30, // Category Map cache (highly stable)
   });
 };

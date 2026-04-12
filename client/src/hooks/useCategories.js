@@ -11,5 +11,7 @@ export const useNestedCategories = () => {
       const { data } = await api.get('/categories/all-nested');
       return data.categories || [];
     },
+    staleTime: 1000 * 60 * 60, // 1 hour stale time for client categories
+    gcTime: 1000 * 60 * 90,    // 1.5 hours garbage collection
   });
 };

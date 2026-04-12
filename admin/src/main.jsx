@@ -18,8 +18,10 @@ import './App.css';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 2, // 2 minutes for admin
+      staleTime: 1000 * 60 * 5, // 5 minutes default for general content
+      gcTime: 1000 * 60 * 10,    // 10 minutes garbage collection
       retry: 1,
+      refetchOnWindowFocus: false, // Prevent logs on browser tab switch
     },
   },
 });

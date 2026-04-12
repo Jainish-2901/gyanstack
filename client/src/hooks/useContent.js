@@ -12,6 +12,7 @@ export const useCategoryContent = (categoryId, enabled = false) => {
       return data.content || [];
     },
     enabled,
+    staleTime: 1000 * 60 * 10, // 10 minutes cache for previews
   });
 };
 
@@ -25,6 +26,7 @@ export const useContentList = (params) => {
       const { data } = await api.get('/content', { params: { ...params, limit: params.limit || 30 } });
       return data.content || [];
     },
+    staleTime: 1000 * 60 * 5, // 5 minutes fresh for search results
   });
 };
 
