@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { messaging, firebaseConfig } from '../services/firebase';
@@ -11,11 +11,6 @@ export default function NotificationBell({ user }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
-
-  const playPing = () => {
-    pingSound.play().catch(() => {
-    });
-  };
 
   const fetchAnnouncements = useCallback(async () => {
     if (!user) return;
@@ -47,7 +42,6 @@ export default function NotificationBell({ user }) {
         if (permission === 'granted') {
           const params = new URLSearchParams(firebaseConfig).toString();
           const swUrl = `/firebase-messaging-sw.js?${params}`;
-
           const registration = await navigator.serviceWorker.register(swUrl);
 
           const token = await getToken(messaging, {
@@ -67,15 +61,13 @@ export default function NotificationBell({ user }) {
     setupNotifications();
 
     const unsubscribe = onMessage(messaging, (payload) => {
-      playPing();
-
+      pingSound.play().catch(() => {});
       if (Notification.permission === 'granted') {
         new Notification(payload.notification.title, {
           body: payload.notification.body,
           icon: '/logo.png',
         });
       }
-
       fetchAnnouncements();
     });
 
@@ -87,11 +79,23 @@ export default function NotificationBell({ user }) {
   }, [user, fetchAnnouncements]);
 
   useEffect(() => {
-    if (isOpen && window.innerWidth <= 490) {
+    const isMobile = window.innerWidth <= 768;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    if (isOpen) {
       document.body.style.overflow = 'hidden';
+      if (!isMobile && scrollbarWidth > 0) {
+        document.body.style.paddingRight = `${scrollbarWidth}px`;
+      }
     } else {
       document.body.style.overflow = 'unset';
+      document.body.style.paddingRight = '0px';
     }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+      document.body.style.paddingRight = '0px';
+    };
   }, [isOpen]);
 
   const toggleDropdown = (e) => {
@@ -114,7 +118,7 @@ export default function NotificationBell({ user }) {
         <i className={`bi ${unreadCount > 0 ? 'bi-bell-fill shadow-pulse' : 'bi-bell'} fs-5`}></i>
         {unreadCount > 0 && (
           <span className="position-absolute translate-middle badge rounded-pill bg-danger"
-            style={{ top: '8px', right: '-4px', fontSize: '9px', border: '2px solid white' }}>
+            style={{ top: '8px', right: '-4px', fontSize: '10px', border: '2px solid white' }}>
             {unreadCount}
           </span>
         )}
@@ -122,24 +126,16 @@ export default function NotificationBell({ user }) {
 
       {isOpen && (
         <>
-          <div className="notification-overlay d-md-none" onClick={() => setIsOpen(false)}></div>
-          <ul className="dropdown-menu dropdown-menu-end shadow-lg show position-absolute glass-panel border-0 p-0 overflow-hidden"
-            style={{
-              minWidth: '320px',
-              maxHeight: '480px',
-              right: 0,
-              top: '130%',
-              zIndex: 2100,
-              borderRadius: '1rem',
-              backgroundColor: 'rgba(255, 255, 255, 0.98)'
-            }}>
-
-            <li className='dropdown-header border-bottom d-flex justify-content-between align-items-center py-3 px-4 bg-white'>
+          {/* Immersive Dark Backdrop */}
+          <div className="notification-modal-overlay" onClick={() => setIsOpen(false)}></div>
+          
+          <ul className="dropdown-menu notification-modal-content shadow-lg show glass-panel border-0 p-0 overflow-hidden">
+            <li className='dropdown-header border-bottom d-flex justify-content-between align-items-center py-3 px-4'>
               <span className="text-dark fw-bold mb-0">System Alerts</span>
-              <button className="btn-close" style={{ fontSize: '0.7rem' }} onClick={() => setIsOpen(false)}></button>
+              <button className="btn-close" style={{ fontSize: '0.65rem' }} onClick={() => setIsOpen(false)}></button>
             </li>
 
-            <div className="notification-scroll-area no-scrollbar" style={{ maxHeight: '350px', overflowY: 'auto' }}>
+            <div className="notification-scroll-area no-scrollbar">
               {loading ? (
                 <div className='text-center my-5'><div className="spinner-border spinner-border-sm text-primary"></div></div>
               ) : announcements.length === 0 ? (
@@ -151,22 +147,31 @@ export default function NotificationBell({ user }) {
                 announcements.map((ann) => (
                   <li key={ann._id} className="border-bottom border-light">
                     <Link
-                      to={`/announcements/${ann._id}`}
+                      to={`/dashboard/announcements/${ann._id}`}
                       onClick={() => setIsOpen(false)}
                       className="text-decoration-none"
                     >
-                      <div className="p-3 d-flex align-items-center gap-3 transition-all hover-bg-light"
-                        style={{ background: !ann.isRead ? 'rgba(99, 102, 241, 0.04)' : 'transparent' }}>
-                        <div className={`icon-circle-sm flex-shrink-0 ${!ann.isRead ? 'bg-primary text-white' : 'bg-light text-secondary'}`}>
-                          <i className="bi bi-megaphone"></i>
+                      <div className="p-3 d-flex align-items-center justify-content-between gap-3 transition-all hover-bg-light"
+                        style={{ background: !ann.isRead ? 'rgba(99, 102, 241, 0.05)' : 'transparent' }}>
+                        <div className="d-flex align-items-center gap-3 overflow-hidden">
+                          <div className={`icon-circle ${!ann.isRead ? 'bg-primary text-white' : 'bg-light text-secondary'}`}>
+                            <i className="bi bi-megaphone"></i>
+                          </div>
+                          <div className="d-flex flex-column overflow-hidden text-start">
+                            <span className={`small text-truncate ${!ann.isRead ? 'fw-bold text-dark' : 'text-secondary'}`}>
+                              {ann.title}
+                            </span>
+                            <small className="text-muted extra-small">
+                              {new Date(ann.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                            </small>
+                          </div>
                         </div>
-                        <div className="d-flex flex-column overflow-hidden text-start">
-                          <span className={`small text-truncate ${!ann.isRead ? 'fw-bold text-dark' : 'text-secondary'}`}>
-                            {ann.title}
+                        
+                        {/* Action Flow "View" Button */}
+                        <div className="flex-shrink-0">
+                          <span className="btn btn-outline-success btn-sm rounded-pill px-3 py-1 fw-bold" style={{ fontSize: '0.7rem' }}>
+                            View
                           </span>
-                          <small className="text-muted extra-small">
-                            {new Date(ann.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
-                          </small>
                         </div>
                       </div>
                     </Link>
@@ -185,11 +190,82 @@ export default function NotificationBell({ user }) {
       )}
 
       <style>{`
-        .icon-circle-sm { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; }
-        .hover-bg-light:hover { background: rgba(0,0,0,0.03) !important; }
         .shadow-pulse { filter: drop-shadow(0 0 5px rgba(99, 102, 241, 0.6)); animation: bell-pulse 2s infinite; }
         @keyframes bell-pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .extra-small { font-size: 0.65rem; }
+        .icon-circle { width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
+        
+        /* Immersive Dark Backdrop (Admin Logic Sync) */
+        .notification-modal-overlay { 
+          position: fixed; 
+          top: 0; 
+          left: 0; 
+          width: 100vw; 
+          height: 100vh; 
+          background: rgba(0, 0, 0, 0.45); 
+          backdrop-filter: blur(8px); 
+          -webkit-backdrop-filter: blur(8px);
+          z-index: 2200; 
+          animation: fadeIn 0.25s ease;
+        }
+
+        /* Top-Aligned Centered Modal Strategy (Admin Logic Sync) */
+        ul.notification-modal-content {
+          position: fixed !important;
+          top: 120px !important; 
+          left: 50% !important;
+          transform: translateX(-50%) !important;
+          margin: 0 !important;
+          width: 92% !important;
+          max-width: 450px !important;
+          height: auto !important;
+          max-height: 80vh !important;
+          z-index: 2300 !important;
+          display: flex !important;
+          flex-direction: column !important;
+          border-radius: 1.75rem !important;
+          background-color: rgba(255, 255, 255, 0.98) !important;
+          backdrop-filter: blur(30px);
+          -webkit-backdrop-filter: blur(30px);
+          border: 1px solid rgba(0,0,0,0.05) !important;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+          animation: modalSlideDown 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes modalSlideDown { 
+          from { opacity: 0; top: 110px !important; transform: translateX(-50%) scale(0.95); } 
+          to { opacity: 1; top: 120px !important; transform: translateX(-50%) scale(1); } 
+        }
+
+        .notification-scroll-area { 
+          flex-grow: 1 !important;
+          overflow-y: auto !important;
+          padding-bottom: 0.5rem;
+        }
+
+        .dropdown-header {
+          padding: 1.25rem !important;
+          background: rgba(99, 102, 241, 0.04);
+        }
+
+        /* Dark Mode Integration (High-Fidelity) */
+        .dark ul.notification-modal-content {
+          background-color: rgba(28, 28, 28, 0.98) !important;
+          border-color: rgba(255, 255, 255, 0.1) !important;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
+        }
+        .dark .dropdown-header {
+          background: rgba(255, 255, 255, 0.04) !important;
+          border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        .dark .text-dark { color: #f8fafc !important; }
+        .dark .text-secondary { color: #94a3b8 !important; }
+        .dark .border-bottom { border-color: rgba(255, 255, 255, 0.08) !important; }
+        .dark .bg-light { background-color: #1e1e1e !important; border-top-color: rgba(255, 255, 255, 0.1) !important; }
+        .dark .icon-circle.bg-light { background-color: #2d2d2d !important; }
+        .dark .btn-close { filter: invert(1) grayscale(1) brightness(2); }
       `}</style>
     </div>
   );

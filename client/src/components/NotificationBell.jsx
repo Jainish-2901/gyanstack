@@ -88,12 +88,23 @@ const NotificationBell = () => {
   }, [fetchAnnouncements]);
 
   useEffect(() => {
-    // Lock background scroll on ALL screen sizes when modal is open
+    const isMobile = window.innerWidth <= 768;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      if (!isMobile && scrollbarWidth > 0) {
+        document.body.style.paddingRight = `${scrollbarWidth}px`;
+      }
     } else {
       document.body.style.overflow = 'unset';
+      document.body.style.paddingRight = '0px';
     }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+      document.body.style.paddingRight = '0px';
+    };
   }, [isOpen]);
 
   const toggleDropdown = (e) => {
@@ -135,7 +146,7 @@ const NotificationBell = () => {
           <div className="notification-modal-overlay" onClick={() => setIsOpen(false)}></div>
           <ul className="dropdown-menu notification-modal-content shadow-lg show glass-panel border-0 p-0 overflow-hidden">
             <li className='dropdown-header border-bottom d-flex justify-content-between align-items-center py-3 px-4'>
-              <span className="text-dark fw-bold h6 mb-0">Notifications</span>
+              <span className="text-dark fw-bold mb-0">GyanStack Notifications:</span>
               <button className="btn-close" style={{ fontSize: '0.65rem' }} onClick={() => setIsOpen(false)}></button>
             </li>
 
@@ -152,7 +163,7 @@ const NotificationBell = () => {
                         style={{ background: !ann.isRead ? 'rgba(99, 102, 241, 0.05)' : 'transparent' }}>
                         <div className="d-flex align-items-center gap-3 overflow-hidden">
                           <div className={`icon-circle ${!ann.isRead ? 'bg-primary text-white' : 'bg-light text-secondary'}`}>
-                            <i className="bi bi-megaphone-fill"></i>
+                            <i className="bi bi-megaphone"></i>
                           </div>
                           <div className="d-flex flex-column overflow-hidden text-start">
                             <span className={`small text-truncate ${!ann.isRead ? 'fw-bold text-dark' : 'text-secondary'}`}>
@@ -173,7 +184,7 @@ const NotificationBell = () => {
 
             <li className="bg-light border-top">
               <Link onClick={() => setIsOpen(false)} className="dropdown-item text-center small text-primary fw-bold py-3" to="/announcements">
-                View All Announcements <i className="bi bi-arrow-right ms-1"></i>
+                View All <i className="bi bi-arrow-right ms-1"></i>
               </Link>
             </li>
           </ul>
@@ -187,7 +198,7 @@ const NotificationBell = () => {
         .extra-small { font-size: 0.65rem; }
         .icon-circle { width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
         
-        /* Immersive Full-Screen Backdrop */
+        /* Immersive Full-Screen Backdrop (Admin Logic) */
         .notification-modal-overlay { 
           position: fixed; 
           top: 0; 
@@ -201,14 +212,14 @@ const NotificationBell = () => {
           animation: fadeIn 0.25s ease;
         }
 
-        /* Perfect Center Modal Strategy (Universal for all screens) */
-        .notification-modal-content {
+        /* Robust Top-Aligned Centered Modal Strategy (Admin Logic Sync) */
+        ul.notification-modal-content {
           position: fixed !important;
-          top: 50% !important;
+          top: 120px !important; /* Increased to ensure absolute header clearance */
           left: 50% !important;
-          transform: translate(-50%, -50%) !important;
+          transform: translateX(-50%) !important;
           margin: 0 !important;
-          width: 90% !important;
+          width: 92% !important;
           max-width: 450px !important;
           height: auto !important;
           max-height: 80vh !important;
@@ -216,18 +227,18 @@ const NotificationBell = () => {
           display: flex !important;
           flex-direction: column !important;
           border-radius: 1.75rem !important;
-          background-color: var(--glass-bg);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
+          background-color: rgba(255, 255, 255, 0.98) !important;
+          backdrop-filter: blur(30px);
+          -webkit-backdrop-filter: blur(30px);
           border: 1px solid var(--glass-border) !important;
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
-          animation: modalScaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+          animation: modalSlideDown 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes modalScaleIn { 
-          from { opacity: 0; transform: translate(-50%, -45%) scale(0.95); } 
-          to { opacity: 1; transform: translate(-50%, -50%) scale(1); } 
+        @keyframes modalSlideDown { 
+          from { opacity: 0; top: 110px !important; transform: translateX(-50%) scale(0.95); } 
+          to { opacity: 1; top: 120px !important; transform: translateX(-50%) scale(1); } 
         }
 
         .notification-scroll-area { 
@@ -237,17 +248,26 @@ const NotificationBell = () => {
         }
 
         .dropdown-header {
-          padding: 1.5rem !important;
+          padding: 1.25rem !important;
           background: rgba(99, 102, 241, 0.04);
         }
 
-        /* Tablet/Mobile vertical spacing refinement */
-        @media (max-width: 576px) {
-          .notification-modal-content {
-            max-height: 85vh !important;
-          }
-          .icon-circle { width: 32px; height: 32px; font-size: 0.8rem; }
+        /* Dark Mode Integration (High-Fidelity) */
+        .dark ul.notification-modal-content {
+          background-color: rgba(28, 28, 28, 0.98) !important;
+          border-color: rgba(255, 255, 255, 0.1) !important;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
         }
+        .dark .dropdown-header {
+          background: rgba(255, 255, 255, 0.04) !important;
+          border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        .dark .text-dark { color: #f8fafc !important; }
+        .dark .text-secondary { color: #94a3b8 !important; }
+        .dark .border-bottom { border-color: rgba(255, 255, 255, 0.08) !important; }
+        .dark .bg-light { background-color: #1e1e1e !important; border-top-color: rgba(255, 255, 255, 0.1) !important; }
+        .dark .icon-circle.bg-light { background-color: #2d2d2d !important; }
+        .dark .btn-close { filter: invert(1) grayscale(1) brightness(2); }
       `}</style>
     </div>
   );

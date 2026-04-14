@@ -1402,69 +1402,6 @@ h1, h2, h3, h4 {
   transition: all 0.2s ease-in-out;
 }
 
-@media (max-width: 490px) {
-
-  /* Center the Notification dropdown specifically for small phones */
-  .notification-dropdown .dropdown-menu.show {
-    position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    right: auto !important;
-    transform: translate(-50%, -50%) !important;
-    width: calc(100% - 2.5rem) !important;
-    max-width: 360px !important;
-    margin: 0 !important;
-    z-index: 2200 !important;
-    max-height: 70vh !important;
-    /* Tuned to prevent bottom cutoff */
-    border-radius: 1.5rem !important;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4) !important;
-    animation: zoomInCenter 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-    display: flex !important;
-    flex-direction: column !important;
-  }
-
-  /* Ensure the list part of the dropdown is what scrolls, not the header */
-  .notification-dropdown .dropdown-menu.show li:not(.dropdown-header) {
-    overflow-y: auto;
-  }
-
-  /* Blurry overlay backdrop for the centered notification */
-  .notification-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(5px);
-    z-index: 2150;
-    animation: fadeIn 0.2s ease;
-  }
-}
-
-@keyframes zoomInCenter {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -45%) scale(0.95);
-  }
-
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
 /* Ultra Small Devices (Smartphones below 390px) */
 @media (max-width: 390px) {
   .hero-title {
@@ -1515,14 +1452,6 @@ h1, h2, h3, h4 {
     font-size: 1.25rem !important;
   }
 
-  .notification-dropdown .dropdown-menu.show {
-    width: calc(100% - 1.5rem) !important;
-    max-width: 320px !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    border-radius: 1.25rem !important;
-  }
 
   .btn {
     padding: 0.5rem 1rem !important;
@@ -1537,17 +1466,14 @@ h1, h2, h3, h4 {
     font-size: 0.9rem !important;
   }
 
-  /* Compact Dashboard Header */
   .dashboard-header .container-fluid {
     padding: 0 0.5rem !important;
   }
 
-  /* Even smaller social link gap for ultra-compact devices */
   .fancy-footer .d-flex.gap-3 {
     gap: 0.5rem !important;
   }
 
-  /* Announcement Card Mobile Optimization */
   .announcement-item {
     padding: 1rem !important;
   }
@@ -1567,7 +1493,6 @@ h1, h2, h3, h4 {
   }
 }
 
-/* Helper Utilities */
 .x-small {
   font-size: 0.75rem !important;
 }
@@ -1581,7 +1506,6 @@ h1, h2, h3, h4 {
   animation: heartbeat 1s infinite;
 }
 
-/* Hover Animations */
 .transition-all {
   transition: all 0.3s ease-in-out !important;
 }

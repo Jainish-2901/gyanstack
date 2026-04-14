@@ -31,7 +31,8 @@ Built with a focus on modern aesthetics (Glassmorphism), speed, and offline capa
 - **Request Tracker**: Dedicated dashboard section to track the status of your content requests in real-time.
 - **PWA Experience**: Fully installable as a mobile or desktop app with **Offline Notifications**.
 - **Cross-Device Sync**: Notifications read status and user preferences sync instantly between mobile and desktop using a **Fault-Tolerant AuthContext Sync** pattern.
-- **Announcements**: Dynamic banner system with **High-Fidelity Detail Routes** (`/announcements/:id`) and mobile-optimized card designs.
+- **Announcements**: Dynamic banner system with **High-Fidelity Detail Routes** (`/announcements/:id`) on both Client and Admin applications.
+- **Universal Dark Mode**: Intelligent self-healing theme engineering that ensures 100% visibility for critical alerts across light and dark modes.
 
 ### 🛡️ Hardened Security & Stability
 - **Multi-Tier Rate Limiting**: Specialized shields for Global API (100req/15m), Authentication (10req/15m), and AI Services (20req/15m).
@@ -128,5 +129,5 @@ Built with a focus on modern aesthetics (Glassmorphism), speed, and offline capa
 
 *Built with ❤️ for the student community by Jainish.*
 
-*Last Updated: April 14, 2026 (Sync & Animation Overhaul)*
+*Last Updated: April 14, 2026 (Universal Sync & High-Fidelity Theming Overhaul)*
 

@@ -18,6 +18,7 @@ const ManageUsers = lazy(() => import('./pages/admin/ManageUsers'));
 const ManageAnnouncements = lazy(() => import('./pages/admin/ManageAnnouncements'));
 const MyAnnouncements = lazy(() => import('./pages/admin/MyAnnouncements'));
 const GlobalContentManager = lazy(() => import('./pages/admin/GlobalContentManager'));
+const AnnouncementDetailPage = lazy(() => import('./pages/admin/AnnouncementDetailPage'));
 const NotFound = lazy(() => import('./pages/admin/NotFound'));
 
 export default function App() {
@@ -45,6 +46,7 @@ export default function App() {
                         <Route path="admin-panel" element={<AdminPanel />} />
                         <Route path="settings" element={<EditProfile />} />
                         <Route path="announcements" element={<AnnouncementsPage />} />
+                        <Route path="dashboard/announcements/:id" element={<AnnouncementDetailPage />} />
                         <Route path="dashboard/requests" element={<ViewContentRequests />} />
 
                         <Route path="dashboard/my-announcements" element={
