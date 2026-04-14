@@ -119,11 +119,19 @@ export default function PrivacyPolicy() {
                     </div>
                   </div>
 
-                  <div className="d-flex align-items-start gap-3">
+                  <div className="mb-3 d-flex align-items-start gap-3">
                     <div className="p-2 rounded-2 bg-light"><i className="bi bi-bar-chart-line text-primary"></i></div>
                     <div>
                       <p className="fw-bold text-dark mb-1">d) Usage Analytics</p>
                       <p className="small mb-0">We track content views and downloads to improve resource visibility. This data is for internal optimization only.</p>
+                    </div>
+                  </div>
+
+                  <div className="d-flex align-items-start gap-3">
+                    <div className="p-2 rounded-2 bg-light"><i className="bi bi-eye-fill text-primary"></i></div>
+                    <div>
+                      <p className="fw-bold text-dark mb-1">e) Announcement Interactions</p>
+                      <p className="small mb-0">We track when system updates are opened to measure the effectiveness of our platform communications and ensure students receive critical alerts.</p>
                     </div>
                   </div>
                 </div>

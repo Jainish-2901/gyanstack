@@ -30,8 +30,8 @@ Built with a focus on modern aesthetics (Glassmorphism), speed, and offline capa
 - **Contributor Ecosystem**: Real-time "Top Contributors" shelf highlighting community leaders.
 - **Request Tracker**: Dedicated dashboard section to track the status of your content requests in real-time.
 - **PWA Experience**: Fully installable as a mobile or desktop app with **Offline Notifications**.
-- **Cross-Device Sync**: Notifications read status and user preferences sync instantly between mobile and desktop using `fcmToken` tracking.
-- **Announcements**: Dynamic banner system with smart-truncation and mobile-optimized card designs.
+- **Cross-Device Sync**: Notifications read status and user preferences sync instantly between mobile and desktop using a **Fault-Tolerant AuthContext Sync** pattern.
+- **Announcements**: Dynamic banner system with **High-Fidelity Detail Routes** (`/announcements/:id`) and mobile-optimized card designs.
 
 ### 🛡️ Hardened Security & Stability
 - **Multi-Tier Rate Limiting**: Specialized shields for Global API (100req/15m), Authentication (10req/15m), and AI Services (20req/15m).
@@ -49,7 +49,7 @@ Built with a focus on modern aesthetics (Glassmorphism), speed, and offline capa
 | **Social Gear** | Firebase Cloud Messaging (FCM), Cross-Device State Sync |
 | **Storage** | Google Drive API(Files), Cloudinary (Media/Profiles) |
 | **Security** | AI interaction logging, JWT, BcryptJS, Express Rate Limit |
-| **DevOps** | Vite-Plugin-PWA, Dotenv, CORS |
+| **DevOps** | Vite-Plugin-PWA, Dotenv, CORS, **HMR-Optimized Context Architecture** |
 
 ---
 

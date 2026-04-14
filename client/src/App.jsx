@@ -22,6 +22,7 @@ const Browse            = lazy(() => import('./pages/public/Browse'));
 const ContentDetailPage = lazy(() => import('./pages/public/ContentDetailPage'));
 const Contact           = lazy(() => import('./pages/public/Contact'));
 const AnnouncementsPage = lazy(() => import('./pages/public/AnnouncementsPage'));
+const AnnouncementDetailPage = lazy(() => import('./pages/public/AnnouncementDetailPage'));
 const UploaderProfile   = lazy(() => import('./pages/public/UploaderProfile'));
 const Dashboard         = lazy(() => import('./pages/public/Dashboard'));
 const SavedContent      = lazy(() => import('./pages/public/SavedContent'));
@@ -102,8 +103,9 @@ export default function App() {
             <Route path="/browse"          element={<Browse />} />
             <Route path="/content/:id"     element={<ContentDetailPage />} />
             <Route path="/contact"         element={<Contact />} />
-            <Route path="/announcements"   element={<AnnouncementsPage />} />
-            <Route path="/uploader/:id"    element={<UploaderProfile />} />
+            <Route path="/announcements"     element={<AnnouncementsPage />} />
+            <Route path="/announcements/:id" element={<AnnouncementDetailPage />} />
+            <Route path="/uploader/:id"      element={<UploaderProfile />} />
             <Route path="/privacy"         element={<PrivacyPolicy />} />
             <Route path="/terms"           element={<TermsOfService />} />
             <Route path="/about"           element={<About />} />

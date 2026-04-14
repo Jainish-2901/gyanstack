@@ -9,7 +9,7 @@ const getAccessToken = () => {
     return new Promise((resolve, reject) => {
         const key = {
             client_email: process.env.FIREBASE_CLIENT_EMAIL,
-            private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n') // Handle newline escaping
+            private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')
         };
 
         if (!key.client_email || !key.private_key) {
@@ -31,7 +31,6 @@ const getAccessToken = () => {
     });
 };
 
-// Push Notification bhejta hai (Modern HTTP v1)
 const sendPushNotification = async (title, body, announcementId = null) => {
     try {
         
@@ -39,10 +38,9 @@ const sendPushNotification = async (title, body, announcementId = null) => {
         
         const usersWithTokens = await User.find({ 
             fcmToken: { $exists: true, $ne: "" },
-            isDeleted: false // Only send to active users
+            isDeleted: false 
         }).select('fcmToken').lean();
 
-        // Extract tokens and remove duplicates
         const tokens = [...new Set(usersWithTokens.map(u => u.fcmToken))].filter(t => t);
 
 
@@ -139,7 +137,6 @@ exports.requestAnnouncement = async (req, res) => {
     }
 };
 
-// --- YEH NAYA FLEXIBLE FUNCTION HAI (Frontend Public, Header Bell, and Homepage ke liye) ---
 exports.getAnnouncements = async (req, res) => {
     try {
         const { limit, status = 'approved', days } = req.query; 
@@ -168,11 +165,9 @@ exports.getAnnouncements = async (req, res) => {
         res.status(500).json({ message: 'Server error (getAnnouncements): ' + err.message });
     }
 };
-// -----------------------------------------------------------------------------------
 
 exports.getAllAnnouncements = async (req, res) => {
     try {
-        // SuperAdmin sabhi status (pending/approved/rejected) dekhta hai
         const announcements = await Announcement.find()
             .populate('requestedBy', 'username')
             .sort({ createdAt: -1 });
@@ -194,10 +189,9 @@ exports.getMyAnnouncements = async (req, res) => {
     }
 };
 
-// 5. Announcement ka Status Badlna (SuperAdmin Only) - PUSH NOTIFICATION LOGIC ADDED
 exports.updateAnnouncementStatus = async (req, res) => {
     try {
-        const { status } = req.body; // 'approved' ya 'rejected'
+        const { status } = req.body; 
         
         const updatedAnnouncement = await Announcement.findByIdAndUpdate(
             req.params.id,
@@ -230,7 +224,6 @@ exports.deleteAnnouncement = async (req, res) => {
             return res.status(404).json({ message: 'Announcement not found' });
         }
 
-        // Security Check: SuperAdmin hamesha delete kar sakta hai, Admin sirf apni request delete kar sakta hai
         if (req.user.role === 'superadmin' || (req.user.role === 'admin' && announcement.requestedBy.equals(req.user.id))) {
             await Announcement.findByIdAndDelete(req.params.id);
             return res.json({ message: 'Announcement deleted successfully' });
@@ -284,7 +277,6 @@ exports.subscribeUser = async (req, res) => {
   }
 
   try {
-    // Agar user ka token pehle se exist karta hai to update karein, warna naya banayein
     await Subscription.findOneAndUpdate(
       { userId: req.user.id },
       { fcmToken },
@@ -315,11 +307,17 @@ exports.markAllRead = async (req, res) => {
             return res.status(400).json({ message: 'latestId is required' });
         }
 
-        await User.findByIdAndUpdate(req.user.id, { 
-            lastSeenAnnId: latestId 
-        });
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user.id, 
+            { lastSeenAnnId: latestId },
+            { new: true } 
+        ).select('-password'); 
 
-        res.status(200).json({ success: true, message: 'All marked as read' });
+        res.status(200).json({ 
+            success: true, 
+            message: 'All marked as read',
+            user: updatedUser 
+        });
     } catch (err) {
         console.error("Mark All Read Error:", err.message);
         res.status(500).json({ message: 'Server error while marking read' });

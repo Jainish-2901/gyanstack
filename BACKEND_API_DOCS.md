@@ -95,6 +95,15 @@ Returns a recursive structure where each category includes:
 - `itemCount`: The total number of materials directly linked to this category.
 - `children`: Array of sub-categories (recursive).
 
+### 📢 Announcements (`/api/announcements`)
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| GET | `/` | Get approved announcements (supports `limit`, `days`). | Public |
+| PUT | `/mark-all-read` | Sync read status. **Returns updated user profile.** | Auth |
+| POST | `/:id/track-open` | Increment announcement view/open count. | Public |
+| POST | `/` | Submit a new announcement request. | Admin |
+| DELETE| `/:id` | Remove an announcement. | SuperAdmin |
+
 ---
 
 ## 🛡️ Security Best Practices

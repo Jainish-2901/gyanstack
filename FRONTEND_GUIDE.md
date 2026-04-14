@@ -12,6 +12,7 @@ The client frontend is optimized for seamless content discovery and a "premium" 
 - **Dynamic Sorting**: Browse results can be sorted by "Recently Added", "Most Visited", "Likes", etc., for highly personalized discovery.
 - **Resource Intelligence**: The detail view provides enriched metadata, showing real-time file sizes from Google Drive and visual profiles (color palettes) from Cloudinary.
 - **Personalized Library**: Integrated "Like" and "Save" systems allowing users to build their own curated study list.
+- **Announcement Detail View**: Dedicated high-fidelity routes (`/announcements/:id`) for full-screen update reading with independent state tracking.
 
 ### Technical Benefits:
 - **TanStack Query Caching**: Ultra-fast navigation with smart data refetching.
@@ -59,6 +60,12 @@ GyanStack utilizes **Framer Motion** for a "living" interface:
 - **AnimatePresence Routing**: Uses unique `location` keys to ensure pages mount/unmount cleanly without blank artifacting.
 - **Spring Physics**: All buttons and cards utilize spring-based transitions for a natural, high-performance tactile feel.
 - **Scroll Reveals**: Legal sections and cards fade in dynamically as the user scrolls, creating a premium storytelling effect.
+
+## ⚡ HMR Compatible Architecture
+To maximize development velocity, GyanStack utilizes a **Vite-Optimized Context Pattern**:
+- **Context/Hook Separation**: Context objects and Provider logic are decoupled from the consuming hooks if necessary to prevent HMR invalidation.
+- **Strict Export Rules**: Files either export purely React components or purely hooks/logic to ensure **Fast Refresh** reliability.
+- **Fault-Tolerant State Sync**: The `AuthContext` supports explicit `user` updates from children components (e.g., NotificationBell), ensuring real-time UI synchronization without full page reloads.
 
 ---
 *Last Updated: April 14, 2026 (Compliance & UX Overhaul Update)*

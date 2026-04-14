@@ -92,6 +92,7 @@ export default function TermsOfService() {
                   <li>Maintain the confidentiality of your credentials.</li>
                   <li>Provide accurate academic/profile information.</li>
                   <li>Be responsible for all interactions performed under your account.</li>
+                  <li>Agree to receive essential <strong>System Communications</strong> regarding platform updates and academic alerts.</li>
                 </ul>
               </Section>
 

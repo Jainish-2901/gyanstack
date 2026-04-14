@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { messaging, firebaseConfig } from '../services/firebase';
 import { getToken, onMessage } from 'firebase/messaging';
+import { useAuth } from '../context/AuthContext';
 
 const pingSound = new Audio('/notification-ping.mp3');
 
-const NotificationBell = ({ user }) => {
+const NotificationBell = () => {
+  const { user, setUser } = useAuth();
   const [announcements, setAnnouncements] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -100,9 +102,13 @@ const NotificationBell = ({ user }) => {
 
     if (!isOpen && announcements.length > 0) {
       const latestId = announcements[0]._id;
-      
-      api.put('/announcements/mark-all-read', { latestId }).catch(err => {
-          console.error("Failed to sync read status:", err);
+
+      api.put('/announcements/mark-all-read', { latestId }).then(({ data }) => {
+        if (data.success && data.user) {
+          setUser(data.user);
+        }
+      }).catch(err => {
+        console.error("Failed to sync read status:", err);
       });
 
       setAnnouncements(prev => prev.map(ann => ({ ...ann, isRead: true })));
@@ -128,18 +134,18 @@ const NotificationBell = ({ user }) => {
         <>
           <div className="notification-overlay d-md-none" onClick={() => setIsOpen(false)}></div>
           <ul className="dropdown-menu dropdown-menu-end shadow-lg show position-absolute glass-panel border-0 p-0 overflow-hidden"
-              style={{
-                minWidth: '320px',
-                maxHeight: '480px',
-                right: 0,
-                top: '130%',
-                zIndex: 2100,
-                borderRadius: '1.25rem',
-                backgroundColor: 'var(--glass-bg)',
-                backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
-                border: '1px solid var(--glass-border)'
-              }}>
+            style={{
+              minWidth: '320px',
+              maxHeight: '480px',
+              right: 0,
+              top: '130%',
+              zIndex: 2100,
+              borderRadius: '1.25rem',
+              backgroundColor: 'var(--glass-bg)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              border: '1px solid var(--glass-border)'
+            }}>
 
             <li className='dropdown-header border-bottom d-flex justify-content-between align-items-center py-3 px-4'>
               <span className="text-dark fw-bold h6 mb-0">Notifications</span>
