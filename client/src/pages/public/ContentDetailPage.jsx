@@ -445,7 +445,7 @@ export default function ContentDetailPage() {
                       disabled={toggleLike.isPending}
                     >
                       <i className={`bi ${item.likedBy?.includes(user?.id) ? 'bi-heart-fill' : 'bi-heart'} fs-5 me-2`}></i>
-                      {item.likedBy?.includes(user?.id) ? 'Liked' : 'Like'}
+                      {item.likedBy?.includes(user?.id) ? 'Liked This' : 'Like This'}
                     </button>
                   </div>
 
@@ -464,8 +464,12 @@ export default function ContentDetailPage() {
                     <ShareButton 
                       title={item.title} 
                       url={window.location.href} 
-                      className="btn btn-outline-primary w-100 py-3 d-flex align-items-center justify-content-center h-100"
-                    />
+                      isCircle={false}
+                      className={`btn w-100 py-3 d-flex align-items-center justify-content-center h-100 btn-outline-primary`}
+                    >
+                      <i className="bi bi-share-fill fs-5 me-2"></i>
+                      Share Content
+                    </ShareButton>
                   </div>
 
                   {hasDownload && (

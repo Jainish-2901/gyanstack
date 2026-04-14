@@ -4,7 +4,9 @@ export default function ShareButton({
   title, 
   url, 
   className = "btn btn-outline-primary",
-  style = {}
+  style = {},
+  isCircle = true,
+  children
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -62,8 +64,7 @@ export default function ShareButton({
     }
   };
 
-  // Perfect circle styling essentials
-  const circleStyle = {
+  const finalStyle = isCircle ? {
     width: '38px',
     height: '38px',
     borderRadius: '50%',
@@ -73,6 +74,9 @@ export default function ShareButton({
     justifyContent: 'center',
     position: 'relative',
     ...style
+  } : {
+    position: 'relative',
+    ...style
   };
 
   return (
@@ -80,14 +84,16 @@ export default function ShareButton({
       className={className}
       onClick={handleShare}
       title="Share"
-      style={circleStyle}
+      style={finalStyle}
     >
-      <i className={`bi ${copied ? 'bi-check2' : 'bi-share-fill'}`} style={{ fontSize: '1rem' }}></i>
+      {children ? children : (
+        <i className={`bi ${copied ? 'bi-check2' : 'bi-share-fill'}`} style={{ fontSize: '1rem' }}></i>
+      )}
       {copied && (
         <span 
           className="badge bg-dark bg-opacity-75 text-white position-absolute" 
           style={{ 
-            top: '-35px', 
+            top: isCircle ? '-35px' : '-40px', 
             left: '50%', 
             transform: 'translateX(-50%)',
             fontSize: '10px'

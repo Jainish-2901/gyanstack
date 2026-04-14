@@ -220,16 +220,21 @@ export default function ContentCard({ item }) {
             <ShareButton 
               title={item.title} 
               url={`/content/${item._id}`} 
-              className="btn btn-light rounded-circle shadow-sm text-primary d-flex align-items-center justify-content-center"
-              style={{width: '38px', height: '38px', padding: 0}}
-            />
+              isCircle={false}
+              className="btn btn-light rounded-pill shadow-sm text-primary d-flex align-items-center px-2 py-1"
+              style={{ fontSize: '0.75rem' }}
+            >
+              <i className={`bi bi-share-fill me-1`}></i>
+              Share Content
+            </ShareButton>
             <button 
-              className={`btn btn-light rounded-circle shadow-sm d-flex align-items-center justify-content-center ${isLiked ? 'text-danger' : 'text-muted'}`} 
-              style={{width: '38px', height: '38px', padding: 0}}
+              className={`btn btn-light rounded-pill shadow-sm d-flex align-items-center px-2 py-1 ${isLiked ? 'text-danger' : 'text-muted'}`} 
+              style={{ fontSize: '0.75rem' }}
               onClick={handleLike}
               disabled={loading}
             >
-              <i className={`bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'} fs-6`}></i>
+              <i className={`bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'} me-1`}></i>
+              {isLiked ? 'Liked This' : 'Like This'}
             </button>
           </div>
         </div>
