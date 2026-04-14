@@ -2,19 +2,15 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      strategies: 'injectManifest', // Using custom consolidated SW
+      strategies: 'injectManifest',
       srcDir: 'src',
-      filename: 'sw.js', // Output will be public/sw.js 
+      filename: 'sw.js',
       registerType: 'autoUpdate',
       devOptions: {
-        // PERF: Disabled in dev — Workbox intercepts HMR/JSX requests in dev mode
-        // causing 'Precaching did not find a match' spam and 453ms message handler violations.
-        // Service worker is only meaningful on the production build.
         enabled: false,
       },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg', 'logo.png'],
@@ -48,6 +44,10 @@ export default defineConfig({
     })
   ],
   server: {
-    port: 5173
+    port: 5173,
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+      'Cross-Origin-Embedder-Policy': 'unsafe-none',
+    }
   }
 })

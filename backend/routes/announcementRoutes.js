@@ -18,7 +18,7 @@ router.post('/subscribe', authMiddleware, require('../controllers/announcementCo
 router.get('/', getAnnouncements); 
 
 // Track Notification Open (Public)
-router.put('/:id/track-open', require('../controllers/announcementController').trackAnnouncementOpen);
+router.post('/:id/track-open', require('../controllers/announcementController').trackAnnouncementOpen);
 
 // Mark All as Read (Synced)
 router.put('/mark-all-read', authMiddleware, require('../controllers/announcementController').markAllRead);

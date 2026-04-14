@@ -2,14 +2,13 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
       devOptions: {
-        enabled: false, // Disabled in dev for cleaner console
+        enabled: false,
         navigateFallbackAllowlist: [/^index.html$/]
       },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg', 'logo.png'],
@@ -41,22 +40,19 @@ export default defineConfig({
         ]
       },
       workbox: {
-        // Essential for "Online First" behavior
         runtimeCaching: [
           {
-            // API calls should always try the network first (Online Access)
             urlPattern: /^https?:\/\/.*\/api\/.*/i,
-            handler: 'NetworkOnly', // Changed to NetworkOnly to strictly require internet for Admin
+            handler: 'NetworkOnly',
           },
           {
-            // Static assets (images, etc) can be cache first for performance
             urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/,
             handler: 'CacheFirst',
             options: {
               cacheName: 'image-cache',
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
+                maxAgeSeconds: 60 * 60 * 24 * 30
               }
             }
           }

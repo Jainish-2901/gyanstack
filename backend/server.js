@@ -1,17 +1,16 @@
-// server.js (Hamara main backend server)
 
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const rateLimit = require('express-rate-limit'); // NAYA IMPORT
-const announcementRoutes = require('./routes/announcementRoutes'); // <-- NAYA IMPORT
+const rateLimit = require('express-rate-limit');
+const announcementRoutes = require('./routes/announcementRoutes');
 
 dotenv.config();
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: process.env.NODE_ENV === 'production' ? 100 : 1000, // Increased for development
+  max: process.env.NODE_ENV === 'production' ? 100 : 1000,
   message: { message: "Too many requests from this IP, please try again after 15 minutes." },
   standardHeaders: true,
   legacyHeaders: false,
@@ -19,18 +18,16 @@ const apiLimiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: process.env.NODE_ENV === 'production' ? 50 : 1000, // Increased for development
+  max: process.env.NODE_ENV === 'production' ? 50 : 1000,
   message: { message: "Too many login/signup attempts. Please wait 15 minutes." },
 });
 
-// 3. AI Assistant Limiter (Cost & Abuse Control: 20 requests/15min)
 const aiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
   message: { message: "AI daily limit reached for this session. Please try again later." },
 });
 
-// --- REGISTER ALL MODELS FIRST (To avoid MissingSchemaError) ---
 require('./models/userModel');
 require('./models/contentModel');
 require('./models/categoryModel');
@@ -75,7 +72,6 @@ if (process.env.NODE_ENV !== 'production') {
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Database Connection Utility
 let cachedConnection = null;
 let connectionPromise = null;
 
@@ -95,11 +91,10 @@ const connectDB = async () => {
         connectTimeoutMS: 20000,
         socketTimeoutMS: 45000,
         family: 4,
-        bufferCommands: true, // Re-enable buffering for startup stability
+        bufferCommands: true,
       });
 
 
-      // Watchdog for connection health
       if (mongoose.connection.listenerCount('error') === 0) {
         mongoose.connection.on('error', (err) => {
           console.error('MongoDB Runtime Error:', err);
@@ -117,7 +112,7 @@ const connectDB = async () => {
       return conn;
     } catch (err) {
       console.error('MongoDB Connection Error:', err.message);
-      connectionPromise = null; // Reset on failure so we can try again
+      connectionPromise = null;
       throw err;
     }
   })();
@@ -125,7 +120,6 @@ const connectDB = async () => {
   return await connectionPromise;
 };
 
-// Middleware to ensure DB connection is ready before handling requests
 app.use(async (req, res, next) => {
   try {
     await connectDB();
@@ -139,14 +133,13 @@ app.use(async (req, res, next) => {
   }
 });
 
-// Test Route
 app.get('/', (req, res) => {
   res.send('GyanStack Backend API is running... Status: OK');
 });
 
-app.use('/api', apiLimiter); // Global Shield
-app.use('/api/auth', authLimiter, require('./routes/authRoutes')); // Brute-force Shield
-app.use('/api/ai', aiLimiter, require('./routes/aiRoutes')); // AI Cost Shield
+app.use('/api', apiLimiter);
+app.use('/api/auth', authLimiter, require('./routes/authRoutes'));
+app.use('/api/ai', aiLimiter, require('./routes/aiRoutes'));
 
 app.use('/api/content', require('./routes/contentRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
@@ -165,12 +158,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Server ko start karein (Sirf local development ke liye zaroori hai)
 if (process.env.NODE_ENV !== 'production') {
   const server = app.listen(PORT, () => {
   });
-
-  // High timeout for large file uploads (10 minutes)
   server.timeout = 600000;
 }
 

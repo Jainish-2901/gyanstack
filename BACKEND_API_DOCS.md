@@ -51,6 +51,13 @@ For content detail requests, the backend utilizes a **Content Aggregator** that 
 ### 5. Controller Logic & Response
 - **Error Handling**: Global standardized error responses with stack traces in development.
 
+### 6. 🔄 Cross-Device State Synchronization
+To maintain a consistent experience across user devices, the backend implements a **Sync Bridge**:
+- **Field**: `lastSeenAnnId` (stored in the User model).
+- **Trigger**: Opening the notification bell on any device calls `PUT /mark-all-read`.
+- **Action**: The backend stores the ID of the latest announcement seen by the user.
+- **Propagation**: On next login or profile refresh, the frontend receives this ID, instantly zeroing out the notification badge even on a brand-new device.
+
 ---
 
 ## 🚀 API Endpoint Reference
@@ -99,8 +106,8 @@ Returns a recursive structure where each category includes:
 | Method | Endpoint | Description | Access |
 | :--- | :--- | :--- | :--- |
 | GET | `/` | Get approved announcements (supports `limit`, `days`). | Public |
-| PUT | `/mark-all-read` | Sync read status. **Returns updated user profile.** | Auth |
-| POST | `/:id/track-open` | Increment announcement view/open count. | Public |
+| PUT | `/mark-all-read` | Sync `lastSeenAnnId` (Requires `latestId`). Returns fresh profile. | Auth |
+| POST | `/:id/track-open` | Increment interaction `openCount`. | Public |
 | POST | `/` | Submit a new announcement request. | Admin |
 | DELETE| `/:id` | Remove an announcement. | SuperAdmin |
 
@@ -113,4 +120,4 @@ Returns a recursive structure where each category includes:
 4. **Data Sanitization**: Mongoose schemas and logic to prevent injection.
 
 ---
-*Last Updated: April 14, 2026 (Compliance & AI Sync Update)*
+*Last Updated: April 14, 2026 (State Sync & Analytics Architecture Milestone)*

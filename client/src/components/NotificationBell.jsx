@@ -200,6 +200,28 @@ const NotificationBell = () => {
         .extra-small { font-size: 0.65rem; }
         .icon-circle { width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
         .notification-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 2000; }
+
+        @media (max-width: 768px) {
+          .notification-dropdown .dropdown-menu {
+            position: fixed !important;
+            top: 85px !important;
+            margin-top: env(safe-area-inset-top) !important;
+            left: 12px !important;
+            right: 12px !important;
+            width: auto !important;
+            min-width: 0 !important;
+            transform: none !important;
+            z-index: 2100 !important;
+            max-height: 80vh !important;
+            border-radius: 1.5rem !important;
+          }
+          .notification-scroll-area { 
+            max-height: 50vh !important; 
+          }
+          .dropdown-header {
+            padding-top: 1.25rem !important;
+          }
+        }
       `}</style>
     </div>
   );
