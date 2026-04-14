@@ -11,7 +11,7 @@ export default function ShareButton({
   // Helper to fetch logo and give it a descriptive name
   const fetchLogoAsFile = async (descriptiveName) => {
     try {
-      const response = await fetch('/logo_v2.png');
+      const response = await fetch('/maskable-icon-v2.png');
       const blob = await response.blob();
       // Sanitize name for filename
       const safeName = descriptiveName ? descriptiveName.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'gyanstack';
@@ -36,7 +36,8 @@ export default function ShareButton({
     };
 
     if (navigator.share) {
-      try {if (isMobile) {
+      try {
+        if (isMobile) {
           const logoFile = await fetchLogoAsFile(title);
           if (logoFile && navigator.canShare && navigator.canShare({ files: [logoFile] })) {
             shareData.files = [logoFile];
