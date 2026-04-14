@@ -15,7 +15,7 @@ export default defineConfig({
       },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg', 'logo.png'],
       manifest: {
-        name: 'GyanStack | BCA MCA Resource Hub',
+        name: 'GyanStack | Resource Hub',
         short_name: 'GyanStack',
         description: 'The Ultimate College Resource Hub for BCA/MCA Students',
         theme_color: '#10b981',
