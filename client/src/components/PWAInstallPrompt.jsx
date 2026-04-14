@@ -1,24 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 const PWAInstallPrompt = () => {
-    // Use ref instead of state for deferredPrompt:
-    // State would re-trigger the useEffect (which registers listeners),
-    // causing re-registration loops and stale closures.
     const deferredPromptRef = useRef(null);
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
-        // Only register listeners once (empty dep array)
         const handler = (e) => {
-            e.preventDefault(); // REQUIRED: prevents browser's default mini-infobar
+            e.preventDefault();
             deferredPromptRef.current = e;
             setIsVisible(true);
         };
         window.addEventListener('beforeinstallprompt', handler);
 
-        // Listen for external trigger (e.g. from Home page install button)
         const triggerHandler = () => {
-            // Read from ref — always gets latest value (no stale closure)
             if (deferredPromptRef.current) {
                 handleInstallClick();
             } else {
@@ -27,7 +21,6 @@ const PWAInstallPrompt = () => {
         };
         window.addEventListener('trigger-pwa-install', triggerHandler);
 
-        // Hide if already installed
         if (window.matchMedia('(display-mode: standalone)').matches) {
             setIsVisible(false);
         }
@@ -36,7 +29,7 @@ const PWAInstallPrompt = () => {
             window.removeEventListener('beforeinstallprompt', handler);
             window.removeEventListener('trigger-pwa-install', triggerHandler);
         };
-    }, []); // IMPORTANT: empty array — register once only
+    }, []);
 
     const handleInstallClick = async () => {
         if (!deferredPromptRef.current) {
@@ -44,12 +37,9 @@ const PWAInstallPrompt = () => {
             return;
         }
 
-        // Show native prompt — this is the critical call the browser was waiting for
         deferredPromptRef.current.prompt();
         const { outcome } = await deferredPromptRef.current.userChoice;
-        console.log('PWA install outcome:', outcome);
 
-        // Clear after use — prompt() can only be called once
         deferredPromptRef.current = null;
         setIsVisible(false);
     };

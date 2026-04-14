@@ -1,7 +1,6 @@
 const nodemailer = require('nodemailer');
 
 const sendEmail = async (options) => {
-  // 1. Transporter banayein (Gmail use karke)
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -10,7 +9,6 @@ const sendEmail = async (options) => {
     },
   });
 
-  // 2. Email options define karein
   const mailOptions = {
     from: `GyanStack <${process.env.GMAIL_USER}>`,
     to: options.email,
@@ -18,7 +16,6 @@ const sendEmail = async (options) => {
     text: options.message,
   };
 
-  // 3. Email bhej dein
   await transporter.sendMail(mailOptions);
 };
 

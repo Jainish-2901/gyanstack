@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import api from '../services/api';
 
 export default function EditAnnouncementModal({ item, onClose, onUpdate }) {
-  // Form state ko 'item' se initialize karein
   const [title, setTitle] = useState(item.title);
   const [content, setContent] = useState(item.content);
   const [loading, setLoading] = useState(false);
@@ -14,13 +13,12 @@ export default function EditAnnouncementModal({ item, onClose, onUpdate }) {
     setError('');
     
     try {
-      // Backend API ko update request bhej
       const { data: updatedItem } = await api.put(`/announcements/${item._id}`, {
         title,
         content,
       });
-      onUpdate(updatedItem); // Parent component ki list ko update karein
-      onClose(); // Modal band karein
+      onUpdate(updatedItem); 
+      onClose(); 
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update announcement.');
     }
@@ -28,7 +26,6 @@ export default function EditAnnouncementModal({ item, onClose, onUpdate }) {
   };
 
   return (
-    // Bootstrap Modal HTML
     <>
       <div className="modal-backdrop fade show"></div>
       <div className="modal fade show d-block" tabIndex="-1">

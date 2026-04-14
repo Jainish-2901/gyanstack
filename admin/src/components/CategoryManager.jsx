@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { useAdminCategories, useAllCategoriesFlat, useCategoryMutation } from '../hooks/useAdminCategories';
 
-// --- Updated EditCategoryForm ---
 const EditCategoryForm = ({ category, allCategories, onSave, onCancel }) => {
   const [name, setName] = useState(category.name);
   const [parentId, setParentId] = useState(category.parentId);
@@ -13,7 +12,7 @@ const EditCategoryForm = ({ category, allCategories, onSave, onCancel }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-3 border-bottom bg-light">
+    <form onSubmit={handleSubmit} className="p-3 border-bottom bg-primary bg-opacity-5">
       <div className="mb-2">
         <label className="form-label small fw-bold">Update Name</label>
         <input 
@@ -49,7 +48,6 @@ const EditCategoryForm = ({ category, allCategories, onSave, onCancel }) => {
   );
 };
 
-// --- CategoryItem Component ---
 const CategoryItem = ({ category, index, allCategories, onSelect, selectedId, onDelete, onUpdate, isSelectOnly, reorderAction }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -90,7 +88,8 @@ const CategoryItem = ({ category, index, allCategories, onSelect, selectedId, on
           className="list-group-item p-0 border-0"
           style={{
             ...provided.draggableProps.style,
-            backgroundColor: snapshot.isDragging ? '#e9ecef' : 'transparent',
+            backgroundColor: snapshot.isDragging ? 'var(--brand-100)' : 'transparent',
+            color: 'var(--text-primary)'
           }}
         >
           {isEditing ? (
@@ -102,16 +101,16 @@ const CategoryItem = ({ category, index, allCategories, onSelect, selectedId, on
             />
           ) : (
             <div 
-              className={`d-flex justify-content-between align-items-center p-2 ps-3 ${isSelected ? 'bg-primary text-white' : ''}`}
-              style={{ cursor: 'pointer' }}
+              className={`d-flex justify-content-between align-items-center p-2 ps-3 ${isSelected ? 'bg-primary text-white shadow-sm' : ''}`}
+              style={{ cursor: 'pointer', borderRadius: '0.75rem', marginBottom: '4px', color: isSelected ? 'white' : 'var(--text-primary)' }}
               onClick={() => onSelect(category)}
             >
               <span className="flex-grow-1 text-break pe-2">
                 {!isSelectOnly && (
-                  <i className="bi bi-grip-vertical me-2 d-none d-md-inline-block" {...provided.dragHandleProps}></i>
+                  <i className="bi bi-grip-vertical me-2 d-none d-md-inline-block text-muted" {...provided.dragHandleProps}></i>
                 )}
                 <i 
-                  className={`bi ${isOpen ? 'bi-chevron-down' : 'bi-chevron-right'} me-2`}
+                  className={`bi ${isOpen ? 'bi-chevron-down' : 'bi-chevron-right'} me-2 ${isSelected ? 'text-white' : 'text-primary'}`}
                   onClick={(e) => { e.stopPropagation(); handleToggle(); }}
                 ></i>
                 {category.name}
@@ -169,7 +168,6 @@ const CategoryItem = ({ category, index, allCategories, onSelect, selectedId, on
   );
 };
 
-// --- Updated CategoryManager Component ---
 export default function CategoryManager({ onSelectCategory, isSelectOnly = false }) {
   const [newCatName, setNewCatName] = useState('');
   const [selectedCategory, setSelectedCategory] = useState({ _id: 'root', name: 'Root' });
@@ -215,13 +213,13 @@ export default function CategoryManager({ onSelectCategory, isSelectOnly = false
   };
 
   return (
-    <div className="card border-0 shadow-sm">
+    <div className="glass-card shadow-sm border-0">
       <div className="card-body">
         {!isSelectOnly && (
           <>
-            <h5 className="card-title fw-bold">Manage Categories</h5>
+            <h5 className="card-title fw-bold" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>Manage Categories</h5>
             <form onSubmit={handleCreateCategory} className="mb-3">
-              <label className="form-label small">Creating in: <span className="fw-bold">{selectedCategory.name}</span></label>
+              <label className="form-label small text-muted">Creating in: <span className="fw-bold text-primary">{selectedCategory.name}</span></label>
               <div className="input-group">
                 <input type="text" className="form-control" placeholder="New Category Name..." value={newCatName} onChange={(e) => setNewCatName(e.target.value)} />
                 <button className="btn btn-primary px-3" type="submit" disabled={createCategory.isPending}>
@@ -235,11 +233,11 @@ export default function CategoryManager({ onSelectCategory, isSelectOnly = false
         <DragDropContext onDragEnd={onRootDragEnd}>
           <div className="list-group category-tree" style={{ maxHeight: '450px', overflowY: 'auto', overflowX: 'auto', width: '100%' }}>
             <div 
-              className={`d-flex align-items-center p-2 ps-3 fw-bold rounded-3 mb-2 transition-all ${selectedCategory._id === 'root' ? 'bg-primary text-white' : 'text-secondary hover-bg-light'}`}
-              style={{ cursor: 'pointer' }}
+              className={`d-flex align-items-center p-2 ps-3 fw-bold rounded-3 mb-2 transition-all ${selectedCategory._id === 'root' ? 'bg-primary text-white shadow-sm' : 'hover-bg-light'}`}
+              style={{ cursor: 'pointer', color: selectedCategory._id === 'root' ? 'white' : 'var(--text-primary)' }}
               onClick={() => handleSelect({ _id: 'root', name: 'Root' })}
             >
-              <i className="bi bi-diagram-3-fill me-2"></i> Root
+              <i className={`bi bi-diagram-3-fill me-2 ${selectedCategory._id === 'root' ? 'text-white' : 'text-primary'}`}></i> Root
             </div>
             
             {loadingRoots ? ( <p className="p-3 text-center">Loading tree...</p> ) : (

@@ -3,7 +3,6 @@ import api from '../../services/api';
 import LoadingScreen from '../../components/LoadingScreen';
 import EditAnnouncementModal from '../../components/EditAnnouncementModal';
 
-// --- MOBILE CARD: Designer Style with Glassmorphic details ---
 const AnnouncementCardMobile = ({ ann, handleAnnouncementStatus, handleEditClick, handleAnnouncementDelete }) => {
   const statusColor = ann.status === 'approved' ? 'success' : ann.status === 'rejected' ? 'danger' : 'warning text-dark';
   const ctr = ann.sentCount > 0 ? ((ann.openCount / ann.sentCount) * 100).toFixed(1) : 0;
@@ -20,26 +19,26 @@ const AnnouncementCardMobile = ({ ann, handleAnnouncementStatus, handleEditClick
           </span>
         </div>
 
-        <h6 className="fw-bold text-dark mb-1">{ann.title}</h6>
+        <h6 className="fw-bold mb-1" style={{ color: 'var(--text-primary)' }}>{ann.title}</h6>
         <p className="text-muted small mb-3 text-truncate-2">{ann.content}</p>
 
         <div className="row g-2 mb-3">
           <div className="col-4">
-            <div className="bg-light rounded-3 p-2 text-center border">
+            <div className="bg-primary bg-opacity-5 rounded-3 p-2 text-center border border-primary border-opacity-10">
               <small className="d-block text-muted x-small">SENT</small>
               <span className="fw-bold text-primary small">{ann.sentCount || 0}</span>
             </div>
           </div>
           <div className="col-4">
-            <div className="bg-light rounded-3 p-2 text-center border">
+            <div className="bg-success bg-opacity-5 rounded-3 p-2 text-center border border-success border-opacity-10">
               <small className="d-block text-muted x-small">OPEN</small>
               <span className="fw-bold text-success small">{ann.openCount || 0}</span>
             </div>
           </div>
           <div className="col-4">
-            <div className="bg-light rounded-3 p-2 text-center border">
+            <div className="bg-dark bg-opacity-5 rounded-3 p-2 text-center border border-secondary border-opacity-10">
               <small className="d-block text-muted x-small">CTR</small>
-              <span className="fw-bold text-dark small">{ctr}%</span>
+              <span className="fw-bold small" style={{ color: 'var(--text-primary)' }}>{ctr}%</span>
             </div>
           </div>
         </div>
@@ -69,7 +68,7 @@ const AnnouncementCardMobile = ({ ann, handleAnnouncementStatus, handleEditClick
 
 export default function ManageAnnouncements() {
   const [announcements, setAnnouncements] = useState([]);
-  const [filter, setFilter] = useState('all'); // NEW: Filter logic
+  const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -159,10 +158,12 @@ export default function ManageAnnouncements() {
       {/* HEADER SECTION */}
       <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 px-3 gap-3">
         <div>
-          <h4 className="fw-bold text-dark mb-0">Broadcast Management</h4>
+          <h4 className="fw-bold mb-0" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>
+             <i className="bi bi-broadcast text-primary me-2"></i>Broadcast Management
+          </h4>
           <p className="text-muted extra-small mb-0">Control communication & track student engagement</p>
         </div>
-        <button className="btn btn-sm btn-white border rounded-pill px-4 shadow-sm fw-bold text-primary" onClick={() => fetchAnnouncements(false)}>
+        <button className="btn btn-sm btn-outline-primary border rounded-pill px-4 shadow-sm fw-bold" onClick={() => fetchAnnouncements(false)}>
           <i className="bi bi-arrow-repeat me-2"></i> Sync Stats
         </button>
       </div>
@@ -170,7 +171,6 @@ export default function ManageAnnouncements() {
       {error && <div className="alert alert-danger mx-3 border-0 shadow-sm rounded-3 mb-4">{error}</div>}
       {success && <div className="alert alert-success mx-3 border-0 shadow-sm rounded-3 mb-4">{success}</div>}
 
-      {/* --- PULSE ANALYTICS CARDS --- */}
       {pulse && (
         <div className="row g-3 mb-5 px-3">
           <div className="col-md-4">
@@ -185,7 +185,7 @@ export default function ManageAnnouncements() {
             </div>
           </div>
           <div className="col-md-4">
-            <div className="card border-0 rounded-4 shadow-sm p-3 h-100 bg-white border">
+            <div className="glass-card shadow-sm p-3 h-100 border overflow-hidden">
               <p className="small text-muted mb-1">Platform Engagement</p>
               <h2 className="fw-bold text-primary mb-0">{pulse.platform.opened} <span className="fs-6 fw-normal text-muted">Clicks</span></h2>
               <div className="mt-3 text-muted extra-small">Internal user interactions via Notification Bell</div>
@@ -203,15 +203,14 @@ export default function ManageAnnouncements() {
         </div>
       )}
 
-      {/* --- QUICK BROADCAST COMMAND --- */}
       <div className="mx-3 mb-5">
-        <div className="card border-0 rounded-4 shadow-sm overflow-hidden" style={{ background: '#f8f9ff' }}>
+        <div className="glass-card shadow-sm overflow-hidden border-0" style={{ background: 'var(--surface-elevated)', opacity: 0.9 }}>
           <div className="card-body p-4">
             <div className="d-flex align-items-center gap-3 mb-4">
               <div className="bg-primary bg-opacity-10 p-2 rounded-3">
                 <i className="bi bi-megaphone-fill text-primary fs-4"></i>
               </div>
-              <h5 className="fw-bold mb-0 text-dark">Instant Broadcast</h5>
+              <h5 className="fw-bold mb-0" style={{ color: 'var(--text-primary)' }}>Instant Broadcast</h5>
             </div>
             <form onSubmit={handleAnnouncementSubmit} className="row g-3">
               <div className="col-lg-4">
@@ -232,10 +231,9 @@ export default function ManageAnnouncements() {
         </div>
       </div>
 
-      {/* --- HISTORY & MODERATION --- */}
       <div className="mx-3">
         <div className="d-flex justify-content-between align-items-center mb-3">
-          <h6 className="fw-bold mb-0"><i className="bi bi-journal-text me-2"></i>History & Status</h6>
+          <h6 className="fw-bold mb-0" style={{ color: 'var(--text-primary)' }}><i className="bi bi-journal-text text-primary me-2"></i>History & Status</h6>
           <div className="btn-group btn-group-sm rounded-pill shadow-sm overflow-hidden border">
             {['all', 'approved', 'pending', 'rejected'].map(s => (
               <button key={s} className={`btn btn-sm px-3 text-capitalize ${filter === s ? 'btn-primary' : 'btn-white'}`} onClick={() => setFilter(s)}>{s}</button>
@@ -243,10 +241,10 @@ export default function ManageAnnouncements() {
           </div>
         </div>
 
-        <div className="card border-0 rounded-4 shadow-sm overflow-hidden bg-white">
+        <div className="glass-card border-0 overflow-hidden">
           <div className="table-responsive d-none d-lg-block">
             <table className="table table-hover align-middle mb-0">
-              <thead className="bg-light bg-opacity-50">
+              <thead className="bg-primary bg-opacity-5">
                 <tr className="extra-small text-uppercase text-muted">
                   <th className="ps-4 py-3">Announcement</th>
                   <th>Status</th>
@@ -259,7 +257,7 @@ export default function ManageAnnouncements() {
                 {filteredAnnouncements.map(ann => (
                   <tr key={ann._id}>
                     <td className="ps-4 py-3">
-                      <div className="fw-bold text-dark">{ann.title}</div>
+                      <div className="fw-bold" style={{ color: 'var(--text-primary)' }}>{ann.title}</div>
                       <small className="text-muted d-flex align-items-center gap-2">
                         <i className="bi bi-person"></i> {ann.requestedBy?.username || 'Admin'}
                         <span className="opacity-25">|</span>
@@ -277,15 +275,15 @@ export default function ManageAnnouncements() {
                         <div><i className="bi bi-eye text-success me-1"></i><strong>{ann.openCount || 0}</strong></div>
                       </div>
                     </td>
-                    <td className="fw-bold text-dark">
+                    <td className="fw-bold" style={{ color: 'var(--text-primary)' }}>
                       {ann.sentCount > 0 ? ((ann.openCount / ann.sentCount) * 100).toFixed(1) : 0}%
                     </td>
                     <td className="pe-4 text-end">
-                      <div className="btn-group btn-group-sm rounded-3 shadow-sm border overflow-hidden">
-                        <button className="btn btn-white" title="Approve" onClick={() => handleAnnouncementStatus(ann._id, 'approved')} disabled={ann.status === 'approved'}><i className="bi bi-check-lg text-success"></i></button>
-                        <button className="btn btn-white" title="Reject" onClick={() => handleAnnouncementStatus(ann._id, 'rejected')} disabled={ann.status === 'rejected'}><i className="bi bi-x-lg text-danger"></i></button>
-                        <button className="btn btn-white" title="Edit" onClick={() => handleEditClick(ann)}><i className="bi bi-pencil text-info"></i></button>
-                        <button className="btn btn-white" title="Delete" onClick={() => handleAnnouncementDelete(ann._id)}><i className="bi bi-trash text-danger"></i></button>
+                      <div className="btn-group btn-group-sm rounded-3 shadow-sm border border-opacity-10 overflow-hidden">
+                        <button className="btn btn-outline-success border-0" title="Approve" onClick={() => handleAnnouncementStatus(ann._id, 'approved')} disabled={ann.status === 'approved'}><i className="bi bi-check-lg"></i></button>
+                        <button className="btn btn-outline-danger border-0" title="Reject" onClick={() => handleAnnouncementStatus(ann._id, 'rejected')} disabled={ann.status === 'rejected'}><i className="bi bi-x-lg"></i></button>
+                        <button className="btn btn-outline-info border-0" title="Edit" onClick={() => handleEditClick(ann)}><i className="bi bi-pencil"></i></button>
+                        <button className="btn btn-outline-danger border-0" title="Delete" onClick={() => handleAnnouncementDelete(ann._id)}><i className="bi bi-trash"></i></button>
                       </div>
                     </td>
                   </tr>

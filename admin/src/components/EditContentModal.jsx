@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-import api from '../services/api'; // Path ko fix kiya gaya hai
+import api from '../services/api'; 
 
-// 'categories' prop ko AdminPanel se receive karein
 export default function EditContentModal({ item, onClose, onUpdate, categories }) {
   
-  // Form state initialization with safety fallbacks
   const [title, setTitle] = useState(item?.title || '');
   const [categoryId, setCategoryId] = useState(item?.categoryId || '');
   const [tags, setTags] = useState((item?.tags || []).join(', '));
@@ -23,13 +21,10 @@ export default function EditContentModal({ item, onClose, onUpdate, categories }
     setLoading(true);
     setError('');
     
-    // --- CHANGE: Ab FormData ka use karenge ---
-    // Kyunki humein file bhi bhejni ho sakti hai
     const formData = new FormData();
     formData.append('title', title);
     formData.append('categoryId', categoryId);
     formData.append('tags', tags);
-    // Allow admin to correct the MIME type on existing content
     if (fileType) formData.append('fileType', fileType);
     
     if (item.type === 'link') {
@@ -38,23 +33,19 @@ export default function EditContentModal({ item, onClose, onUpdate, categories }
       formData.append('textNote', textNote);
     }
     
-    // Agar user ne nayi file select ki hai, tabhi use append karein
     if (file) {
       formData.append('file', file);
     }
-    // ----------------------------------------
     
     try {
-      // Backend API ko update request bhej
-      // (Backend pehle se hi multipart/form-data ke liye setup hai)
       const { data: updatedItem } = await api.put(`/content/${item._id}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
       
-      onUpdate(updatedItem); // Parent component (AdminPanel) ki list ko update karein
-      onClose(); // Modal band karein
+      onUpdate(updatedItem); 
+      onClose(); 
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update content.');
     }
@@ -62,7 +53,6 @@ export default function EditContentModal({ item, onClose, onUpdate, categories }
   };
 
   return (
-    // Bootstrap Modal HTML
     <>
       <div className="modal-backdrop fade show"></div>
       <div className="modal fade show d-block" tabIndex="-1">
@@ -81,7 +71,6 @@ export default function EditContentModal({ item, onClose, onUpdate, categories }
                   <label htmlFor="editTitle">Content Title</label>
                 </div>
                 
-                {/* --- CHANGE: Category ID input ki jagah Dropdown --- */}
                 <div className="form-floating mb-3">
                   <select
                     className="form-select"
@@ -91,9 +80,8 @@ export default function EditContentModal({ item, onClose, onUpdate, categories }
                     required
                   >
                     <option value="root">Root / General</option>
-                    {/* categories map (object) se loop karein */}
                     {Object.entries(categories || {}).map(([catId, catName]) => {
-                      if (catId === 'root') return null; // Skip if already added
+                      if (catId === 'root') return null; 
                       return (
                         <option key={catId} value={catId}>
                           {catName}
@@ -103,14 +91,12 @@ export default function EditContentModal({ item, onClose, onUpdate, categories }
                   </select>
                   <label htmlFor="editCategory">Category</label>
                 </div>
-                {/* -------------------------------------------------- */}
 
                 <div className="form-floating mb-3">
                   <input type="text" className="form-control" id="editTags" value={tags} onChange={(e) => setTags(e.target.value)} />
                   <label htmlFor="editTags">Tags (comma se alag)</label>
                 </div>
 
-                {/* --- NAYA: Edit Link or Note Content --- */}
                 {item.type === 'link' && (
                   <div className="form-floating mb-3">
                     <input type="url" className="form-control" id="editUrl" placeholder="https://..." value={url} onChange={(e) => setUrl(e.target.value)} required />
@@ -125,7 +111,6 @@ export default function EditContentModal({ item, onClose, onUpdate, categories }
                   </div>
                 )}
 
-                {/* --- ENHANCED: Resource & File Replace Logic --- */}
                 <div className="mb-3 p-3 border rounded bg-light shadow-sm">
                   <label className="form-label fw-bold d-flex align-items-center">
                     <i className="bi bi-file-earmark-arrow-up me-2 text-primary"></i>
@@ -146,7 +131,6 @@ export default function EditContentModal({ item, onClose, onUpdate, categories }
                     </div>
                   </div>
 
-                  {/* Only show file upload if it's not a simple note/link OR if it's already a drive resource */}
                   {(item.googleDriveId || (item.url && item.fileResourceType !== 'auto')) && (
                     <div className="replacement-section">
                       <label htmlFor="editFile" className="form-label small fw-bold">Replace with New File</label>
@@ -163,7 +147,6 @@ export default function EditContentModal({ item, onClose, onUpdate, categories }
                       </div>
                     </div>
                   )}
-                  {/* File type override — visible for Drive files or octet-stream type */}
                   {(item.googleDriveId || item.type?.includes('octet') || item.fileResourceType === 'raw') && (
                     <div className="mt-3">
                       <label className="form-label small fw-bold"><i className="bi bi-file-earmark-fill me-1 text-primary"></i>File Type</label>
@@ -183,7 +166,6 @@ export default function EditContentModal({ item, onClose, onUpdate, categories }
                     </div>
                   )}
                 </div>
-                {/* -------------------------------------- */}
 
                 <button type="submit" className="btn btn-primary w-100" disabled={loading}>
                   {loading ? 'Saving...' : 'Save Changes'}

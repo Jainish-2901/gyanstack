@@ -7,28 +7,21 @@ import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import App from './App';
 
-// 1. Bootstrap CSS
 import 'bootstrap/dist/css/bootstrap.min.css';
-// 2. Bootstrap JS (Dropdowns ke liye zaroori)
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
-// 3. Hamari custom CSS
 import './App.css'; 
 
-// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes default
-      gcTime: 1000 * 60 * 10,    // 10 minutes cache
+      staleTime: 1000 * 60 * 5, 
+      gcTime: 1000 * 60 * 10,    
       retry: 1,
-      refetchOnWindowFocus: false, // Less jumpy logs during dev
+      refetchOnWindowFocus: false, 
     },
   },
 });
 
-// PWA: Service Worker Registration (Production Only)
-// SW is disabled in dev (vite.config.js devOptions.enabled: false) to prevent
-// Workbox from intercepting HMR/JSX source files and causing console violations.
 import { registerSW } from 'virtual:pwa-register';
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
@@ -39,7 +32,6 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
        }
     },
     onOfflineReady() {
-      console.log('GyanStack: App ready to work offline');
     },
   });
 }

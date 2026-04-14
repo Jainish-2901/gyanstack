@@ -18,7 +18,9 @@ The client frontend is optimized for seamless content discovery and a "premium" 
 - **Lazy Loading**: Code-splitting ensures heavy components (like the AI assistant) only load when needed, keeping the initial paint lightning fast.
 - **PWA Installation**: Provides the convenience of downloading the website as a lightweight application for instant home-screen access.
 - **Premium Notifications**: All user feedback is handled via **glassmorphism toast notifications** (via `react-hot-toast`), offering a non-blocking, modern experience.
-- **Auto-Focus Navigation**: The breadcrumb bar automatically scrolls and centers the active folder, ensuring perfect orientation in deep hierarchies.
+- **Auto-Focus Navigation**: The breadcrumb bar automatically scrolls and centers the active folder.
+- **Back-To-Top Utility**: A floating, transparent glassmorphism button appears during deep scrolling for instant home access.
+- **Semantic Legal Icons**: Terms and Privacy pages use contextually relevant iconography (shields, graduation caps, bugs) for improved scannability.
 
 ---
 
@@ -50,7 +52,13 @@ The command center for system-wide control and community oversight.
 Every component in the GyanStack ecosystem follows a **Glassmorphic / Modern Minimalist** design system.
 - **Responsive-First**: Every button, dropdown, and card is optimized for "perfect alignment" on mobile devices. Folders utilize a smart **2x2 grid** on mobile views.
 - **Rich Aesthetics**: High-quality iconography (Bootstrap Icons), modern typography (Plus Jakarta Sans), and sleek glassmorphism panels.
-- **Accessible UI**: High contrast modes, single-line laptop headers, and natural-wrap mobile titles for maximum readability.
+- **Accessible UI**: High contrast modes, single-line laptop headers, and natural-wrap mobile titles.
+
+## 🎞️ Fluid Motion System
+GyanStack utilizes **Framer Motion** for a "living" interface:
+- **AnimatePresence Routing**: Uses unique `location` keys to ensure pages mount/unmount cleanly without blank artifacting.
+- **Spring Physics**: All buttons and cards utilize spring-based transitions for a natural, high-performance tactile feel.
+- **Scroll Reveals**: Legal sections and cards fade in dynamically as the user scrolls, creating a premium storytelling effect.
 
 ---
-*Last Updated: April 12, 2026 (UI/UX Optimization Update)*
+*Last Updated: April 14, 2026 (Compliance & UX Overhaul Update)*

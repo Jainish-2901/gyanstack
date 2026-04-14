@@ -41,6 +41,7 @@ export default function UserSidebar({ show, onMobileClose }) {
                     <NavLink
                         key={index}
                         to={link.path}
+                        end={link.path === '/dashboard'}
                         className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`}
                         onClick={onMobileClose}
                     >
@@ -58,8 +59,8 @@ export default function UserSidebar({ show, onMobileClose }) {
             </div>
 
             {/* USER PROFILE CARD (BOTTOM) */}
-            <div className="p-3 border-top border-opacity-10 bg-light bg-opacity-10">
-                <div className="glass-panel p-2 d-flex align-items-center border-0 shadow-sm" style={{ background: 'rgba(255,255,255,0.5)' }}>
+            <div className="p-3 border-top border-opacity-10">
+                <div className="glass-panel p-2 d-flex align-items-center border-0 shadow-sm">
                     <Link
                         to="/settings"
                         onClick={onMobileClose}
@@ -73,8 +74,8 @@ export default function UserSidebar({ show, onMobileClose }) {
                             )}
                         </div>
                         <div className="flex-grow-1 overflow-hidden">
-                            <h6 className="mb-0 text-truncate small fw-bold text-dark">{user?.username}</h6>
-                            <small className="text-muted text-uppercase x-small">{user?.role}</small>
+                            <h6 className="mb-0 text-truncate small fw-bold" style={{ color: 'var(--text-primary)' }}>{user?.username}</h6>
+                            <small className="text-uppercase x-small" style={{ color: 'var(--text-muted)', fontWeight: 600 }}>{user?.role}</small>
                         </div>
                     </Link>
 
@@ -97,10 +98,13 @@ export default function UserSidebar({ show, onMobileClose }) {
                 }
                 .sidebar-nav-link i { font-size: 1.1rem; }
                 .sidebar-nav-link.active {
-                    background: rgba(99, 102, 241, 0.1);
+                    background: var(--brand-50);
                     color: var(--primary);
                     border-left: 4px solid var(--primary);
                     font-weight: 700;
+                }
+                [data-bs-theme="dark"] .sidebar-nav-link.active {
+                    background: rgba(52, 211, 153, 0.1);
                 }
                 .sidebar-nav-link:hover:not(.active) {
                     background: rgba(0,0,0,0.03);

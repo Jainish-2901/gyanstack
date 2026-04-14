@@ -26,8 +26,6 @@ export function AuthProvider({ children }) {
     loadUser();
   }, []);
 
-  // --- (register, login, logout, forgotPassword, resetPassword functions pehle se hain...) ---
-
   const register = async (username, email, phone, password) => {
     try {
       const { data } = await api.post('/auth/register', {
@@ -81,15 +79,11 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // --- YEH NAYE FUNCTIONS HAIN ---
 
-  // 7. Profile Update (Username/Phone/ProfileImage)
   const updateProfile = async (formData) => {
     try {
-      // API call to backend (sending FormData)
       const { data } = await api.put('/auth/update-profile', formData);
       
-      // Naya token aur user data save karein (taaki Header mein naam/photo update ho)
       localStorage.setItem('token', data.token);
       setUser(data.user);
       
@@ -100,22 +94,19 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // 8. Password Change (Dashboard se)
   const changePassword = async (currentPassword, newPassword) => {
     try {
-      // API call to backend
       const { data } = await api.put('/auth/change-password', { 
         currentPassword, 
         newPassword 
       });
-      return data.message; // "Password changed successfully"
+      return data.message; 
     } catch (error) {
       const msg = error.response?.data?.message || 'Password change failed.';
       throw new Error(msg);
     }
   };
 
-  // ---------------------------------
 
   const value = {
     user,
@@ -125,8 +116,8 @@ export function AuthProvider({ children }) {
     logout,
     forgotPasswordRequest,
     resetPassword,
-    updateProfile, // <-- Naya function add karein
-    changePassword, // <-- Naya function add karein
+    updateProfile, 
+    changePassword, 
   };
 
   if (loading) {

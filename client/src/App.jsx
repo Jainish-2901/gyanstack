@@ -1,23 +1,19 @@
 import React, { lazy, Suspense } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import toast, { Toaster, ToastBar } from 'react-hot-toast';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicLayout from './components/PublicLayout';
 import UserLayout from './components/UserLayout';
 import LoadingScreen from './components/LoadingScreen';
 import 'bootstrap/dist/css/bootstrap.min.css';
-
-// Always-loaded (app-wide, tiny footprint — NOT lazy)
-// Always-loaded (app-wide, tiny footprint — NOT lazy)
 import OfflineNotice from './components/OfflineNotice';
 import ScrollToTop from './components/ScrollToTop';
+import BackToTop from './components/BackToTop';
 
-// Lazy-loaded app-wide components
 const PWAInstallPrompt = lazy(() => import('./components/PWAInstallPrompt'));
 const ChatWidget       = lazy(() => import('./components/ChatWidget'));
 
-// Lazy-loaded pages — each becomes a separate JS chunk, downloaded only on first visit.
-// This cuts the initial bundle from ~one large file to small per-page chunks.
 const Home              = lazy(() => import('./pages/public/Home'));
 const Login             = lazy(() => import('./pages/public/Login'));
 const Signup            = lazy(() => import('./pages/public/Signup'));
@@ -38,9 +34,11 @@ const TermsOfService    = lazy(() => import('./pages/public/TermsOfService'));
 const About             = lazy(() => import('./pages/public/About'));
 
 export default function App() {
+  const location = useLocation();
   return (
     <div className="App">
       <ScrollToTop />
+      <BackToTop />
       <OfflineNotice />
       <Toaster 
         position="top-right" 
@@ -94,8 +92,8 @@ export default function App() {
       <Suspense fallback={<LoadingScreen text="Loading GyanStack..." />}>
         <PWAInstallPrompt />
 
-        <Routes>
-          {/* 1. Public Pages (Header + Footer) */}
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
           <Route element={<PublicLayout />}>
             <Route path="/"                element={<Home />} />
             <Route path="/login"           element={<Login />} />
@@ -112,7 +110,6 @@ export default function App() {
             <Route path="*"               element={<NotFound />} />
           </Route>
 
-          {/* 2. User Dashboard Pages (Sidebar + Profile Header) */}
           <Route element={<ProtectedRoute><UserLayout /></ProtectedRoute>}>
             <Route path="/dashboard"           element={<Dashboard />} />
             <Route path="/dashboard/saved"     element={<SavedContent />} />
@@ -120,7 +117,8 @@ export default function App() {
             <Route path="/settings"            element={<EditProfile />} />
             <Route path="/request"             element={<RequestContent />} />
           </Route>
-        </Routes>
+          </Routes>
+        </AnimatePresence>
 
         <ChatWidget />
       </Suspense>

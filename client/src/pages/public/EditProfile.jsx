@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import PasswordInput from '../../components/PasswordInput';
-// DashboardLayout removed
 
 export default function EditProfile() {
-    // AuthContext se naye functions lein
     const { user, updateProfile, changePassword } = useAuth();
     
-    // State
     const [username, setUsername] = useState(user?.username || '');
     const [phone, setPhone] = useState(user?.phone || '');
     const [profileImage, setProfileImage] = useState(null);
@@ -22,7 +19,6 @@ export default function EditProfile() {
     const [loadingProfile, setLoadingProfile] = useState(false);
     const [loadingPassword, setLoadingPassword] = useState(false);
 
-    // Handle Image Change
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -83,7 +79,6 @@ export default function EditProfile() {
         try {
             const message = await changePassword(currentPassword, newPassword);
             setSuccess(message);
-            // Fields reset karein
             setCurrentPassword('');
             setNewPassword('');
         } catch (err) {

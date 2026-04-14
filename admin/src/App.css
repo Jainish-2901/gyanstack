@@ -1,75 +1,88 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 :root {
-  /* Core Colors - Light Mode */
-  --primary: #6366f1; /* Indigo */
-  --primary-hover: #4f46e5;
-  --secondary: #06b6d4; /* Cyan */
-  --accent: #ec4899; /* Pink */
-  
+  /* Fonts */
+  --font-inter: 'Inter', sans-serif;
+  --font-display: 'Space Grotesk', sans-serif;
+
+  /* Brand Colors - Mint / Green Palette */
+  --primary: #10b981;
+  --primary-hover: #059669;
+  --secondary: #14b8a6;
+  --accent: #f43f5e;
+  --brand-50: #ecfdf5;
+  --brand-100: #d1fae5;
+  --brand-200: #a7f3d0;
+  --brand-300: #6ee7b7;
+  --brand-400: #34d399;
+  --brand-500: #10b981;
+  --brand-600: #059669;
+  --brand-700: #047857;
+
   /* Backgrounds & Surfaces */
   --bg-gradient-start: #fdfbfb;
   --bg-gradient-end: #ebedee;
   --surface-color: #ffffff;
-  
+  --surface-elevated: #f8f9fc;
+
   /* Text */
   --text-primary: #0f172a;
   --text-secondary: #475569;
   --text-muted: #94a3b8;
-  
-  /* Glassmorphism Light */
-  --glass-bg: rgba(255, 255, 255, 0.85);
-  --glass-border: rgba(255, 255, 255, 0.6);
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
-  
+
+  /* Glassmorphism Redefined */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-shadow: 0 8px 32px 0 rgba(16, 185, 129, 0.05);
+
   /* Bootstrap Overrides */
   --bs-primary: var(--primary);
-  --bs-primary-rgb: 99, 102, 241;
+  --bs-primary-rgb: 16, 185, 129;
   --bs-secondary: var(--secondary);
   --bs-body-color: var(--text-primary);
-  --bs-border-color: rgba(255, 255, 255, 0.6);
-  --bs-card-bg: var(--glass-bg);
-  
-  /* Layout constraints */
+  --bs-border-color: rgba(0, 0, 0, 0.08);
+
+  /* Admin Header/Nav specific */
   --nav-height: 80px;
 }
 
 [data-bs-theme="dark"] {
-  /* Core Colors - Dark Mode */
-  --primary: #818cf8;
-  --primary-hover: #6366f1;
-  --secondary: #22d3ee;
-  --accent: #f472b6;
-
-  /* Backgrounds & Surfaces */
+  /* Surfaces Dark */
+  --surface-color: #0a0a0f;
+  --surface-card: #111118;
+  --surface-elevated: #16161f;
+  
+  /* Background Gradient Overrides */
   --bg-gradient-start: #0f172a;
   --bg-gradient-end: #020617;
-  --surface-color: #1e293b;
-  
-  /* Text */
+
+  /* Text Dark */
   --text-primary: #f8fafc;
   --text-secondary: #cbd5e1;
   --text-muted: #64748b;
 
-  /* Glassmorphism Dark */
-  --glass-bg: rgba(15, 23, 42, 0.75);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  /* Brand Adjustments for Dark Mode */
+  --primary: #34d399;
+  --primary-hover: #10b981;
+
+  /* Glassmorphism Dark Redefined */
+  --glass-bg: rgba(15, 23, 42, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 12px 48px 0 rgba(0, 0, 0, 0.6);
   
   /* Bootstrap Overrides Dark */
   --bs-primary: var(--primary);
   --bs-secondary: var(--secondary);
   --bs-body-color: var(--text-primary);
-  --bs-border-color: rgba(255, 255, 255, 0.1);
-  --bs-card-bg: rgba(15, 23, 42, 0.75);
-  --text-muted: #94a3b8; /* Better visibility in dark mode */
+  --bs-body-bg: var(--bg-gradient-start);
+  --bs-border-color: rgba(255, 255, 255, 0.08);
+  --bs-card-bg: var(--glass-bg);
 }
 
 html, body, #root {
   height: 100vh;
   width: 100%;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  /* Removed scroll-behavior: smooth — blocks main thread */
+  font-family: var(--font-inter);
   font-size: 0.92rem;
   overflow: hidden;
 }
@@ -96,11 +109,11 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(79, 70, 229, 0.3);
+  background: var(--brand-200);
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(79, 70, 229, 0.6);
+  background: var(--brand-400);
 }
 
 /* --- GLOBAL FORM STYLES: Explicit Borders --- */
@@ -124,7 +137,7 @@ body {
 
 .form-control:focus, .form-select:focus, input:focus, textarea:focus, select:focus {
   border-color: var(--primary) !important;
-  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25) !important;
+  box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.15) !important;
   outline: none;
 }
 
@@ -143,7 +156,6 @@ body {
   background-color: var(--primary) !important;
   border-color: var(--primary) !important;
 }
-/* ------------------------------------------- */
 
 /* Base App Container */
 .App {
@@ -172,7 +184,7 @@ body {
 
 .glass-card:hover {
   border-color: var(--primary);
-  box-shadow: 0 12px 40px rgba(99, 102, 241, 0.12);
+  box-shadow: 0 12px 40px rgba(16, 185, 129, 0.12);
 }
 
 .text-accent { color: var(--accent) !important; }
@@ -294,27 +306,26 @@ body {
   font-weight: 600;
   letter-spacing: 0.3px;
   padding: 0.6rem 1.5rem;
-  /* PERF: 'transition: all' triggers reflow on every click — specify only GPU props */
   transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.15s ease;
 }
 
 .btn-primary {
   background: var(--primary);
   border: none;
-  box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
 }
 
 .btn-primary:hover {
   background: var(--primary-hover);
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(79, 70, 229, 0.4);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
 }
 
 .cta-gradient {
-  background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+  background: linear-gradient(135deg, #10b981 0%, #14b8a6 50%, #0ea5e9 100%);
   border: none;
   color: white !important;
-  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
   background-size: 200% 200%;
   animation: gradientShift 5s ease infinite;
 }
@@ -358,6 +369,7 @@ body {
 }
 
 .hero-title {
+  font-family: var(--font-display);
   font-size: 3.5rem;
   font-weight: 800;
   line-height: 1.2;
@@ -373,7 +385,6 @@ body {
   border-radius: 1.5rem;
   padding: 2rem;
   height: 100%;
-  /* PERF: 'transition: all' is expensive; specify only what changes */
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
   will-change: transform;
 }
@@ -411,11 +422,8 @@ body {
 .card {
   border: none;
   background: var(--glass-bg);
-  /* PERF: Removed backdrop-filter — causes forced reflow on every click/scroll event.
-     Admin table renders many cards at once; blur on all of them kills click performance */
   border: 1px solid var(--glass-border);
   border-radius: 1.25rem;
-  /* PERF: No 'transition: all' — only GPU-composited props */
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   overflow: hidden;
 }
@@ -489,7 +497,6 @@ body {
   margin-bottom: 0.5rem;
   border-radius: 0.75rem !important;
   font-weight: 500;
-  /* PERF: Only transition color and background, not all properties */
   transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
   color: var(--text-primary);
 }
@@ -502,7 +509,7 @@ body {
 .list-group-item.active {
   background: var(--primary) !important;
   color: white;
-  box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
 }
 
 [data-bs-theme="dark"] .list-group-item {
@@ -623,11 +630,42 @@ body {
 [data-bs-theme="dark"] .text-secondary {
     color: var(--text-secondary) !important;
 }
-[data-bs-theme="dark"] .bg-light {
-    background-color: rgba(255, 255, 255, 0.05) !important;
-}
-[data-bs-theme="dark"] .bg-white {
+[data-bs-theme="dark"] .bg-white,
+[data-bs-theme="dark"] .card.bg-white,
+[data-bs-theme="dark"] .container-fluid.bg-white {
     background-color: var(--surface-color) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-bs-theme="dark"] .bg-light,
+[data-bs-theme="dark"] .card.bg-light {
+    background-color: var(--surface-elevated) !important;
+}
+
+/* Fix sticky headers in dark mode */
+[data-bs-theme="dark"] .sticky-top.bg-white,
+[data-bs-theme="dark"] .sticky-top.bg-light {
+    background-color: var(--surface-color) !important;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+/* Ensure all tables are dark-mode compliant */
+[data-bs-theme="dark"] .table {
+    --bs-table-bg: transparent;
+    --bs-table-striped-bg: rgba(255, 255, 255, 0.02);
+    --bs-table-hover-bg: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+}
+
+[data-bs-theme="dark"] .table thead,
+[data-bs-theme="dark"] .table thead tr,
+[data-bs-theme="dark"] .table thead th {
+    background-color: var(--surface-elevated) !important;
+    color: var(--text-secondary) !important;
+    border-bottom-color: var(--glass-border) !important;
+}
+[data-bs-theme="dark"] .card-body {
+    background-color: transparent !important;
 }
 [data-bs-theme="dark"] .card {
     background: var(--glass-bg);
@@ -873,12 +911,13 @@ body {
 
 .dashboard-main {
   flex-grow: 1;
-  margin-left: 250px; /* Width of sidebar */
+  margin-left: 250px; 
   display: flex;
   flex-direction: column;
   height: 100vh;
   transition: all 0.3s ease;
-  overflow: hidden; /* Remove global vertical scroll in desktop */
+  overflow: hidden; 
+  background: transparent !important;
 }
 
 .dashboard-header {
@@ -886,7 +925,7 @@ body {
   position: fixed;
   top: 0;
   right: 0;
-  left: 250px; /* Width of sidebar */
+  left: 250px; 
   background: var(--glass-bg);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
@@ -900,10 +939,11 @@ body {
 
 .dashboard-content {
   padding: 1rem 1.25rem;
-  padding-top: calc(60px + 1.25rem); /* Header height + padding */
+  padding-top: calc(60px + 1.25rem); 
   flex-grow: 1;
-  overflow-y: auto; /* Internal scrolling if needed */
+  overflow-y: auto; 
   height: 100%;
+  background: transparent !important;
 }
 
 .sidebar-nav-link {
@@ -919,15 +959,19 @@ body {
 }
 
 .sidebar-nav-link:hover {
-  background: rgba(99, 102, 241, 0.05);
+  background: rgba(16, 185, 129, 0.05);
   color: var(--primary);
 }
 
 .sidebar-nav-link.active {
-  background: rgba(99, 102, 241, 0.1);
+  background: var(--brand-50);
   color: var(--primary);
   font-weight: 700;
   border-left-color: var(--primary);
+}
+
+[data-bs-theme="dark"] .sidebar-nav-link.active {
+  background: rgba(52, 211, 153, 0.1);
 }
 
 .sidebar-nav-link i {

@@ -44,12 +44,10 @@ const contentSchema = new mongoose.Schema({
     default: 0,
   },
 
-  // --- NAYA FIELD (DOWNLOAD TRACKING KE LIYE) ---
   downloadsCount: {
     type: Number,
     default: 0,
   },
-  // ---------------------------------------------
   
   // Like fields
   likesCount: {
@@ -61,7 +59,6 @@ const contentSchema = new mongoose.Schema({
     ref: 'User'
   }],
   
-  // --- YEH NAYE FIELDS HAIN (SAVE/BOOKMARK KE LIYE) ---
   savesCount: {
     type: Number,
     default: 0,
@@ -71,7 +68,6 @@ const contentSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }]
-  // -----------------------------
 
 }, { timestamps: true }); // createdAt aur updatedAt automatic add karega
 

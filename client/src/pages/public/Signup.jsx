@@ -37,7 +37,6 @@ export default function Signup() {
     try {
       await register(username, email, phone, password);
       
-      // --- ANALYTICS: Sign Up Event ---
       if (analytics) {
         logEvent(analytics, 'sign_up', { method: 'manual' });
       }
@@ -73,7 +72,6 @@ export default function Signup() {
             return;
         }
 
-        // --- ANALYTICS: Sign Up Event ---
         if (analytics) {
           logEvent(analytics, 'sign_up', { method: 'google' });
         }

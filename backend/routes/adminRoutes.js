@@ -8,17 +8,13 @@ const {
 } = require('../controllers/adminController'); 
 const authMiddleware = require('../middleware/authMiddleware');
 
-// --- CHANGE: Middleware ko alag-alag import karein ---
 const { adminMiddleware, superAdminMiddleware } = require('../middleware/adminMiddleware');
 
-// --- NAYA ROUTE (DASHBOARD STATS) ---
 // Ise Admin aur SuperAdmin dono access kar sakte hain
 // Isliye 'adminMiddleware' ka use karein (SuperAdmin isse pass ho jayega)
 router.get('/stats', authMiddleware, adminMiddleware, getDashboardStats);
-// ------------------------------------
 
 
-// --- SuperAdmin Only Routes ---
 // (Middleware ko global 'router.use' se hata kar individual route par lagayein)
 
 // Route 1: Get All Users (SuperAdmin Only)

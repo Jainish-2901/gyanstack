@@ -2,6 +2,8 @@ import React from 'react';
 import { useContentList } from '../hooks/useContent';
 import ContentCard from './ContentCard';
 import { CardSkeleton } from './SkeletonLoaders';
+import { motion } from 'framer-motion';
+import { fadeInUp, staggerContainer } from '../utils/animations';
 
 export default function ContentList({ categoryId, searchTerm, uploaderName, sortBy, order }) {
   const [skip, setSkip] = React.useState(0);
@@ -20,20 +22,17 @@ export default function ContentList({ categoryId, searchTerm, uploaderName, sort
   
   const { data, isLoading, error } = useContentList(params);
 
-  // Reset list when filters change
   React.useEffect(() => {
     setSkip(0);
     setAllContent([]);
   }, [categoryId, searchTerm, uploaderName, sortBy, order]);
 
-  // Aggregate content when new pages load
   React.useEffect(() => {
     if (data?.content) {
       if (skip === 0) {
         setAllContent(data.content);
       } else {
         setAllContent(prev => {
-          // Prevent duplicates
           const newIds = new Set(data.content.map(i => i._id));
           const filteredPrev = prev.filter(i => !newIds.has(i._id));
           return [...filteredPrev, ...data.content];
@@ -78,13 +77,18 @@ export default function ContentList({ categoryId, searchTerm, uploaderName, sort
 
   return (
     <div className="pb-5">
-      <div className="row g-3 g-md-4">
+      <motion.div 
+        className="row g-3 g-md-4"
+        variants={staggerContainer}
+        initial="initial"
+        animate="animate"
+      >
         {allContent.map(item => (
-          <div key={item._id} className="col-6 col-md-6 col-lg-4">
+          <motion.div key={item._id} className="col-6 col-md-6 col-lg-4" variants={fadeInUp}>
             <ContentCard item={item} />
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {data?.hasMore && (
         <div className="text-center mt-5">

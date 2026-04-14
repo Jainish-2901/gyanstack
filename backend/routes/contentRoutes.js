@@ -77,7 +77,6 @@ router.put('/:id', authMiddleware, adminMiddleware, (req, res, next) => {
 router.get('/', getContent);
 router.get('/saved', authMiddleware, getSavedContent);
 router.get('/my-content', authMiddleware, adminMiddleware, getMyContent);
-// --- SUPERADMIN ONLY ROUTES (Must be above /:id) ---
 router.get('/manage-all', authMiddleware, superAdminMiddleware, getGlobalContentManagement);
 router.post('/reassign', authMiddleware, superAdminMiddleware, reassignContent);
 

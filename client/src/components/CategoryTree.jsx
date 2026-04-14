@@ -1,45 +1,28 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 
-/**
- * Fully recursive category tree for the Browse sidebar.
- * Works at any depth: BCA → SEM-3 → GU Papers → JAVA Theory Papers → ...
- *
- * Rules:
- *  - Node WITH children  → collapsible accordion (expand/collapse)
- *  - Node WITHOUT children → selectable leaf (triggers content filter)
- *  - Auto-expands path to the active category when URL has ?category=ID
- */
-
-// Recursively check if this node or any descendant is the active one
 function isDescendantActive(node, activeCategoryId) {
   if (node._id === activeCategoryId) return true;
   if (node.children) return node.children.some(c => isDescendantActive(c, activeCategoryId));
   return false;
 }
 
-// Indent step per depth level (px)
 const INDENT = 12;
 
-// Color palette for top-level programs (cycles if more than 4)
 const PROGRAM_ICONS = ['bi-mortarboard-fill', 'bi-journal-bookmark-fill', 'bi-briefcase-fill', 'bi-award-fill'];
 const PROGRAM_COLORS = ['#6366f1', '#06b6d4', '#ec4899', '#10b981'];
 
-// --- Recursive node ---
 function CategoryNode({ cat, depth, onSelect, activeCategoryId }) {
   const hasChildren = Boolean(cat.children && cat.children.length > 0);
   const isActive = activeCategoryId === cat._id;
   const hasActiveDescendant = !isActive && isDescendantActive(cat, activeCategoryId);
 
-  // Start expanded if a descendant is active
   const [open, setOpen] = useState(() => isDescendantActive(cat, activeCategoryId));
 
-  // Re-evaluate when active ID changes (e.g. URL changes)
   useEffect(() => {
     if (isDescendantActive(cat, activeCategoryId)) setOpen(true);
-  }, [activeCategoryId]); // eslint-disable-line
+  }, [activeCategoryId]);
 
-  // --- LEAF --- (no children → click selects for content filter)
   if (!hasChildren) {
     return (
       <button
@@ -65,7 +48,6 @@ function CategoryNode({ cat, depth, onSelect, activeCategoryId }) {
     );
   }
 
-  // --- BRANCH --- (has children → clicking BOTH selects content AND toggles children)
   const isMid   = depth === 1;
   const isTop   = depth === 0;
 
@@ -75,7 +57,6 @@ function CategoryNode({ cat, depth, onSelect, activeCategoryId }) {
     ? (isTop ? PROGRAM_ICONS[colorIdx] : 'bi-folder2-open')
     : (isTop ? 'bi-book-fill' : 'bi-folder2');
 
-  // Active background: solid if this node is selected, muted if a child is selected
   const bgActive = isActive
     ? 'rgba(99,102,241,0.15)'
     : (hasActiveDescendant ? 'rgba(99,102,241,0.06)' : 'transparent');
@@ -87,7 +68,6 @@ function CategoryNode({ cat, depth, onSelect, activeCategoryId }) {
       <button
         className="d-flex align-items-center w-100 text-start border-0 rounded-2 mb-1"
         onClick={() => {
-          // Select this category's content AND toggle children visibility
           onSelect(cat._id, cat.name);
           setOpen(o => !o);
         }}
@@ -151,7 +131,6 @@ function CategoryNode({ cat, depth, onSelect, activeCategoryId }) {
   );
 }
 
-// --- Main export ---
 export default function CategoryTree({ onCategorySelect, activeCategoryId, initialData = [], isLoading = false }) {
   const [cats, setCats] = useState(initialData);
   const [loading, setLoading] = useState(initialData.length === 0 && !isLoading);

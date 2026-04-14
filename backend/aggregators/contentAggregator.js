@@ -32,7 +32,6 @@ class ContentAggregator {
 
         const promises = [];
 
-        // 1. Google Drive Enrichment
         if (result.googleDriveId) {
             promises.push(
                 getDriveFileMetadata(result.googleDriveId)
@@ -41,7 +40,6 @@ class ContentAggregator {
             );
         }
 
-        // 2. Cloudinary Enrichment
         if (result.url && result.url.includes('cloudinary.com')) {
             const publicId = this.getPublicIdFromUrl(result.url);
             if (publicId) {

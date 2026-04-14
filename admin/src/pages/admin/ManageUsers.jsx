@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import { useAllUsers, useAdminUserMutation } from '../../hooks/useAdminUsers';
 import LoadingScreen from '../../components/LoadingScreen';
 
-// 🚀 HELPER: Mobile User Card
 const UserCardMobile = ({ user, handleRoleChange, handleUserDelete }) => (
-  <div className="card mb-3 border-0 rounded-4 shadow-sm overflow-hidden bg-white">
+  <div className="glass-card mb-3 shadow-sm overflow-hidden">
     <div className="card-body p-3">
       <div className="d-flex justify-content-between align-items-start mb-2">
         <div className="d-flex align-items-center gap-2">
@@ -12,34 +11,58 @@ const UserCardMobile = ({ user, handleRoleChange, handleUserDelete }) => (
             <i className="bi bi-person-fill"></i>
           </div>
           <div>
-            <div className={`fw-bold small ${user.isDeleted ? 'text-decoration-line-through text-muted' : 'text-dark'}`}>{user.username}</div>
+            <div className="fw-bold small" style={{ color: user.isDeleted ? 'var(--text-muted)' : 'var(--text-primary)', textDecoration: user.isDeleted ? 'line-through' : 'none' }}>{user.username}</div>
             <div className="text-muted" style={{ fontSize: '0.65rem' }}>{user.email}</div>
           </div>
         </div>
         <span className={`badge rounded-pill ${user.role === 'superadmin' ? 'bg-danger' : user.role === 'admin' ? 'bg-warning text-dark' : 'bg-secondary'}`} style={{ fontSize: '0.6rem' }}>{user.role.toUpperCase()}</span>
       </div>
       
-      <div className="bg-light p-2 rounded-3 mb-3 d-flex justify-content-between align-items-center">
-        <span className="small text-muted">Auth:</span>
-        {user.googleId ? (
-          <span className="badge bg-white text-danger border border-danger border-opacity-25 rounded-pill small"><i className="bi bi-google me-1"></i> Google</span>
-        ) : (
-          <span className="badge bg-white text-primary border border-primary border-opacity-25 rounded-pill small"><i className="bi bi-person-badge me-1"></i> Manual</span>
+      <div className="bg-primary bg-opacity-5 p-2 rounded-3 mb-3 d-flex flex-column gap-2">
+        <div className="d-flex justify-content-between align-items-center">
+          <span className="small text-muted">Auth:</span>
+          {user.googleId ? (
+            <span className="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill small"><i className="bi bi-google me-1"></i> Google Sync</span>
+          ) : (
+            <span className="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill small"><i className="bi bi-person-badge me-1"></i> Manual</span>
+          )}
+        </div>
+        {user.phone && (
+          <div className="d-flex justify-content-between align-items-center">
+            <span className="small text-muted">Phone:</span>
+            <span className="small fw-medium" style={{ color: 'var(--text-primary)' }}>{user.phone}</span>
+          </div>
         )}
       </div>
 
-      <div className="d-flex gap-2">
-        <div className="dropdown flex-grow-1">
-          <button className="btn btn-sm btn-outline-primary w-100 rounded-pill dropdown-toggle" type="button" data-bs-toggle="dropdown" disabled={user.role === 'superadmin'}>
-            Change Role
+      <div className="d-flex gap-2 align-items-center">
+        <div className="d-flex flex-grow-1 gap-1 p-1 bg-opacity-10 bg-primary rounded-pill border">
+          <button 
+            className={`btn btn-xs flex-fill rounded-pill border-0 px-2 ${user.role === 'student' ? 'btn-success shadow-sm' : 'btn-light bg-transparent'}`} 
+            style={{ fontSize: '0.65rem', padding: '2px 0' }} 
+            onClick={() => handleRoleChange(user._id, 'student')}
+          >
+            Student
           </button>
-          <ul className="dropdown-menu shadow border-0 rounded-3">
-            <li><button className="dropdown-item small" onClick={() => handleRoleChange(user._id, 'student')}>Make Student</button></li>
-            <li><button className="dropdown-item small" onClick={() => handleRoleChange(user._id, 'admin')}>Make Admin</button></li>
-          </ul>
+          <button 
+            className={`btn btn-sm flex-fill rounded-pill border-0 px-2 ${user.role === 'admin' ? 'btn-warning shadow-sm' : 'btn-light'}`} 
+            style={{ fontSize: '0.7rem' }} 
+            onClick={() => handleRoleChange(user._id, 'admin')}
+          >
+            Admin
+          </button>
+          <button 
+            className={`btn btn-sm flex-fill rounded-pill border-0 px-2 ${user.role === 'superadmin' ? 'btn-danger shadow-sm' : 'btn-light'}`} 
+            style={{ fontSize: '0.7rem' }} 
+            onClick={() => handleRoleChange(user._id, 'superadmin')} 
+            disabled={user.role === 'superadmin'}
+          >
+            Super
+          </button>
         </div>
         <button 
-          className="btn btn-sm btn-outline-danger rounded-pill px-3" 
+          className="btn btn-sm btn-outline-danger rounded-circle d-flex align-items-center justify-content-center" 
+          style={{ width: '32px', height: '32px' }}
           onClick={() => handleUserDelete(user._id)}
           disabled={user.role === 'superadmin'}
         >
@@ -78,8 +101,8 @@ export default function ManageUsers() {
   return (
     <div className="container-fluid fade-in px-0 overflow-hidden d-flex flex-column" style={{ height: 'calc(100vh - 120px)' }}>
       <div className="d-flex justify-content-between align-items-center mb-3 flex-shrink-0 pe-3">
-        <h4 className="fw-bold text-danger mb-0">
-            <i className="bi bi-people-fill me-2"></i>Manage User Roles
+        <h4 className="fw-bold mb-0" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>
+            <i className="bi bi-person-gear text-primary me-2"></i>User Access Control
         </h4>
         <button className="btn btn-sm btn-outline-primary border-0 rounded-circle" style={{ width: '32px', height: '32px' }} onClick={() => refreshUsers()} title="Refresh">
             <i className="bi bi-arrow-clockwise fs-5"></i>
@@ -93,12 +116,13 @@ export default function ManageUsers() {
         <div className="card-body p-0 d-flex flex-column overflow-hidden"> 
           {/* DESKTOP VIEW: Table */}
           <div className="table-responsive d-none d-lg-block flex-grow-1 overflow-auto">
-            <table className="table table-striped table-hover align-middle mb-0">
-              <thead className="sticky-top bg-white z-1 shadow-sm">
+            <table className="table table-hover align-middle mb-0 border-0">
+              <thead className="sticky-top z-1 shadow-sm">
                 <tr>
                   <th className="ps-4">Method</th>
                   <th>Name</th>
                   <th>Email</th>
+                  <th>Phone</th>
                   <th>Role</th>
                   <th className="pe-4">Actions</th>
                 </tr>
@@ -108,27 +132,28 @@ export default function ManageUsers() {
                   <tr key={user._id}>
                     <td className="ps-4">
                         {user.googleId ? (
-                            <span className="badge bg-light text-danger border border-danger border-opacity-25 rounded-pill d-inline-flex align-items-center gap-1">
+                            <span className="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill d-inline-flex align-items-center gap-1">
                                 <i className="bi bi-google"></i> Google
                             </span>
                         ) : (
-                            <span className="badge bg-light text-primary border border-primary border-opacity-25 rounded-pill d-inline-flex align-items-center gap-1">
+                            <span className="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill d-inline-flex align-items-center gap-1">
                                 <i className="bi bi-person-badge"></i> Manual
                             </span>
                         )}
                     </td>
-                    <td className="fw-medium text-dark">
-                        <span className={user.isDeleted ? 'text-decoration-line-through text-muted' : ''}>{user.username}</span>
+                    <td className="fw-medium">
+                        <span style={{ color: user.isDeleted ? 'var(--text-muted)' : 'var(--text-primary)', textDecoration: user.isDeleted ? 'line-through' : 'none' }}>{user.username}</span>
                         {user.isDeleted && <span className="badge bg-danger bg-opacity-10 text-danger ms-2" style={{ fontSize: '0.65rem' }}>Deactivated</span>}
                     </td>
-                    <td>{user.email}</td>
-                    <td><span className={`badge rounded-pill ${user.role === 'superadmin' ? 'bg-danger' : user.role === 'admin' ? 'bg-warning text-dark' : 'bg-secondary'}`}>{user.role}</span></td>
+                    <td className="text-secondary">{user.email}</td>
+                    <td className="small text-secondary">{user.phone || <span className="text-muted opacity-50">N/A</span>}</td>
+                    <td><span className={`badge rounded-pill ${user.role === 'superadmin' ? 'bg-danger' : user.role === 'admin' ? 'bg-warning text-dark' : 'bg-primary bg-opacity-10 text-primary'}`}>{user.role}</span></td>
                     <td className="pe-4">
                       <div className="d-flex gap-3 align-items-center">
-                        <div className="scroll-selection d-flex gap-1 p-1 bg-light rounded-pill">
-                          <button className={`btn btn-sm rounded-pill border-0 px-3 ${user.role === 'student' ? 'btn-success shadow-sm' : 'btn-light'}`} style={{ fontSize: '0.75rem' }} onClick={() => handleRoleChange(user._id, 'student')}>Student</button>
-                          <button className={`btn btn-sm rounded-pill border-0 px-3 ${user.role === 'admin' ? 'btn-warning shadow-sm' : 'btn-light'}`} style={{ fontSize: '0.75rem' }} onClick={() => handleRoleChange(user._id, 'admin')}>Admin</button>
-                          <button className={`btn btn-sm rounded-pill border-0 px-3 ${user.role === 'superadmin' ? 'btn-danger shadow-sm' : 'btn-light'}`} style={{ fontSize: '0.75rem' }} onClick={() => handleRoleChange(user._id, 'superadmin')} disabled={user.role === 'superadmin'}>Super</button>
+                        <div className="d-flex gap-1 p-1 bg-primary bg-opacity-5 rounded-pill border border-opacity-10">
+                          <button className={`btn btn-xs rounded-pill border-0 px-3 ${user.role === 'student' ? 'btn-success shadow-sm' : 'btn-light bg-transparent'}`} style={{ fontSize: '0.75rem' }} onClick={() => handleRoleChange(user._id, 'student')}>Student</button>
+                          <button className={`btn btn-xs rounded-pill border-0 px-3 ${user.role === 'admin' ? 'btn-warning shadow-sm' : 'btn-light bg-transparent'}`} style={{ fontSize: '0.75rem' }} onClick={() => handleRoleChange(user._id, 'admin')}>Admin</button>
+                          <button className={`btn btn-xs rounded-pill border-0 px-3 ${user.role === 'superadmin' ? 'btn-danger shadow-sm' : 'btn-light bg-transparent'}`} style={{ fontSize: '0.75rem' }} onClick={() => handleRoleChange(user._id, 'superadmin')} disabled={user.role === 'superadmin'}>Super</button>
                         </div>
                         <button 
                           className="btn btn-sm btn-outline-danger border-0 rounded-circle" 
@@ -153,7 +178,12 @@ export default function ManageUsers() {
                 <div className="text-center py-5 text-muted">No users found.</div>
             ) : (
                 users.map(user => (
-                    <UserCardMobile key={user._id} user={user} handleRoleChange={handleRoleChange} handleUserDelete={handleUserDelete} />
+                    <UserCardMobile 
+                        key={user._id} 
+                        user={user} 
+                        handleRoleChange={handleRoleChange} 
+                        handleUserDelete={handleUserDelete} 
+                    />
                 ))
             )}
           </div>

@@ -17,7 +17,8 @@ The GyanStack Backend is a **Node.js/Express** application designed for the **ME
 - **Cloud Media**: Google Drive (Primary files), Cloudinary (Visual assets).
 - **Authentication**: JWT (JSON Web Tokens)
 - **Rate Limiting**: `express-rate-limit`
-- **Email/Notifications**: NodeMailer, FCM (Firebase Cloud Messaging)
+- **Email/Notifications**: NodeMailer, FCM (Firebase Cloud Messaging), Cross-Device Sync
+- **AI Engine**: Groq SDK (Llama 3.3 Large Language Model)
 
 ---
 
@@ -61,7 +62,14 @@ For content detail requests, the backend utilizes a **Content Aggregator** that 
 | POST | `/login` | Login user (JWT) | Public |
 | POST | `/google-login` | Google OAuth login | Public |
 | GET | `/me` | Get current user profile | Auth |
-| PUT | `/update-profile` | Update profile (incl. avatar) | Auth |
+| PUT | `/update-profile` | Update profile (incl. avatar, FCM Token) | Auth |
+| PUT | `/sync-notification` | Update `lastReadAnnId` for sync | Auth |
+
+### 🤖 AI Study Assistant (`/api/ai`)
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| POST | `/chat` | Send message to AI. Context-aware. | Public |
+| GET | `/history/:sessionId`| Retrieve study conversation history | Auth |
 
 ### 📁 Content & Categories (`/api/content`, `/api/categories`)
 | Method | Endpoint | Description | Access |
@@ -96,4 +104,4 @@ Returns a recursive structure where each category includes:
 4. **Data Sanitization**: Mongoose schemas and logic to prevent injection.
 
 ---
-*Last Updated: April 12, 2026 (UI/UX Optimization Update)*
+*Last Updated: April 14, 2026 (Compliance & AI Sync Update)*

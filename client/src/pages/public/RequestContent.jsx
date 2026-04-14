@@ -3,7 +3,6 @@ import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import LoadingScreen from '../../components/LoadingScreen';
-// DashboardLayout removed
 
 export default function RequestContent() {
   const { user } = useAuth();
@@ -13,7 +12,6 @@ export default function RequestContent() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   
-  // My Requests State
   const [myRequests, setMyRequests] = useState([]);
   const [fetchingRequests, setFetchingRequests] = useState(true);
   
@@ -59,7 +57,7 @@ export default function RequestContent() {
       setSuccess('Your request has been submitted successfully!');
       setTopic('');
       setMessage('');
-      fetchMyRequests(); // Refresh the list
+      fetchMyRequests(); 
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to submit request.');
     } finally {

@@ -8,32 +8,29 @@ import EditContentModal from '../../components/EditContentModal';
 import CategoryManager from '../../components/CategoryManager';
 import api from '../../services/api';
 
-// --- 1. HELPER COMPONENT: Content Card for Mobile View ---
 const SITE_URL = import.meta.env.VITE_SITE_URL || 'http://localhost:5173';
 
 const ContentCardMobile = ({ item, categoryMap, handleEditClick, handleDelete, isSelected, onToggleSelect }) => (
-  <div className={`card mb-2 border-0 rounded-3 overflow-hidden transition-all w-100 ${isSelected ? 'border-primary' : 'border-light'}`} style={{
+  <div className={`glass-card mb-2 overflow-hidden transition-all w-100 ${isSelected ? 'border-primary' : ''}`} style={{
     boxShadow: isSelected ? '0 4px 6px -1px rgba(99, 102, 241, 0.1)' : 'none',
-    backgroundColor: isSelected ? 'rgba(99, 102, 241, 0.02)' : '#fff',
     border: '1px solid',
-    borderColor: isSelected ? '#6366f1' : '#f1f1f1'
+    borderColor: isSelected ? 'var(--primary)' : 'var(--glass-border)'
   }}>
     <div className="card-body p-3">
-      {/* 1. Header Row: Title (Full Space) */}
       <div className="mb-3">
-        <div className="fw-bold text-dark" style={{
-          fontSize: '1.05rem',
-          lineHeight: '1.3',
-          wordBreak: 'break-word',
-          overflowWrap: 'break-word',
-          display: 'block'
-        }}>
+        <div className="fw-bold fs-6" style={{
+            color: 'var(--text-primary)',
+            lineHeight: '1.3',
+            wordBreak: 'break-word',
+            overflowWrap: 'break-word',
+            display: 'block',
+            fontFamily: 'var(--font-display)'
+          }}>
           {item.title}
         </div>
       </div>
 
       <div className="d-flex gap-3">
-        {/* 2. Left Side: checkbox */}
         <div className="d-flex align-items-start pt-1">
           <input
             type="checkbox"
@@ -44,7 +41,6 @@ const ContentCardMobile = ({ item, categoryMap, handleEditClick, handleDelete, i
           />
         </div>
 
-        {/* 3. Right Side: Metadata & Actions */}
         <div className="flex-grow-1 min-w-0">
           <div className="mb-3" style={{ fontSize: '0.85rem', color: '#64748b' }}>
             <span className="badge bg-light text-dark fw-normal border-0 p-0 me-2">{item.type}</span>
@@ -96,12 +92,10 @@ const ContentCardMobile = ({ item, categoryMap, handleEditClick, handleDelete, i
 export default function AdminPanel() {
   const { user } = useAuth();
 
-  // 1. Data Fetching Hooks
   const { data: myContent = [], isLoading: loadingContent, refetch: refreshContent } = useMyContent();
   const { data: categoryMap = {} } = useCategoryMap();
   const { uploadContent, deleteContent, bulkDeleteContent } = useAdminContentMutation();
 
-  // States for Upload Form
   const [title, setTitle] = useState('');
   const [type, setType] = useState('note');
   const [files, setFiles] = useState(null); 
@@ -122,13 +116,11 @@ export default function AdminPanel() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // States for Content Management
   const [isEditing, setIsEditing] = useState(false);
   const [currentItem, setCurrentItem] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Initial fetch effect no longer needed for data, but can be used for error cleanup
   useEffect(() => {
     if (error || success) {
       const timer = setTimeout(() => { setError(''); setSuccess(''); }, 5000);
@@ -136,12 +128,9 @@ export default function AdminPanel() {
     }
   }, [error, success]);
 
-  // --- BATCH UPLOAD CHANGE ---
   const handleFileChange = (e) => {
-    // FileList object ko files state mein store karein
     setFiles(e.target.files);
   };
-  // ---------------------------
 
   // Upload Logic
   const handleUpload = async (e) => {
@@ -262,7 +251,6 @@ export default function AdminPanel() {
       setSelectedIds([...selectedIds, id]);
     }
   };
-  // -------------------------------
 
   // Edit Logic
   const handleEditClick = (item) => { setCurrentItem(item); setIsEditing(true); };
@@ -274,26 +262,32 @@ export default function AdminPanel() {
 
 
   return (
-    // --- DASHBOARD LAYOUT MEIN WRAP KAREIN ---
     <>
       <div className="container-fluid fade-in px-3 px-md-4 overflow-x-hidden" style={{ overflowX: 'hidden' }}>
-        <h3 className="fw-bold mb-4 text-primary text-break">Content Manager</h3>
+        <div className="d-flex align-items-center mb-4">
+            <h4 className="fw-bold mb-0" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>
+                <i className="bi bi-folder-check text-primary me-2"></i>Content Manager
+            </h4>
+        </div>
 
-        {error && <div className="alert alert-danger" onClick={() => setError('')}>{error}</div>}
-        {success && <div className="alert alert-success" onClick={() => setSuccess('')}>{success}</div>}
+        {error && <div className="alert alert-danger border-0 shadow-sm" onClick={() => setError('')}>{error}</div>}
+        {success && <div className="alert alert-success border-0 shadow-sm" onClick={() => setSuccess('')}>{success}</div>}
 
         <style dangerouslySetInnerHTML={{
           __html: `
             .stylish-search-group {
-                background: #f1f5f9;
-                border: none;
+                background: var(--brand-50);
+                border: 1px solid var(--glass-border);
                 border-radius: 12px;
                 padding: 4px 12px;
                 transition: all 0.2s ease;
             }
+            [data-bs-theme="dark"] .stylish-search-group {
+                background: rgba(255, 255, 255, 0.03);
+            }
             .stylish-search-group:focus-within {
-                background: #fff;
-                box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+                background: var(--surface-color);
+                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
                 transform: translateY(-1px);
             }
             .stylish-search-input, 
@@ -305,13 +299,15 @@ export default function AdminPanel() {
                 box-shadow: none !important;
                 font-weight: 500;
                 font-size: 0.95rem;
+                color: var(--text-primary) !important;
             }
             .stylish-search-input::placeholder {
                 color: #94a3b8;
                 font-weight: 400;
             }
             .check-all-mobile-box {
-                background: #f1f5f9;
+                background: var(--brand-50);
+                border: 1px solid var(--glass-border);
                 border-radius: 10px;
                 padding: 8px 12px;
                 display: flex;
@@ -321,11 +317,14 @@ export default function AdminPanel() {
                 cursor: pointer;
                 transition: background 0.2s;
             }
+            [data-bs-theme="dark"] .check-all-mobile-box {
+                background: rgba(255, 255, 255, 0.03);
+            }
             .check-all-mobile-box:active {
-                background: #e2e8f0;
+                background: var(--brand-100);
             }
             .form-check-input {
-                border: 2px solid #cbd5e1 !important;
+                border: 2px solid var(--primary) !important;
                 cursor: pointer;
             }
             .form-check-input:checked {
@@ -337,9 +336,11 @@ export default function AdminPanel() {
         <div className="row gx-0 gx-lg-2 gy-4 align-items-start justify-content-center min-vh-md-75 admin-row mx-0">
           {/* Left Column: Upload Form */}
           <div className="col-lg-8 col-md-12 pe-lg-2" style={{ minWidth: 0 }}>
-            <div className="card border-0 rounded-3 mb-4">
+            <div className="glass-card shadow-sm border-0 mb-4 overflow-hidden">
               <div className="card-body p-4 p-sm-4">
-                <h4 className="fw-bold mb-4 text-primary">Upload New Content</h4>
+                <h5 className="fw-bold mb-4" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>
+                    <i className="bi bi-cloud-upload text-primary me-2"></i>Upload New Content
+                </h5>
 
                 {/* Content Type Selector */}
                 <div className="mb-4">
@@ -371,8 +372,8 @@ export default function AdminPanel() {
 
                 {/* Mode Selector for Files */}
                 {type === 'file' && (
-                  <div className="mb-4 p-3 bg-light rounded-3">
-                    <label className="form-label fw-bold d-block mb-3">Step 2: Upload Mode</label>
+                  <div className="mb-4 p-3 bg-primary bg-opacity-5 rounded-3 border border-primary border-opacity-10">
+                    <label className="form-label fw-bold d-block mb-3 tracking-wider">Step 2: UPLOAD MODE</label>
                     <div className="btn-group w-100" role="group">
                       <input
                         type="radio"
@@ -434,10 +435,9 @@ export default function AdminPanel() {
                     </div>
                   )}
 
-                  {/* --- NAYA CATEGORY SELECTOR --- */}
                   <div className="mb-4">
                     <label className="form-label fw-bold">Step 3: Select Category</label>
-                    <div className="p-3 border rounded-3 bg-light overflow-hidden shadow-sm">
+                    <div className="p-3 border rounded-3 bg-primary bg-opacity-5 overflow-hidden shadow-sm">
                       <p className="mb-2">Selected: <span className="fw-bold text-primary">{categoryName}</span></p>
                       <div style={{ maxHeight: '350px', overflowY: 'auto' }}>
                         <CategoryManager
@@ -450,7 +450,6 @@ export default function AdminPanel() {
                       </div>
                     </div>
                   </div>
-                  {/* ----------------------------- */}
 
                   {/* Content Type */}
                   <select className="form-select mb-3" value={type} onChange={(e) => setType(e.target.value)}>
@@ -595,10 +594,9 @@ export default function AdminPanel() {
 
           {/* Right Column: Manage Categories & Announcements */}
           <div className="col-lg-4 col-md-12" style={{ minWidth: 0 }}>
-            {/* Naya Category Manager (Admin bhi manage kar sakta hai) */}
             <div className="card border-0 rounded-3 mb-4">
               <CategoryManager
-                isSelectOnly={false} // Yahaan poori functionality (add/edit/delete/reorder) dikhegi
+                isSelectOnly={false} 
               />
             </div>
           </div>
@@ -607,13 +605,13 @@ export default function AdminPanel() {
         {/* Content Management Table */}
         <div className="row mt-4 mb-5 mx-0 gx-0">
           <div className="col-12">
-            <div className="card border-0 rounded-3 overflow-hidden">
+            <div className="glass-card shadow-sm border-0 overflow-hidden">
               <div className="card-header border-0 bg-transparent px-3 pb-3">
                 <div className="row g-3 align-items-center">
                   {/* Left Side: Title & Actions */}
                   <div className="col-12 col-md-6 ps-md-4">
                     <div className="d-flex flex-wrap align-items-center gap-3">
-                      <h5 className="fw-bold mb-0 text-dark">
+                      <h5 className="fw-bold mb-0" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)', letterSpacing: '-0.5px' }}>
                         <i className="bi bi-stack me-2 text-primary"></i>Manage Your Content
                       </h5>
 
@@ -666,7 +664,7 @@ export default function AdminPanel() {
                       checked={filteredContent.length > 0 && selectedIds.length === filteredContent.length}
                       readOnly
                     />
-                    <span className="fw-bold text-dark">Select All Content</span>
+                    <span className="fw-bold" style={{ color: 'var(--text-primary)' }}>Select All Content</span>
                     <span className="badge bg-white text-primary border ms-auto">{filteredContent.length} Items</span>
                   </div>
                 </div>
@@ -736,7 +734,7 @@ export default function AdminPanel() {
                               <td><span className="badge bg-secondary">{item.type}</span></td>
 
                               <td>
-                                <span className="fw-medium text-dark">
+                                <span className="fw-medium" style={{ color: 'var(--text-primary)' }}>
                                   {categoryMap[item.categoryId] || 'Uncategorized'}
                                 </span>
                               </td>
@@ -805,7 +803,6 @@ export default function AdminPanel() {
             item={currentItem}
             onClose={() => setIsEditing(false)}
             onUpdate={handleUpdateItem}
-            // Modal ko category map pass karein
             categories={categoryMap}
           />
         )}

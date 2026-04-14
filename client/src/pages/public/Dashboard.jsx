@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useMyRequests } from '../../hooks/useRequests';
 
-// Main content component (Student specific)
 const StudentDashboardView = ({ user, requests, fetching }) => (
   <>
     <h3 className="fw-bold mb-4 text-primary">

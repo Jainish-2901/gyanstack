@@ -3,7 +3,6 @@ const Subscription = require('../models/subscriptionModel');
 const User = require('../models/userModel');
 const axios = require('axios');
 
-// --- NAYA HELPER FUNCTION (FCM v1 Modern) ---
 const { google } = require('googleapis');
 
 const getAccessToken = () => {
@@ -35,11 +34,9 @@ const getAccessToken = () => {
 // Push Notification bhejta hai (Modern HTTP v1)
 const sendPushNotification = async (title, body, announcementId = null) => {
     try {
-        console.log("FCM v1: Starting push notification process...");
         
         const projectId = process.env.FIREBASE_PROJECT_ID || "gyanstack-server";
         
-        // 1. Fetch all unique tokens from the User collection
         const usersWithTokens = await User.find({ 
             fcmToken: { $exists: true, $ne: "" },
             isDeleted: false // Only send to active users
@@ -48,17 +45,13 @@ const sendPushNotification = async (title, body, announcementId = null) => {
         // Extract tokens and remove duplicates
         const tokens = [...new Set(usersWithTokens.map(u => u.fcmToken))].filter(t => t);
 
-        console.log(`FCM: Target audience size is ${tokens.length} unique devices.`);
 
         if (tokens.length === 0) {
-            console.log("FCM: No users subscribed. Skipping send.");
             return 0;
         }
 
-        // 2. Access Token generate karein
         const accessToken = await getAccessToken();
 
-        // 3. Sequential delivery to tokens
         let successCount = 0;
         let failureCount = 0;
 
@@ -105,9 +98,7 @@ const sendPushNotification = async (title, body, announcementId = null) => {
             }
         }
 
-        console.log(`FCM Delivery Complete: ${successCount} Success, ${failureCount} Failures.`);
         
-        // --- NAYA: Database mein sentCount update karein ---
         if (announcementId && successCount > 0) {
             await Announcement.findByIdAndUpdate(announcementId, { sentCount: successCount });
         }
@@ -118,9 +109,7 @@ const sendPushNotification = async (title, body, announcementId = null) => {
         return 0;
     }
 };
-// -----------------------------
 
-// 1. Nayi Announcement Request Karna (Admin/SuperAdmin)
 exports.requestAnnouncement = async (req, res) => {
     const { title, content } = req.body;
     try {
@@ -136,7 +125,6 @@ exports.requestAnnouncement = async (req, res) => {
         await newAnnouncement.save();
 
         if (isSuperAdmin) {
-            // Auto-approved announcement ke liye notification bhejien
             const pushTitle = `🚨 New Update: ${title}`;
             const pushBody = content.substring(0, 100) + '... Tap to view.';
             await sendPushNotification(pushTitle, pushBody, newAnnouncement._id); 
@@ -152,14 +140,12 @@ exports.requestAnnouncement = async (req, res) => {
 };
 
 // --- YEH NAYA FLEXIBLE FUNCTION HAI (Frontend Public, Header Bell, and Homepage ke liye) ---
-// 2. Approved Announcements Fetch Karna (Public)
 exports.getAnnouncements = async (req, res) => {
     try {
         const { limit, status = 'approved', days } = req.query; 
         
         let query = { status: status };
 
-        // --- NEW: Time-based filtering ---
         if (days) {
             const dateThreshold = new Date();
             dateThreshold.setDate(dateThreshold.getDate() - parseInt(days));
@@ -184,7 +170,6 @@ exports.getAnnouncements = async (req, res) => {
 };
 // -----------------------------------------------------------------------------------
 
-// 3. Sabhi Announcements Fetch Karna (SuperAdmin Only)
 exports.getAllAnnouncements = async (req, res) => {
     try {
         // SuperAdmin sabhi status (pending/approved/rejected) dekhta hai
@@ -198,7 +183,6 @@ exports.getAllAnnouncements = async (req, res) => {
     }
 };
 
-// 4. Sirf Admin ki Apni Announcements Fetch Karna (Admin Only)
 exports.getMyAnnouncements = async (req, res) => {
     try {
         const announcements = await Announcement.find({ requestedBy: req.user.id })
@@ -225,13 +209,11 @@ exports.updateAnnouncementStatus = async (req, res) => {
             return res.status(404).json({ message: 'Announcement not found' });
         }
         
-        // --- NAYA LOGIC: IF APPROVED, SEND NOTIFICATION ---
         if (status === 'approved') {
             const title = `🚨 New Update: ${updatedAnnouncement.title}`;
             const body = updatedAnnouncement.content.substring(0, 100) + '... Tap to view.';
             await sendPushNotification(title, body, updatedAnnouncement._id); 
         }
-        // --------------------------------------------------
 
         res.json({ message: `Announcement ${status} successfully`, announcement: updatedAnnouncement });
     } catch (err) {
@@ -241,7 +223,6 @@ exports.updateAnnouncementStatus = async (req, res) => {
 };
 
 
-// 6. Announcement Delete Karna (Admin/SuperAdmin)
 exports.deleteAnnouncement = async (req, res) => {
     try {
         const announcement = await Announcement.findById(req.params.id);
@@ -263,7 +244,6 @@ exports.deleteAnnouncement = async (req, res) => {
     }
 };
 
-// 7. Announcement Edit Karna (Admin/SuperAdmin)
 exports.updateAnnouncement = async (req, res) => {
     const { title, content } = req.body;
     const { id } = req.params;
@@ -275,11 +255,9 @@ exports.updateAnnouncement = async (req, res) => {
         }
 
         let canEdit = false;
-        // 1. SuperAdmin hamesha edit kar sakta hai
         if (req.user.role === 'superadmin') {
             canEdit = true;
         }
-        // 2. Admin sirf apni 'pending' request ko edit kar sakta hai
         else if (req.user.role === 'admin' && announcement.requestedBy.equals(req.user.id) && announcement.status === 'pending') {
             canEdit = true;
         }
@@ -299,7 +277,6 @@ exports.updateAnnouncement = async (req, res) => {
     }
 };
 
-// 8. Push Notification Token Save Karna
 exports.subscribeUser = async (req, res) => {
   const { fcmToken } = req.body;
   if (!fcmToken) {
@@ -320,7 +297,6 @@ exports.subscribeUser = async (req, res) => {
   }
 };
 
-// 9. Announcement Open Tracking
 exports.trackAnnouncementOpen = async (req, res) => {
     try {
         const { id } = req.params;
@@ -329,5 +305,23 @@ exports.trackAnnouncementOpen = async (req, res) => {
     } catch (err) {
         console.error("Track Open Error:", err.message);
         res.status(500).json({ message: 'Failed to track open' });
+    }
+};
+
+exports.markAllRead = async (req, res) => {
+    try {
+        const { latestId } = req.body;
+        if (!latestId) {
+            return res.status(400).json({ message: 'latestId is required' });
+        }
+
+        await User.findByIdAndUpdate(req.user.id, { 
+            lastSeenAnnId: latestId 
+        });
+
+        res.status(200).json({ success: true, message: 'All marked as read' });
+    } catch (err) {
+        console.error("Mark All Read Error:", err.message);
+        res.status(500).json({ message: 'Server error while marking read' });
     }
 };

@@ -17,15 +17,10 @@ router.post('/', authMiddleware, adminMiddleware, createCategory);
 // GET /api/categories?parentId=...
 router.get('/', getCategories); 
 
-// --- NAYA ROUTE ---
-// AdminPanel me category map banane ke liye
 router.get('/all-nested', getAllNestedCategories);
-// -----------------
 
-// --- NAYA ROUTE ---
 // PUT /api/categories/:id (Category ka naam update karne ke liye)
 router.put('/:id', authMiddleware, adminMiddleware, updateCategory);
-// -----------------
 
 // DELETE /api/categories/:id
 router.delete('/:id', authMiddleware, adminMiddleware, deleteCategory);

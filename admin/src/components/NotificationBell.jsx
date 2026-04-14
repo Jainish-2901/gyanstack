@@ -4,7 +4,6 @@ import api from '../services/api';
 import { messaging, firebaseConfig } from '../services/firebase';
 import { getToken, onMessage } from 'firebase/messaging';
 
-// Pre-load the sound to avoid delay (Place this file in your /public folder)
 const pingSound = new Audio('/notification-ping.mp3');
 
 export default function NotificationBell({ user }) {
@@ -13,14 +12,11 @@ export default function NotificationBell({ user }) {
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
 
-  // Helper to play sound with browser restriction handling
   const playPing = () => {
     pingSound.play().catch(() => {
-      console.log("Audio autoplay blocked. Interaction required first.");
     });
   };
 
-  // --- 1. DATA FETCHING (Memoized) ---
   const fetchAnnouncements = useCallback(async () => {
     if (!user) return;
     setLoading(true);
@@ -42,7 +38,6 @@ export default function NotificationBell({ user }) {
     setLoading(false);
   }, [user]);
 
-  // --- 2. FIREBASE NOTIFICATION LOGIC ---
   useEffect(() => {
     if (!user) return;
 
@@ -71,12 +66,9 @@ export default function NotificationBell({ user }) {
 
     setupNotifications();
 
-    // Listen for foreground messages
     const unsubscribe = onMessage(messaging, (payload) => {
-      // 1. Play Sound
       playPing();
 
-      // 2. Show native browser notification
       if (Notification.permission === 'granted') {
         new Notification(payload.notification.title, {
           body: payload.notification.body,
@@ -84,7 +76,6 @@ export default function NotificationBell({ user }) {
         });
       }
 
-      // 3. Refresh list and count
       fetchAnnouncements();
     });
 
@@ -95,7 +86,6 @@ export default function NotificationBell({ user }) {
     if (user) fetchAnnouncements();
   }, [user, fetchAnnouncements]);
 
-  // Handle Mobile Scroll Lock
   useEffect(() => {
     if (isOpen && window.innerWidth <= 490) {
       document.body.style.overflow = 'hidden';

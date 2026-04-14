@@ -10,10 +10,8 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// 10. Public Statistics Lena (Home Page ke liye)
 exports.getPublicStats = async (req, res) => {
   try {
-    // Check if models are available (avoid potential race conditions in serverless)
     if (!Content || !User) {
       throw new Error('Database models were not initialized correctly');
     }
@@ -54,14 +52,12 @@ const sendEmail = require('../services/mailService');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 
-// JWT Token generate karne ka helper function
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: '30d',
   });
 };
 
-// 1. Naya User Register Karna
 exports.registerUser = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -92,6 +88,7 @@ exports.registerUser = async (req, res) => {
         role: user.role,
         profileImage: user.profileImage || '',
         googleId: user.googleId || null,
+        lastSeenAnnId: user.lastSeenAnnId || '',
       },
     });
   } catch (err) {
@@ -100,7 +97,6 @@ exports.registerUser = async (req, res) => {
   }
 };
 
-// 2. User Login Karna (Username, Email, ya Phone se)
 exports.loginUser = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -114,7 +110,6 @@ exports.loginUser = async (req, res) => {
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
-    // Block deleted users
     if (user.isDeleted) {
       return res.status(401).json({ message: 'Your account has been deactivated. Please contact support.' });
     }
@@ -133,6 +128,7 @@ exports.loginUser = async (req, res) => {
         role: user.role,
         profileImage: user.profileImage || '',
         googleId: user.googleId || null,
+        lastSeenAnnId: user.lastSeenAnnId || '',
       },
     });
   } catch (err) {
@@ -141,31 +137,25 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-// ** googleLogin controller with Cloudinary Capture **
 exports.googleLogin = async (req, res) => {
   const { email, username, googleId, profileImage: googlePhotoUrl } = req.body;
 
   try {
-    // 1. PROMPT: Check for valid email first
     if (!email) {
       return res.status(400).json({ success: false, message: 'Google account must have a valid email to continue.' });
     }
 
-    // 2. Find or Create User
     let user = await User.findOne({ email });
 
     if (user) {
-      // Block deleted users
       if (user.isDeleted) {
         return res.status(401).json({ success: false, message: 'Your account has been deactivated. Please contact support.' });
       }
-      // Link Google ID if missing
       if (!user.googleId) {
         user.googleId = googleId;
         await user.save({ validateBeforeSave: false });
       }
     } else {
-      // Create NEW user
       const safeUsername = (username || email.split('@')[0] || 'user').replace(/\s+/g, '').toLowerCase();
       let finalUsername = safeUsername;
 
@@ -183,7 +173,6 @@ exports.googleLogin = async (req, res) => {
       await user.save({ validateBeforeSave: false });
     }
 
-    // 3. CAPTURE Profile Image: If user doesn't have a Cloudinary image, upload the Google one
     if (googlePhotoUrl && (!user.profileImage || !user.profileImage.includes('cloudinary'))) {
       try {
         const highResUrl = googlePhotoUrl.replace('=s96-c', '=s400-c'); // Get better quality
@@ -196,13 +185,11 @@ exports.googleLogin = async (req, res) => {
         });
         user.profileImage = result.secure_url;
         await user.save({ validateBeforeSave: false });
-        console.log("Captured Google profile image into Cloudinary");
       } catch (uploadErr) {
         console.warn("Failed to capture Google photo, using default/existing:", uploadErr.message);
       }
     }
 
-    // 4. Generate Token & Send FULL User Info
     const token = generateToken(user._id);
     res.status(200).json({
       token,
@@ -215,6 +202,7 @@ exports.googleLogin = async (req, res) => {
         profileImage: user.profileImage || '',
         googleId: user.googleId || null,
         createdAt: user.createdAt,
+        lastSeenAnnId: user.lastSeenAnnId || '',
         savedContentCount: user.savedContent ? user.savedContent.length : 0
       },
     });
@@ -228,7 +216,6 @@ exports.googleLogin = async (req, res) => {
   }
 };
 
-// 3. Forgot Password (OTP Bhejna)
 exports.forgotPassword = async (req, res) => {
   const { email } = req.body;
   try {
@@ -259,7 +246,6 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
-// 4. Reset Password (OTP Verify Karke)
 exports.resetPassword = async (req, res) => {
   const { otp, newPassword } = req.body;
   try {
@@ -281,7 +267,6 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
-// 5. User ki Profile Lena (Login ke baad/Refresh par)
 exports.getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
@@ -296,6 +281,7 @@ exports.getUserProfile = async (req, res) => {
       role: user.role,
       profileImage: user.profileImage || '',
       googleId: user.googleId || null,
+      lastSeenAnnId: user.lastSeenAnnId || '',
       createdAt: user.createdAt
     });
   } catch (err) {
@@ -304,7 +290,6 @@ exports.getUserProfile = async (req, res) => {
   }
 };
 
-// 6. User ka Saved Content Lena
 exports.getSavedContent = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).populate('savedContent');
@@ -318,7 +303,6 @@ exports.getSavedContent = async (req, res) => {
   }
 };
 
-// 7. User ki Profile Update Karna (Dashboard se)
 exports.updateUserProfile = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -342,7 +326,6 @@ exports.updateUserProfile = async (req, res) => {
       user.phone = phone;
     }
 
-    // --- HANDLE PROFILE IMAGE REMOVAL ---
     if (removeProfileImage === 'true' && user.profileImage) {
       try {
         const parts = user.profileImage.split('/');
@@ -350,16 +333,13 @@ exports.updateUserProfile = async (req, res) => {
         const publicId = `gyanstack_profiles/${fileName}`;
         await cloudinary.uploader.destroy(publicId);
         user.profileImage = null; // Profile photo ko null karke hatayein
-        console.log(`Cloudinary image removed: ${publicId}`);
       } catch (err) {
         console.warn("Cloudinary removal failed:", err.message);
       }
     }
 
-    // --- HANDLE NEW IMAGE UPLOAD ---
     if (req.file) {
       try {
-        // Agar purana image hai to pehle use hatayein
         if (user.profileImage) {
           const parts = user.profileImage.split('/');
           const fileName = parts[parts.length - 1].split('.')[0];
@@ -392,6 +372,7 @@ exports.updateUserProfile = async (req, res) => {
         role: updatedUser.role,
         profileImage: updatedUser.profileImage || '',
         googleId: updatedUser.googleId || null,
+        lastSeenAnnId: updatedUser.lastSeenAnnId || '',
         createdAt: updatedUser.createdAt
       },
     });
@@ -401,7 +382,6 @@ exports.updateUserProfile = async (req, res) => {
   }
 };
 
-// 8. Password Change Karna (Dashboard se)
 exports.changePassword = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -423,7 +403,6 @@ exports.changePassword = async (req, res) => {
   }
 };
 
-// 9. Content ko Save/Unsave Karna (Bookmark Toggle)
 exports.toggleSaveContent = async (req, res) => {
   try {
     const contentId = req.params.id;
@@ -455,7 +434,6 @@ exports.toggleSaveContent = async (req, res) => {
   }
 };
 
-// 11. Public Uploader Profile (Har koi dekh sake)
 exports.getPublicUserProfile = async (req, res) => {
   try {
     const userId = req.params.id;
@@ -471,7 +449,6 @@ exports.getPublicUserProfile = async (req, res) => {
   }
 };
 
-// 12. Top Uploaders Lena (Home Page ke liye)
 exports.getTopUploaders = async (req, res) => {
   try {
     const topUploaders = await Content.aggregate([
@@ -504,7 +481,6 @@ exports.getTopUploaders = async (req, res) => {
   }
 };
 
-// 13. Update FCM Token for Push Notifications
 exports.updateFCMToken = async (req, res) => {
   try {
     const { fcmToken } = req.body;
@@ -530,7 +506,6 @@ exports.updateFCMToken = async (req, res) => {
     user.fcmToken = fcmToken;
 
     // Use validateBeforeSave: false to avoid password validation issues 
-    // when just updating the token
     await user.save({ validateBeforeSave: false });
 
     res.status(200).json({

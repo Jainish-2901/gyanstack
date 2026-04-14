@@ -67,18 +67,18 @@ export default function SearchBar({ onSearch, initialValue = '', placeholder = '
 
       <style>{`
         .search-glass-container {
-          background: rgba(255, 255, 255, 0.7);
-          backdrop-filter: blur(10px);
-          -webkit-backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.3);
+          background: var(--glass-bg);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid var(--glass-border);
           transition: all 0.25s ease-in-out;
           width: 100%;
         }
 
         .search-glass-container:focus-within {
-          background: #ffffff;
-          box-shadow: 0 8px 20px rgba(99, 102, 241, 0.12) !important;
-          border-color: rgba(99, 102, 241, 0.4);
+          background: var(--surface-color);
+          box-shadow: 0 8px 30px rgba(99, 102, 241, 0.15) !important;
+          border-color: var(--primary);
         }
 
         /* Clean up standard search input behavior */

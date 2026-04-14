@@ -7,9 +7,9 @@ export default function ThemeToggle() {
   return (
     <button className="btn btn-outline-secondary border-0" onClick={toggleTheme}>
       {theme === 'light' ? (
-        <i className="bi bi-moon-stars-fill"></i> // Moon icon
+        <i className="bi bi-moon-stars-fill"></i>
       ) : (
-        <i className="bi bi-sun-fill"></i> // Sun icon
+        <i className="bi bi-sun-fill"></i>
       )}
     </button>
   );

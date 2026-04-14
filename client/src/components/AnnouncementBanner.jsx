@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../services/api'; // API use karein
+import api from '../services/api';
 
 export default function AnnouncementBanner() {
    const [announcements, setAnnouncements] = useState([]);

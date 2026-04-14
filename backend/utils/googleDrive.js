@@ -95,7 +95,6 @@ const uploadToDrive = async (file, folderNames = [], folderId = null) => {
         // Target folder ID resolve karein (Use provided ID or resolve from path)
         let targetFolderId = folderId;
         
-        // --- NAYA: Folder ID Validation ---
         // Agar folder ID diya gaya hai, to check karein ki woh abhi bhi Drive par hai
         if (targetFolderId) {
             try {

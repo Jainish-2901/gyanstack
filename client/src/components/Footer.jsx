@@ -24,7 +24,6 @@ export default function Footer() {
     <footer className="fancy-footer mt-5">
       <div className="container pt-5">
 
-        {/* --- 1. FEATURES BAR (Centered & Fully Visible) --- */}
         <div className="row justify-content-center g-4 mb-5 pb-5 border-bottom border-opacity-10 mx-auto" style={{ maxWidth: '1100px' }}>
           {features.map((feature, idx) => (
             <div key={idx} className="col-6 col-lg-3">
@@ -39,13 +38,12 @@ export default function Footer() {
           ))}
         </div>
 
-        {/* --- 2. MAIN FOOTER CONTENT --- */}
         <div className="row g-5 mb-5 text-center text-lg-start justify-content-center">
           {/* Brand Info */}
           <div className="col-lg-4 col-md-12">
             <Link className="navbar-brand d-inline-flex align-items-center mb-3" to="/" onClick={() => window.scrollTo(0, 0)}>
               <img src="/logo.png" alt="Logo" className="me-2" style={{ height: '35px' }} />
-              <span className="fw-bold fs-4">GyanStack</span>
+              <span className="fw-bold fs-4 gradient-text">GyanStack</span>
             </Link>
             <p className="footer-text mb-4 opacity-75 pe-lg-4 mx-auto mx-lg-0" style={{ maxWidth: '400px' }}>
               Your universal academic library. Empowering students with
@@ -100,11 +98,10 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* --- 3. BOTTOM BAR --- */}
         <div className="py-4 border-top border-opacity-10 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 text-center text-md-start">
           <div className="text-muted extra-small">
-            © {new Date().getFullYear()} <span className="fw-bold text-primary">GyanStack</span>.
-            Built for students, by students.
+            © {new Date().getFullYear()} <span className="fw-bold text-primary" style={{ color: 'var(--primary) !important' }}>GyanStack</span>.
+            Built for students, by student.
           </div>
           <div className="d-flex align-items-center">
             <a href={`https://www.linkedin.com/in/${socialLinks.linkedin}`} target="_blank" rel="noreferrer"
@@ -122,11 +119,11 @@ export default function Footer() {
         .footer-link:hover { color: var(--primary); transform: translateX(4px); }
         
         .social-link-sm {
-          width: 38px; height: 38px; border-radius: 12px; background: rgba(99, 102, 241, 0.08);
+          width: 38px; height: 38px; border-radius: 12px; background: var(--brand-50);
           color: var(--primary); display: flex; align-items: center; justify-content: center;
           transition: all 0.3s ease; text-decoration: none; font-size: 1.1rem;
         }
-        .social-link-sm:hover { background: var(--primary); color: white; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(99, 102, 241, 0.2); }
+        .social-link-sm:hover { background: var(--primary); color: white; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(16, 185, 129, 0.2); }
         
         .extra-small { font-size: 0.75rem; }
         .x-small { font-size: 0.8rem; }

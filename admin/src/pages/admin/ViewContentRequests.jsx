@@ -2,9 +2,8 @@ import React from 'react';
 import { useContentRequests, useRequestMutation } from '../../hooks/useAdminRequests';
 import LoadingScreen from '../../components/LoadingScreen';
 
-// 🚀 HELPER: Mobile Request Card
 const RequestCardMobile = ({ req, handleUpdateStatus, handleDelete }) => (
-    <div className="card mb-3 border-0 rounded-4 shadow-sm overflow-hidden bg-white mx-1">
+    <div className="glass-card mb-3 border-0 overflow-hidden mx-1">
         <div className="card-body p-3">
             <div className="d-flex justify-content-between align-items-start mb-2">
                 <div className="d-flex align-items-center gap-2">
@@ -12,7 +11,7 @@ const RequestCardMobile = ({ req, handleUpdateStatus, handleDelete }) => (
                         <i className="bi bi-person-fill"></i>
                     </div>
                     <div className="overflow-hidden">
-                        <div className="fw-bold small text-dark text-truncate" style={{ maxWidth: '120px' }}>{req.requestedBy?.username || 'Unknown'}</div>
+                        <div className="fw-bold small text-truncate" style={{ maxWidth: '120px', color: 'var(--text-primary)' }}>{req.requestedBy?.username || 'Unknown'}</div>
                         <div className="text-muted extra-small" style={{ fontSize: '0.65rem' }}>{req.requestedBy?.email}</div>
                     </div>
                 </div>
@@ -21,7 +20,7 @@ const RequestCardMobile = ({ req, handleUpdateStatus, handleDelete }) => (
                 </span>
             </div>
             
-            <div className="bg-light p-2 rounded-3 mb-2">
+            <div className="bg-primary bg-opacity-5 p-2 rounded-3 mb-2">
                 <div className="fw-bold small mb-1">{req.topic}</div>
                 <div className="small text-muted" style={{ fontSize: '0.75rem' }}>{req.message || 'No additional details.'}</div>
             </div>
@@ -60,7 +59,9 @@ export default function ViewContentRequests() {
     <div className="container-fluid fade-in px-1 px-md-3 overflow-x-hidden" style={{ overflowX: 'hidden' }}>
       <div className="d-flex justify-content-between align-items-center mb-3 px-1">
         <div>
-          <h5 className="fw-bold text-primary mb-0">Content Requests</h5>
+          <h4 className="fw-bold mb-0" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>
+             <i className="bi bi-chat-left-text text-primary me-2"></i>Content Requests
+          </h4>
           <p className="text-muted d-none d-md-block small mb-0">Manage and fulfill user requested topics</p>
         </div>
         <button onClick={() => refreshRequests()} className="btn btn-outline-primary btn-sm rounded-circle border-0 d-flex align-items-center justify-content-center" style={{ width: '32px', height: '32px' }}>
@@ -76,7 +77,7 @@ export default function ViewContentRequests() {
         )}
 
         {!loading && requests.length === 0 && (
-          <div className="p-5 text-center mt-4 border-0 rounded-4 bg-white mx-1">
+          <div className="p-5 text-center mt-4 border-0 glass-card mx-1">
             <i className="bi bi-chat-dots display-1 text-primary opacity-25 mb-4 d-block"></i>
             <h5 className="fw-bold">No Requests Found</h5>
             <p className="text-muted small">Users haven't requested any specific content yet.</p>
@@ -86,15 +87,15 @@ export default function ViewContentRequests() {
         {requests.length > 0 && (
           <div className="p-0 border-0 overflow-hidden rounded-4">
             {/* DESKTOP VIEW: Table */}
-            <div className="table-responsive d-none d-lg-block bg-white shadow-sm rounded-4">
-              <table className="table table-hover align-middle mb-0">
-                <thead className="bg-primary bg-opacity-10 border-0">
+            <div className="table-responsive d-none d-lg-block glass-card border-0 shadow-none">
+                <table className="table table-hover align-middle mb-0">
+                    <thead>
                   <tr>
-                    <th className="ps-4 py-3 border-0 text-primary small fw-bold text-uppercase">Requested By</th>
-                    <th className="py-3 border-0 text-primary small fw-bold text-uppercase">Topic</th>
-                    <th className="py-3 border-0 text-primary small fw-bold text-uppercase">Message</th>
-                    <th className="py-3 border-0 text-primary small fw-bold text-uppercase">Status</th>
-                    <th className="pe-4 py-3 border-0 text-primary small fw-bold text-uppercase text-end">Actions</th>
+                    <th className="ps-4 py-3 border-0 text-muted small fw-bold text-uppercase">Requested By</th>
+                    <th className="py-3 border-0 text-muted small fw-bold text-uppercase">Topic</th>
+                    <th className="py-3 border-0 text-muted small fw-bold text-uppercase">Message</th>
+                    <th className="py-3 border-0 text-muted small fw-bold text-uppercase">Status</th>
+                    <th className="pe-4 py-3 border-0 text-muted small fw-bold text-uppercase text-end">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -112,7 +113,7 @@ export default function ViewContentRequests() {
                         </div>
                       </td>
                       <td className="py-3">
-                        <span className="fw-medium text-dark">{req.topic}</span>
+                        <span className="fw-medium" style={{ color: 'var(--text-primary)' }}>{req.topic}</span>
                         <small className="d-block text-muted" style={{ fontSize: '0.7rem' }}>
                           Requested: {new Date(req.createdAt).toLocaleDateString()}
                         </small>

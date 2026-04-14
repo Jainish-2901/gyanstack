@@ -1,11 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { getAiResponse } = require('../controllers/aiController');
+const { getAiResponse, getChatHistory } = require('../controllers/aiController');
 const authMiddleware = require('../middleware/authMiddleware');
 
 const optionalAuth = require('../middleware/optionalAuth');
 
-// Everyone can chat with AI (User context added via optionalAuth)
 router.post('/chat', optionalAuth, getAiResponse);
+
+router.get('/history/:sessionId', authMiddleware, getChatHistory);
+router.get('/history', authMiddleware, getChatHistory);
 
 module.exports = router;

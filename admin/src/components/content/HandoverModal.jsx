@@ -1,10 +1,6 @@
 import React, { useState } from 'react';
 import api from '../../services/api';
 
-/**
- * HandoverModal: Handles the reassignment of content from one admin to another.
- * 🚀🛡️💎✨⚖️🎓💎🏙️❤️
- */
 const HandoverModal = ({ show, onClose, selectedIds, admins, onSuccess, onError }) => {
     const [newUploaderId, setNewUploaderId] = useState('');
     const [loading, setLoading] = useState(false);

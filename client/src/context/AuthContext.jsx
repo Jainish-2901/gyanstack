@@ -8,7 +8,6 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // --- HELPER: Load User on Refresh ---
   useEffect(() => {
     const loadUser = async () => {
       const token = localStorage.getItem('token');
@@ -27,7 +26,6 @@ export function AuthProvider({ children }) {
     loadUser();
   }, []);
 
-  // --- 1. Register ---
   const register = async (username, email, phone, password) => {
     try {
       const { data } = await api.post('/auth/register', {
@@ -41,7 +39,6 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // --- 2. Login ---
   const login = async (loginId, password, preFetchedData = null) => {
     try {
       const data = preFetchedData || (await api.post('/auth/login', {
@@ -57,15 +54,11 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // --- 3. Logout ---
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
-    // Note: You might want to call a backend route here to clear the fcmToken 
-    // so the user doesn't get notifications after logging out.
   };
 
-  // --- 4. Password Recovery ---
   const forgotPasswordRequest = async (email) => {
     try {
       const { data } = await api.post('/auth/forgotpassword', { email });
@@ -84,7 +77,6 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // --- 5. Profile & Security Updates ---
   const updateProfile = async (formData) => {
     try {
       const { data } = await api.put('/auth/update-profile', formData);
@@ -105,12 +97,9 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // --- 6. NEW: Manual FCM Token Sync ---
-  // This allows you to manually trigger a sync if needed outside of the NotificationBell
   const syncFCMToken = async (fcmToken) => {
     try {
       await api.post('/auth/update-fcm-token', { fcmToken });
-      console.log("FCM Token synced via AuthContext");
     } catch (error) {
       console.error("FCM Sync Background Error:", error);
     }
@@ -126,7 +115,7 @@ export function AuthProvider({ children }) {
     resetPassword,
     updateProfile,
     changePassword,
-    syncFCMToken, // Exported for global use
+    syncFCMToken,
   };
 
   if (loading) {

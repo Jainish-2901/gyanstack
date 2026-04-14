@@ -33,7 +33,6 @@ export const requestForToken = async () => {
 
     const permission = await Notification.requestPermission();
     if (permission === "granted") {
-      console.log("Notification permission granted (Admin).");
       
       const swUrl = `/firebase-messaging-sw.js?apiKey=${import.meta.env.VITE_FIREBASE_API_KEY}&authDomain=${import.meta.env.VITE_FIREBASE_AUTH_DOMAIN}&projectId=${import.meta.env.VITE_FIREBASE_PROJECT_ID}&storageBucket=${import.meta.env.VITE_FIREBASE_STORAGE_BUCKET}&messagingSenderId=${import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID}&appId=${import.meta.env.VITE_FIREBASE_APP_ID}`;
       
@@ -47,11 +46,9 @@ export const requestForToken = async () => {
       });
 
       if (currentToken) {
-        console.log("FCM Token (Admin):", currentToken);
         // Backend ko token bhejein
         try {
           await api.post("/announcements/subscribe", { fcmToken: currentToken });
-          console.log("Admin token sent to backend.");
         } catch (apiErr) {
           console.error("Failed to send admin token to backend:", apiErr.message);
         }

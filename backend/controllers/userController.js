@@ -1,6 +1,5 @@
 const Subscription = require('../models/subscriptionModel'); // Token Model
 
-// --- NAYA FUNCTION ---
 // User Subscription Token ko save/update karta hai
 exports.subscribeUser = async (req, res) => {
     try {
@@ -24,5 +23,4 @@ exports.subscribeUser = async (req, res) => {
         console.error("Subscription Error:", error.message);
         res.status(500).send('Server Error (subscribeUser)');
     }
-};
-// --------------------
+};

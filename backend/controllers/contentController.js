@@ -17,7 +17,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// --- HELPER FUNCTIONS ---
 exports.getPublicIdFromUrl = (url) => {
   if (!url) return null;
   try {
@@ -97,35 +96,24 @@ const cleanupEmptyCategoryFolder = async (categoryId) => {
   try {
     if (!categoryId || categoryId === 'root') return;
     
-    console.log(`Checking cleanup for category: ${categoryId}`);
 
-    // 1. Check if any content exists for this category
     const contentCount = await Content.countDocuments({ categoryId });
-    console.log(`Content count for ${categoryId}: ${contentCount}`);
     if (contentCount > 0) return;
 
-    // 2. Check if any child categories exist
     const childCategories = await Category.countDocuments({ parentId: categoryId });
-    console.log(`Child categories count for ${categoryId}: ${childCategories}`);
     if (childCategories > 0) return;
 
-    // 3. Get folder path names and ID
     const { names: folderPath, folderId } = await getCategoryPath(categoryId);
-    console.log(`Folder path/ID for cleanup of ${categoryId}:`, folderPath, folderId);
     
     if (!folderId || folderId === process.env.GOOGLE_DRIVE_FOLDER_ID) {
-        console.log("Root folder or missing ID, skipping Drive deletion.");
         return;
     }
 
-    // 4. Final verify: Is the folder actually empty on Drive too?
     try {
       const physicallyEmpty = await isDriveFolderEmpty(folderId);
       if (physicallyEmpty) {
         await deleteFromDrive(folderId);
-        console.log(`Successfully deleted empty category folder [${folderPath.join('/')}] ID: ${folderId}`);
       } else {
-        console.log(`Folder [${folderPath.join('/')}] not deleted because it still contains files or subfolders.`);
       }
     } catch (err) {
       console.warn("Drive cleanup verification failed:", err.message);
@@ -134,13 +122,8 @@ const cleanupEmptyCategoryFolder = async (categoryId) => {
     console.error("Cleanup Folder Error:", err.message);
   }
 };
-// -----------------------
 
-// 1. Naya Content Upload Karna (Google Drive)
 exports.uploadContent = async (req, res) => {
-  console.log("--- START UPLOAD REQUEST ---");
-  console.log("Body:", req.body);
-  console.log("Files:", req.files ? req.files.map(f => f.originalname) : "No files");
   
   try {
     let { title, type, link, textNote, categoryId, tags } = req.body;
@@ -162,7 +145,6 @@ exports.uploadContent = async (req, res) => {
     const uploadedItems = [];
     let lastError = null;
     
-    // --- BATCH UPLOAD (Google Drive) ---
     if (req.files && req.files.length > 0) {
       const { names: folderPath, folderId: directFolderId } = await getCategoryPath(categoryId);
       
@@ -172,7 +154,6 @@ exports.uploadContent = async (req, res) => {
         let currentFilePath = file.path;
 
         try {
-          // --- IMAGE OPTIMIZATION ---
           if (file.mimetype.startsWith('image/') && !file.mimetype.includes('svg')) {
             try {
               const optName = `opt-${Date.now()}-${path.parse(file.originalname).name}.webp`;
@@ -191,7 +172,6 @@ exports.uploadContent = async (req, res) => {
               console.warn("Sharp optimization failed:", sharpErr.message);
             }
           } 
-          // --- VIDEO OPTIMIZATION ---
           else if (file.mimetype.startsWith('video/') && file.size > 15 * 1024 * 1024) { 
             try {
               const optName = `opt-${Date.now()}-${path.parse(file.originalname).name}.mp4`;
@@ -216,16 +196,11 @@ exports.uploadContent = async (req, res) => {
           }
 
           // Upload to Drive
-          console.log(`Uploading file ${file.originalname} to Drive...`);
           const driveData = await uploadToDrive({ ...file, path: currentFilePath }, folderPath, directFolderId);
-          console.log(`Drive upload success: ${driveData.id}`);
           
-          // --- NAYA: Sync Folder ID if it was recalibrated ---
           if (driveData.parentFolderId && driveData.parentFolderId !== directFolderId) {
-            console.log("Syncing new folder ID to Category:", driveData.parentFolderId);
             await Category.findByIdAndUpdate(categoryId, { googleDriveFolderId: driveData.parentFolderId });
           }
-          // ----------------------------------------------------
           
           const filename = file.originalname;
           const nameWithoutExt = filename.split('.').slice(0, -1).join('.') || filename;
@@ -242,7 +217,6 @@ exports.uploadContent = async (req, res) => {
           });
           
           const savedItem = await newContent.save();
-          console.log(`Database entry created for: ${savedItem.title}`);
           uploadedItems.push(savedItem);
           
           // Cleanup
@@ -274,7 +248,6 @@ exports.uploadContent = async (req, res) => {
           const { externalMimeType } = req.body;
           if (externalMimeType && externalMimeType !== 'application/octet-stream') {
             finalFileType = externalMimeType;
-            console.log(`Using admin-selected MIME type: ${finalFileType}`);
           }
 
           // PRIORITY 2: Extract Google Drive file ID and try API metadata
@@ -297,7 +270,6 @@ exports.uploadContent = async (req, res) => {
               if (meta && !meta.trashed) {
                 finalFileType = meta.mimeType;
                 if (!title) title = meta.name ? meta.name.split('.').slice(0, -1).join('.') || meta.name : '';
-                console.log(`Auto-detected from Drive API: ${meta.name} (${meta.mimeType})`);
               } else {
                 // PRIORITY 3: Guess from URL extension (last resort — rarely works for Drive URLs)
                 const extMatch = link.match(/\.([a-z0-9]+)([?#]|$)/i);
@@ -341,12 +313,9 @@ exports.uploadContent = async (req, res) => {
         tags: tagsArray,
         uploadedBy: req.user.id, 
       });
-      console.log("Saving individual item to DB...");
       const saved = await newContent.save();
-      console.log("Save success:", saved._id);
       uploadedItems.push(saved);
     }
-    // --- END BATCH UPLOAD LOGIC ---
 
     if (uploadedItems.length === 0) {
         console.error("CRITICAL: No items uploaded. lastError:", lastError);
@@ -373,7 +342,6 @@ exports.uploadContent = async (req, res) => {
   }
 };
 
-// 2. Sabhi Content Lena (Filtering ke saath) (Public)
 // ... (Ye function pehle jaisa hi sahi hai, koi change nahi) ...
 exports.getContent = async (req, res) => {
   try {
@@ -417,7 +385,6 @@ exports.getContent = async (req, res) => {
       query.$text = { $search: req.query.search };
     }
     
-    // --- DYNAMIC SORTING LOGIC ---
     let sortObj = { createdAt: -1 }; // Default: Recently Added
     const { sortBy, order } = req.query;
     const sortOrder = order === 'asc' ? 1 : -1;
@@ -466,7 +433,6 @@ exports.getContent = async (req, res) => {
   }
 };
 
-// 3. Ek Single Content Piece Lena (Aur View Count badhana)
 // skipView=true → only fetch, do NOT increment (used by client when already counted in session)
 exports.getSingleContent = async (req, res) => {
   try {
@@ -500,7 +466,6 @@ exports.getSingleContent = async (req, res) => {
   }
 };
 
-// 4. Content ko Like/Unlike Karna (Toggle)
 // ... (Ye function pehle jaisa hi sahi hai, koi change nahi) ...
 exports.likeContent = async (req, res) => {
   try {
@@ -528,7 +493,6 @@ exports.likeContent = async (req, res) => {
   }
 };
 
-// 5. Admin ka Apna Content Fetch Karna (Admin Only)
 // ... (Ye function pehle jaisa hi sahi hai, koi change nahi) ...
 exports.getMyContent = async (req, res) => {
   try {
@@ -553,7 +517,6 @@ exports.updateContent = async (req, res) => {
         return res.status(401).json({ message: 'User not authorized' });
       }
       
-      // Update karne ke liye data object
       const updateData = {};
       if (title) updateData.title = title;
       if (categoryId) updateData.categoryId = categoryId;
@@ -565,7 +528,6 @@ exports.updateContent = async (req, res) => {
       // Allow admin to correct the MIME type (e.g. fix octet-stream on external Drive links)
       if (fileType) updateData.type = fileType;
 
-    // --- FILE REPLACE LOGIC ---
     if (req.file) {
       // Purana file delete karein
       if (content.googleDriveId) {
@@ -635,7 +597,6 @@ exports.updateContent = async (req, res) => {
 
       if (fs.existsSync(currentFilePath)) fs.unlinkSync(currentFilePath);
     } 
-    // --- SYNC WITH DRIVE (Title ya Category change hone par) ---
     else if (content.googleDriveId) {
       let syncName = null;
       let syncPathNames = null;
@@ -680,7 +641,6 @@ exports.updateContent = async (req, res) => {
   }
 };
 
-// 7. Content Delete Karna (Admin Only) - (CHANGED)
 exports.deleteContent = async (req, res) => {
   try {
     let content = await Content.findById(req.params.id);
@@ -691,7 +651,6 @@ exports.deleteContent = async (req, res) => {
       return res.status(401).json({ message: 'User not authorized' });
     }
     
-    // --- DELETE LOGIC (Google Drive) ---
     let driveIdToDelete = content.googleDriveId;
 
     // Aggressive check for external links that might have missed the ID in DB
@@ -783,8 +742,6 @@ exports.bulkDeleteContent = async (req, res) => {
   }
 };
 
-// --- NAYA FUNCTION (SAVE/BOOKMARK) ---
-// 8. Content ko Save/Unsave Karna (Toggle)
 exports.saveContent = async (req, res) => {
   try {
     const content = await Content.findById(req.params.id);
@@ -796,11 +753,9 @@ exports.saveContent = async (req, res) => {
     const userIndex = content.savedBy.findIndex(userId => userId.equals(req.user.id));
 
     if (userIndex > -1) {
-      // Agar mil gaya, to unsave karein
       content.savedBy.splice(userIndex, 1);
       content.savesCount = Math.max(0, content.savesCount - 1); // Niche -1 na jaaye
     } else {
-      // Agar nahi mila, to save karein
       content.savedBy.push(req.user.id);
       content.savesCount += 1;
     }
@@ -816,7 +771,6 @@ exports.saveContent = async (req, res) => {
   }
 };
 
-// 9. User ke sabhi saved items ko fetch karna
 exports.getSavedContent = async (req, res) => {
   try {
     // Aisa content dhoondein jiske 'savedBy' array me current user ki ID ho
@@ -832,7 +786,6 @@ exports.getSavedContent = async (req, res) => {
   }
 };
 
-// 10. Download count ko track karna
 exports.trackDownload = async (req, res) => {
   try {
     // Sirf $inc (increment) operation ka istemaal karein
@@ -855,11 +808,8 @@ exports.trackDownload = async (req, res) => {
     res.status(500).send('Server error (trackDownload)');
   }
 };
-// --- END OF NAYA FUNCTION ---
 
-// --- SUPERADMIN ONLY FUNCTIONS ---
 
-// 11. Content Reassign Karna (Handover logic)
 exports.reassignContent = async (req, res) => {
   try {
     const { contentIds, newUploaderId } = req.body;

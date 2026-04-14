@@ -6,7 +6,6 @@ const api = axios.create({
   baseURL: API_URL,
 });
 
-/* JWT token add karta hai */
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');

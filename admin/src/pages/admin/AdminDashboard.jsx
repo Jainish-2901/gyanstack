@@ -12,7 +12,9 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import ChartDataLabels from 'chartjs-plugin-datalabels'; // Zaroori: plugin for counting on bars
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+import { motion } from 'framer-motion';
+import { fadeInUp, staggerContainer, metricVariants } from '../../utils/animations';
 
 ChartJS.register(
   CategoryScale,
@@ -22,32 +24,31 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  ChartDataLabels // Registering the counting plugin
+  ChartDataLabels
 );
 
 const MetricTile = ({ title, value, icon, color }) => (
-  <div className="col-6 col-md-3">
-    <div className="card border-0 shadow-sm rounded-4 h-100 transition-hover">
+  <motion.div className="col-6 col-md-3" variants={metricVariants}>
+    <div className="glass-card shadow-sm h-100 transition-hover">
       <div className="card-body p-2 p-md-3 d-flex align-items-center">
         <div
-          className={`rounded-circle bg-${color} bg-opacity-10 d-flex align-items-center justify-content-center text-${color} me-2 me-md-3`}
+          className={`rounded-circle bg-${color} bg-opacity-10 d-flex align-items-center justify-content-center text-${color} me-2 me-md-3 shadow-sm`}
           style={{ width: '45px', height: '45px', minWidth: '45px' }}
         >
           <i className={`bi ${icon} fs-5`}></i>
         </div>
         <div className="flex-grow-1 overflow-hidden text-start">
-          <h6 className="text-muted extra-small text-uppercase fw-bold mb-0 text-truncate">{title}</h6>
-          <h4 className="fw-bold mb-0 text-dark">{value?.toLocaleString() || 0}</h4>
+          <h6 className="text-muted extra-small text-uppercase fw-bold mb-1 text-truncate tracking-wider">{title}</h6>
+          <h4 className="fw-bold mb-0" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>{value?.toLocaleString() || 0}</h4>
         </div>
       </div>
     </div>
-  </div>
+  </motion.div>
 );
 
 export default function AdminDashboard() {
   const [period, setPeriod] = useState('all');
   
-  // Use TanStack Query hook
   const { 
     data: stats, 
     isLoading: loading, 
@@ -62,9 +63,10 @@ export default function AdminDashboard() {
       labels: ['Likes', 'Saves', 'Downloads', 'Views'],
       datasets: [{
         data: [stats.totalLikes || 0, stats.totalSaves || 0, stats.totalDownloads || 0, stats.totalViews || 0],
-        backgroundColor: ['#FF6384', '#4BC0C0', '#FFCE56', '#36A2EB'],
+        backgroundColor: ['#14b8a6', '#10b981', '#34d399', '#0ea5e9'],
+        hoverBackgroundColor: ['#0d9488', '#059669', '#10b981', '#0284c7'],
         borderRadius: 8,
-        barThickness: 40, // Increased thickness for wide view
+        barThickness: 35,
       }]
     };
   }, [stats]);
@@ -80,8 +82,9 @@ export default function AdminDashboard() {
         labels: ['Google Sync', 'Manual Entry'],
         datasets: [{
           data: [google, manual],
-          backgroundColor: ['#EA4335', '#0D6EFD'],
+          backgroundColor: ['#10b981', '#14b8a6'],
           borderWidth: 0,
+          weight: 0.5,
           cutout: '75%',
         }]
       }
@@ -98,30 +101,36 @@ export default function AdminDashboard() {
       {/* HEADER SECTION */}
       <div className="d-flex justify-content-between align-items-center mb-4 px-1">
         <div>
-          <h5 className="fw-bold text-dark mb-0">Platform Pulse</h5>
-          <small className="text-muted extra-small">Real-time engagement tracking</small>
+          <h4 className="fw-bold mb-0" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>
+            <i className="bi bi-activity text-primary me-2"></i>Platform Pulse
+          </h4>
+          <small className="text-muted extra-small tracking-wider text-uppercase">Real-time engagement tracking</small>
         </div>
 
-        {/* UPDATED DROPDOWN STYLING */}
-        <div className="d-flex align-items-center bg-white border border-light-subtle rounded-pill px-3 py-1 shadow-sm transition-hover"
+        <div className="d-flex align-items-center glass-panel rounded-pill px-3 py-1 shadow-sm transition-hover border"
           style={{ minWidth: '180px', transition: 'all 0.2s ease' }}>
           <i className="bi bi-calendar3 text-primary me-2 small"></i>
           <select
-            className="form-select form-select-sm fw-bold text-dark shadow-none bg-transparent p-0"
-            style={{ fontSize: '0.85rem', cursor: 'pointer', border: 'none', outline: 'none', backgroundImage: 'none' }}
+            className="form-select form-select-sm fw-bold shadow-none bg-transparent p-0 border-0"
+            style={{ fontSize: '0.85rem', cursor: 'pointer', outline: 'none', backgroundImage: 'none', color: 'var(--text-primary)' }}
             value={period}
             onChange={(e) => setPeriod(e.target.value)}
           >
-            <option value="all">Total Lifetime</option>
-            <option value="week">Past Week</option>
-            <option value="month">Past Month</option>
+            <option value="all" className={period === 'all' ? 'text-primary' : ''}>Total Lifetime</option>
+            <option value="week" className={period === 'week' ? 'text-primary' : ''}>Past Week</option>
+            <option value="month" className={period === 'month' ? 'text-primary' : ''}>Past Month</option>
           </select>
           <i className="bi bi-chevron-down small text-muted ms-1" style={{ fontSize: '0.7rem' }}></i>
         </div>
       </div>
 
       {/* METRIC TILES GRID */}
-      <div className="row g-2 g-md-3 mb-4">
+      <motion.div 
+        className="row g-2 g-md-3 mb-4"
+        variants={staggerContainer}
+        initial="initial"
+        animate="animate"
+      >
         <MetricTile title="Total Uploads" value={stats.totalUploads} icon="bi-cloud-arrow-up-fill" color="primary" />
         <MetricTile title="Total Users" value={stats.totalUsers} icon="bi-people-fill" color="success" />
         <MetricTile title="Google Sync" value={stats.googleUsersCount} icon="bi-google" color="danger" />
@@ -130,14 +139,14 @@ export default function AdminDashboard() {
         <MetricTile title="Total Likes" value={stats.totalLikes} icon="bi-heart-fill" color="danger" />
         <MetricTile title="Total Saves" value={stats.totalSaves} icon="bi-bookmark-star-fill" color="success" />
         <MetricTile title="Downloads" value={stats.totalDownloads} icon="bi-download" color="warning" />
-      </div>
+      </motion.div>
 
-      <div className="row g-3">
+      <motion.div className="row g-3" variants={fadeInUp} initial="initial" animate="animate">
         {/* FULL WIDTH ACTION DISTRIBUTION CHART */}
         <div className="col-12">
-          <div className="card border-0 shadow-sm rounded-4">
+          <div className="glass-card shadow-sm border-0">
             <div className="card-body p-4">
-              <h6 className="fw-bold mb-4 small text-uppercase text-muted">Action Distribution Analysis</h6>
+              <h6 className="fw-bold mb-4 small text-uppercase text-muted tracking-wider">Action Distribution Analysis</h6>
               <div style={{ height: '360px' }}>
                 <Bar
                   data={engagementChart}
@@ -146,16 +155,19 @@ export default function AdminDashboard() {
                     maintainAspectRatio: false,
                     plugins: {
                       legend: { display: false },
-                      datalabels: { // Count display logic
+                      datalabels: {
                         anchor: 'end',
                         align: 'top',
                         formatter: (value) => value.toLocaleString(),
                         font: { weight: 'bold', size: 12 },
-                        color: '#475569'
+                        color: document.documentElement.getAttribute('data-bs-theme') === 'dark' ? '#94a3b8' : '#475569'
                       }
                     },
                     scales: {
-                      y: { display: false }, // Hiding Y axis to make it cleaner since we have labels
+                      y: { 
+                        display: false, 
+                        grace: '15%'
+                      },
                       x: { grid: { display: false }, ticks: { font: { weight: 'bold' } } }
                     }
                   }}
@@ -165,42 +177,40 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* LOGIN SOURCE */}
         <div className="col-md-4">
-          <div className="card border-0 shadow-sm rounded-4 h-100">
+          <div className="glass-card shadow-sm h-100 border-0">
             <div className="card-body p-4">
-              <h6 className="fw-bold small text-uppercase text-muted mb-4">Traffic Channel</h6>
+              <h6 className="fw-bold small text-uppercase text-muted mb-4 tracking-wider">Traffic Channel</h6>
               <div style={{ height: '180px', position: 'relative' }}>
                 <Doughnut
                   data={authDistribution.chartData}
                   options={{ maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: false } } }}
                 />
                 <div className="chart-center-label text-center">
-                  <h3 className="fw-bold mb-0 text-dark">{authDistribution.percentage}%</h3>
+                  <h3 className="fw-bold mb-0" style={{ color: 'var(--text-primary)' }}>{authDistribution.percentage}%</h3>
                   <small className="text-muted extra-small fw-bold">GOOGLE</small>
                 </div>
               </div>
               <div className="mt-4">
                 <div className="d-flex justify-content-between mb-2">
-                  <small className="fw-bold text-muted extra-small"><i className="bi bi-circle-fill text-danger me-1"></i> Google</small>
-                  <small className="fw-bold">{stats.googleUsersCount}</small>
+                  <small className="fw-bold text-muted extra-small"><i className="bi bi-circle-fill text-danger me-1" style={{ color: '#10b981 !important' }}></i> Google Sync</small>
+                  <small className="fw-bold" style={{ color: 'var(--text-primary)' }}>{stats.googleUsersCount}</small>
                 </div>
                 <div className="d-flex justify-content-between">
-                  <small className="fw-bold text-muted extra-small"><i className="bi bi-circle-fill text-primary me-1"></i> Manual</small>
-                  <small className="fw-bold">{stats.manualUsersCount}</small>
+                  <small className="fw-bold text-muted extra-small"><i className="bi bi-circle-fill text-primary me-1" style={{ color: '#14b8a6 !important' }}></i> Manual Entry</small>
+                  <small className="fw-bold" style={{ color: 'var(--text-primary)' }}>{stats.manualUsersCount}</small>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* SYSTEM VITALITY */}
         <div className="col-md-8">
-          <div className="card border-0 shadow-sm rounded-4 h-100">
+          <div className="glass-card shadow-sm h-100 border-0">
             <div className="card-body p-4">
               <div className="d-flex justify-content-between align-items-center mb-4">
-                <h6 className="fw-bold small text-uppercase text-muted mb-0">System Vitality</h6>
-                <span className="badge bg-success bg-opacity-10 text-success extra-small rounded-pill">OPTIMIZED</span>
+                <h6 className="fw-bold small text-uppercase text-muted mb-0 tracking-wider">System Vitality</h6>
+                <span className="badge bg-primary bg-opacity-10 text-primary extra-small rounded-pill px-3">OPTIMIZED</span>
               </div>
               <div className="row g-4">
                 {[
@@ -211,7 +221,7 @@ export default function AdminDashboard() {
                 ].map((item, idx) => (
                   <div className="col-md-6" key={idx}>
                     <div className="d-flex align-items-center mb-2">
-                      <small className="extra-small fw-bold text-dark">{item.label}</small>
+                      <small className="extra-small fw-bold" style={{ color: 'var(--text-primary)' }}>{item.label}</small>
                       <span className="ms-auto extra-small fw-bold text-muted">{item.val.toFixed(1)}%</span>
                     </div>
                     <div className="progress rounded-pill mb-1" style={{ height: '6px' }}>
@@ -223,7 +233,7 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       <style>{`
         .extra-small { font-size: 0.65rem; letter-spacing: 0.3px; }

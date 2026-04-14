@@ -1,9 +1,6 @@
 const User = require('../models/userModel');
-// --- FIX: Content Model Import Zaroori Hai ---
 const Content = require('../models/contentModel');
-// ---------------------------------------------
 
-// 1. Sabhi Users ko Fetch Karna (SuperAdmin Only)
 exports.getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select('-password');
@@ -14,7 +11,6 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
-// 2. User ka Role Badlna (SuperAdmin Only)
 exports.updateUserRole = async (req, res) => {
   try {
     const { role } = req.body;
@@ -33,7 +29,6 @@ exports.updateUserRole = async (req, res) => {
   }
 };
 
-// 3. Dashboard Stats Fetch Karna (Admin/SuperAdmin)
 exports.getDashboardStats = async (req, res) => {
   try {
     const { period = 'month' } = req.query; // Default to 'month'
@@ -89,7 +84,6 @@ exports.getDashboardStats = async (req, res) => {
       stats = contentStats[0];
       delete stats._id;
     } else {
-      // FIX 2: Crash hone se bachane ke liye 0 values return karein
       stats = {
         totalUploads: 0,
         totalViews: 0,
@@ -114,7 +108,6 @@ exports.getDashboardStats = async (req, res) => {
   }
 };
 
-// 4. User ko Soft Delete Karna (SuperAdmin Only)
 exports.deleteUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);

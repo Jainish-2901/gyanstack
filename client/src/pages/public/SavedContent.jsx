@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-// FIX: Paths को 'src' root मानकर absolute किया गया है
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api'; 
 import LoadingScreen from '../../components/LoadingScreen';
 import ContentCard from '../../components/ContentCard';
-// DashboardLayout removed
 
 export default function SavedContent() {
   const { user } = useAuth();
   const [savedContent, setSavedContent] = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate(); // <-- Hook initialize kiya
+  const navigate = useNavigate(); 
 
   useEffect(() => {
     if (!user) {
@@ -34,9 +32,8 @@ export default function SavedContent() {
     fetchSavedContent();
   }, [user]);
   
-  // Back button function
   const handleGoBack = () => {
-    navigate(-1); // History mein ek step peeche jaao
+    navigate(-1); 
   };
 
 
@@ -47,12 +44,10 @@ export default function SavedContent() {
   return (
     <div className="container-fluid fade-in">
       
-      {/* --- BACK BUTTON --- */}
       <button onClick={handleGoBack} className="btn btn-outline-secondary mb-3 btn-sm rounded-pill px-3">
         <i className="bi bi-arrow-left me-2"></i>
         Go Back
       </button>
-      {/* ------------------- */}
       
       <h3 className="fw-bold mb-4 text-primary">My Saved Content</h3>
       

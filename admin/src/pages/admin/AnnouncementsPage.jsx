@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../services/api'; 
 import LoadingScreen from '../../components/LoadingScreen'; 
 import { useAuth } from '../../context/AuthContext'; 
-// -------------------
 
-// Announcement Item Card Component
 const AnnouncementItem = ({ ann }) => {
   return (
     <div className="card mb-4 border-0 rounded-4 shadow-sm glass-panel transition-hover overflow-hidden bg-white">

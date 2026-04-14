@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema({
   phone: {
     type: String,
     unique: true,
-    sparse: true, // Allow multiple nulls for Google users
+    sparse: true, 
     trim: true,
   },
   password: {
@@ -43,7 +43,6 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  // Forgot Password ke liye
   resetPasswordOtp: String,
   resetPasswordExpire: Date,
 
@@ -55,13 +54,16 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  lastSeenAnnId: {
+    type: String,
+    default: ''
+  },
   isDeleted: {
     type: Boolean,
     default: false
   },
 });
 
-// Password Hash karne ke liye (automatic)
 // User save hone se pehle, yeh function chalega
 userSchema.pre('save', async function (next) {
   // Agar password modify nahi hua hai (jaise role change), toh hashing na karein
@@ -75,7 +77,6 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-// Password compare karne ke liye function
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };

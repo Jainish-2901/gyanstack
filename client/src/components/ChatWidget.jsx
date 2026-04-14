@@ -16,38 +16,59 @@ export default function ChatWidget() {
     ]);
     const [loading, setLoading] = useState(false);
     const [guestCount, setGuestCount] = useState(0);
-    const [selections, setSelections] = useState(null); // { options: [{label, path}] }
+    const [selections, setSelections] = useState(null);
+    const [sessionId, setSessionId] = useState('');
     const chatEndRef = useRef(null);
 
-    // 1. Initial Load: Restore history and guest count from localStorage
     useEffect(() => {
-        const savedHistory = localStorage.getItem('gyanstack_ai_history');
-        if (savedHistory) {
-            setChatHistory(JSON.parse(savedHistory));
+        let currentSession = sessionStorage.getItem('gyanstack_chat_session');
+        if (!currentSession) {
+            currentSession = `session_${Math.random().toString(36).substr(2, 9)}_${Date.now()}`;
+            sessionStorage.setItem('gyanstack_chat_session', currentSession);
+        }
+        setSessionId(currentSession);
+
+        if (!user) {
+            const savedHistory = localStorage.getItem('gyanstack_ai_history');
+            if (savedHistory) {
+                setChatHistory(JSON.parse(savedHistory));
+            }
         }
 
         const savedCount = localStorage.getItem('gyanstack_guest_count');
         if (savedCount) {
             setGuestCount(parseInt(savedCount));
         }
-    }, []);
+    }, [user]);
 
-    // 2. Persist Chat History to LocalStorage — DEBOUNCED
-    // Writing JSON.stringify synchronously on every state update blocked the main thread.
-    // Debounce: only write 500ms after the last update, and cap at 20 messages.
+    useEffect(() => {
+        if (user && sessionId) {
+            const fetchHistory = async () => {
+                try {
+                    const { data } = await api.get(`/ai/history/${sessionId}`);
+                    if (data.messages && data.messages.length > 0) {
+                        setChatHistory(data.messages);
+                    }
+                } catch (err) {
+                    console.error("Failed to load study history:", err);
+                }
+            };
+            fetchHistory();
+        }
+    }, [user, sessionId]);
+
     const saveTimerRef = useRef(null);
     useEffect(() => {
-        if (chatHistory.length > 1) {
+        if (!user && chatHistory.length > 1) {
             if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
             saveTimerRef.current = setTimeout(() => {
-                const toSave = chatHistory.slice(-20); // Keep only last 20 messages
+                const toSave = chatHistory.slice(-20);
                 localStorage.setItem('gyanstack_ai_history', JSON.stringify(toSave));
             }, 500);
         }
         return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
-    }, [chatHistory]);
+    }, [chatHistory, user]);
 
-    // 3. Clear guest count upon login, but KEEP history
     useEffect(() => {
         if (user) {
             localStorage.removeItem('gyanstack_guest_count');
@@ -55,14 +76,12 @@ export default function ChatWidget() {
         }
     }, [user]);
 
-    // Scroll to bottom
     useEffect(() => {
         if (chatEndRef.current) {
             chatEndRef.current.scrollIntoView({ behavior: "smooth" });
         }
     }, [chatHistory, isOpen]);
 
-    // Listen for global toggle
     useEffect(() => {
         const handleToggle = () => setIsOpen(true);
         window.addEventListener('toggle-ai-chat', handleToggle);
@@ -73,7 +92,6 @@ export default function ChatWidget() {
         e.preventDefault();
         if (!message.trim() || loading) return;
 
-        // Check Guest Limit
         if (!user && guestCount >= GUEST_MESSAGE_LIMIT) return;
 
         const userMsg = { role: 'user', content: message };
@@ -87,36 +105,29 @@ export default function ChatWidget() {
             const { data } = await api.post('/ai/chat', {
                 message: message,
                 chatHistory: updatedHistory.slice(-10),
-                currentPath: window.location.pathname
+                currentPath: window.location.pathname,
+                sessionId
             });
             
             setChatHistory(curr => [...curr, { role: 'assistant', content: data.reply }]);
-            setSelections(null); // clear old selections on every new response
+            setSelections(null);
             
-            // Handle navigation action from AI
             if (data.action?.type === 'navigate') {
-                setTimeout(() => {
-                    setIsOpen(false);
-                    navigate(data.action.path);
-                }, 1200);
+                navigate(data.action.path); 
             }
 
-            // Handle selections action from AI
             if (data.action?.type === 'selections') {
                 setSelections(data.action.options);
             }
             
-            // Increment Guest Count
             if (!user) {
                 const newCount = guestCount + 1;
                 setGuestCount(newCount);
                 localStorage.setItem('gyanstack_guest_count', newCount.toString());
             }
 
-            // Handle success action from AI
             if (data.action?.type === 'request_success') {
                 setSelections(null);
-                // The AI reply will already contain the success text
             }
 
         } catch (err) {
@@ -132,7 +143,6 @@ export default function ChatWidget() {
     const handleSelectOption = (path, label) => {
         setSelections(null);
 
-        // Safety: If path is missing, inform the user humbly
         if (!path || path === 'null' || path === 'undefined') {
             setChatHistory(curr => [
                 ...curr,
@@ -142,7 +152,6 @@ export default function ChatWidget() {
             return;
         }
 
-        // If it's a category or broad path, we stay in chat to show more details
         if (path.includes('category=') || path.startsWith('/browse')) {
             const userMsg = { role: 'user', content: label };
             setChatHistory(curr => [...curr, userMsg]);
@@ -150,12 +159,13 @@ export default function ChatWidget() {
             setLoading(true);
             api.post('/ai/chat', {
                 message: label,
-                chatHistory: [...chatHistory, userMsg].slice(-10)
+                chatHistory: [...chatHistory, userMsg].slice(-10),
+                sessionId
             }).then(({ data }) => {
                 setChatHistory(curr => [...curr, { role: 'assistant', content: data.reply }]);
                 if (data.action?.type === 'selections') setSelections(data.action.options);
                 if (data.action?.type === 'navigate') {
-                   setTimeout(() => { setIsOpen(false); navigate(data.action.path); }, 1200);
+                   navigate(data.action.path); 
                 }
             }).catch(err => {
                 const errorMsg = err.response?.data?.message || 'Sorry, let me try that again.';
@@ -167,17 +177,13 @@ export default function ChatWidget() {
             return;
         }
 
-        // For direct content/pages, navigate instantly with a confirmation
         setChatHistory(curr => [
             ...curr,
             { role: 'user', content: label },
             { role: 'assistant', content: `Opening **${label}** for you... 🚀` }
         ]);
         
-        setTimeout(() => {
-            setIsOpen(false);
-            navigate(path);
-        }, 800);
+        navigate(path); 
     };
 
     return (
@@ -185,7 +191,7 @@ export default function ChatWidget() {
             {/* Chat Window */}
             {isOpen && (
                 <div className="chat-window shadow-lg border-0 fade-in glass-panel">
-                    <div className="chat-header d-flex justify-content-between align-items-center p-3 bg-primary text-white rounded-top-4">
+                    <div className="chat-header d-flex justify-content-between align-items-center p-3 text-white rounded-top-4" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}>
                         <div className="d-flex align-items-center">
                             <div className="ai-avatar me-2">
                                 <i className="bi bi-robot fs-4"></i>
@@ -211,7 +217,6 @@ export default function ChatWidget() {
                                     >
                                         {chat.content}
                                     </ReactMarkdown>
-                                    {/* Render selection buttons below the LAST assistant message */}
                                     {chat.role === 'assistant' && index === chatHistory.length - 1 && selections && (
                                         <div className="mt-2 d-flex flex-wrap gap-2">
                                             {selections.map((opt, i) => (
@@ -307,14 +312,14 @@ export default function ChatWidget() {
                     box-shadow: 0 10px 40px rgba(0,0,0,0.2);
                     animation: slideUp 0.3s ease-out; 
                 }
-                .ai-avatar { width: 40px; height: 40px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #6366f1; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-                .chat-toggle-btn { width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color: white; border: none; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-                .chat-toggle-btn:hover { transform: scale(1.1) rotate(5deg); box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4); }
+                .ai-avatar { width: 40px; height: 40px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #10b981; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+                .chat-toggle-btn { width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%); color: white; border: none; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+                .chat-toggle-btn:hover { transform: scale(1.1) rotate(5deg); box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4); }
                 .chat-toggle-btn.active { transform: rotate(90deg); }
                 .notification-badge { position: absolute; top: 0; right: 0; width: 22px; height: 22px; border: 2px solid white; border-radius: 50%; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; animation: pulse 2s infinite; }
                 
                 .message-bubble { font-size: 0.9rem; line-height: 1.5; word-wrap: break-word; position: relative; }
-                .message-bubble.bg-primary { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important; color: white !important; }
+                .message-bubble.bg-primary { background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; color: white !important; }
                 
                 /* Dark Mode Compatibility for Bubbles */
                 .message-bubble.bg-light { 

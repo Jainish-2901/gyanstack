@@ -7,7 +7,6 @@ import { useNestedCategories } from '../../hooks/useCategories';
 import { useCategoryContent } from '../../hooks/useContent';
 import ContentCard from '../../components/ContentCard';
 import { StatsSkeleton, CardSkeleton, ListSkeleton } from '../../components/SkeletonLoaders';
-// Feature Card Component (Styling ke liye)
 const FeatureCard = ({ icon, title, text, colorClass }) => (
   <div className="col-lg-3 col-md-6 mb-4 fade-in">
     <div className={`feature-card d-flex flex-column h-100`}>
@@ -20,11 +19,6 @@ const FeatureCard = ({ icon, title, text, colorClass }) => (
   </div>
 );
 
-// --- Recursive Home Tree ---
-// Node with children → collapsible branch (any depth)
-// Node without children → lazy content-fetching leaf
-// Works for: BCA → SEM-3 → GU Papers → JAVA Theory Papers → ...
-
 const getSmallIcon = (type) => {
   if (type?.includes('pdf')) return 'bi-file-earmark-pdf text-danger';
   if (type?.includes('video')) return 'bi-play-circle text-info';
@@ -34,20 +28,19 @@ const getSmallIcon = (type) => {
   return 'bi-file-earmark text-secondary';
 };
 
-// Palette for branch icons based on depth
+
 const BRANCH_COLORS = ['#f59e0b', '#6366f1', '#10b981', '#ec4899'];
 
 const HomeTreeNode = ({ cat, depth = 0 }) => {
   const hasChildren = Boolean(cat.children && cat.children.length > 0);
 
-  // ALL hooks declared unconditionally (React rules of hooks)
+  
   const [open, setOpen] = React.useState(false);
   
-  // Use TanStack Query for lazy fetching
+  
   const { data: items, isLoading: loading, refetch } = useCategoryContent(cat._id, false);
   const [hasRefetched, setHasRefetched] = React.useState(false);
 
-  // Leaf toggle: trigger fetch on first open
   const toggleLeaf = async () => {
     const next = !open;
     setOpen(next);
@@ -59,7 +52,6 @@ const HomeTreeNode = ({ cat, depth = 0 }) => {
 
   const indent = depth * 12;
 
-  // --- LEAF: node has no children — shows lazy content list ---
   if (!hasChildren) {
     return (
       <div className="cat-leaf">
@@ -96,7 +88,6 @@ const HomeTreeNode = ({ cat, depth = 0 }) => {
     );
   }
 
-  // --- BRANCH: has children — collapsible, recurse into children at depth+1 ---
   const iconColor = BRANCH_COLORS[depth % BRANCH_COLORS.length];
   const folderIcon = open ? 'bi-folder2-open' : 'bi-folder2';
 
@@ -123,7 +114,6 @@ const HomeTreeNode = ({ cat, depth = 0 }) => {
   );
 };
 
-// --- Card wrapper for top-level programs (BCA / MCA ...) ---
 const CategoryTree = ({ cat }) => {
   const [open, setOpen] = React.useState(false);
   const hasChildren = Boolean(cat.children && cat.children.length > 0);
@@ -171,7 +161,6 @@ const CategoryTree = ({ cat }) => {
   );
 };
 
-// --- MAIN SECTION WRAPPER ---
 const CategorizedContent = ({ nestedCategories }) => {
   if (!nestedCategories) {
     return (
@@ -187,12 +176,9 @@ const CategorizedContent = ({ nestedCategories }) => {
     );
   }
 
-  // /categories/all-nested already returns only root-level items at the top of array
   const topLevel = nestedCategories;
   if (!topLevel || topLevel.length === 0) return null;
 
-  // Adaptive column: clean layout for any number of programs
-  // 1 → centered full-width  |  2 → 2-col  |  3+ → 3-col grid (wraps to new rows for 4, 5, 6...)
   const colClass =
     topLevel.length === 1 ? 'col-12 col-md-8 mx-auto' :
       topLevel.length === 2 ? 'col-md-6' :
@@ -230,7 +216,6 @@ const CategorizedContent = ({ nestedCategories }) => {
   );
 };
 
-// Moving the Stats Section here to access the live state
 const StatsSection = ({ stats }) => {
   const isLoading = stats.contentCount === '...';
 
@@ -241,7 +226,7 @@ const StatsSection = ({ stats }) => {
           style={{ width: '75px', height: '75px', border: `2px dashed rgba(var(--bs-${color}-rgb), 0.5)` }}>
           <i className={`bi ${icon} text-${color} fs-1`}></i>
         </div>
-        <h2 className="display-5 fw-bold mb-1 text-white">{value}</h2>
+        <h2 className="display-5 fw-bold mb-1" style={{ color: 'var(--text-primary)' }}>{value}</h2>
         <p className="text-white-50 fw-medium text-uppercase tracking-wider small mb-0">{label}</p>
       </div>
     </div>
@@ -262,7 +247,8 @@ const StatsSection = ({ stats }) => {
       <div className="container px-4 px-md-0">
         <div className="position-relative d-flex align-items-center justify-content-center rounded-5 overflow-hidden shadow-lg p-5"
           style={{
-            background: 'linear-gradient(145deg, #0f172a 0%, #1e1b4b 100%)',
+            background: 'var(--surface-color)',
+            border: '1px solid var(--glass-border)',
             minHeight: '350px'
           }}>
 
@@ -273,7 +259,7 @@ const StatsSection = ({ stats }) => {
           {/* Content Layer */}
           <div className="position-relative w-100" style={{ zIndex: 5 }}>
             <div className="row w-100 text-center align-items-center">
-              <StatItem value={stats.contentCount} label="Premium Resources" icon="bi-journal-bookmark-fill" color="info" />
+              <StatItem value={stats.contentCount} label="Premium Resources" icon="bi-journal-bookmark-fill" color="primary" />
               <StatItem value={stats.studentCount} label="Active Students" icon="bi-people-fill" color="success" />
               <StatItem value={stats.viewsCount} label="Total Views" icon="bi-eye-fill" color="warning" />
             </div>
@@ -349,33 +335,34 @@ export default function Home() {
         <AnnouncementBanner />
       </div>
 
-      {/* 1. HERO SECTION (Stylish Gradient Header) */}
-      <div className="container mb-5">
-        <div className="hero-section text-white text-center">
-          <div className="container" style={{ maxWidth: '850px' }}>
-            <div className="badge border border-light text-primary px-3 py-2 rounded-pill mb-4 fade-in glass-panel fw-bold">🚀 The Ultimate College Resource Hub</div>
-            <h1 className="hero-title">
-              Master Your Semesters with GyanStack
+      <div className="container-fluid mb-5 p-0 px-lg-3">
+        <div className="hero-section text-center mesh-gradient rounded-bottom-5 py-5 py-md-5 overflow-hidden position-relative animate-fade-in">
+          <div className="position-absolute top-0 start-0 w-100 h-100 bg-black bg-opacity-10 d-dark-none"></div>
+          <div className="container position-relative py-5" style={{ maxWidth: '900px', zIndex: 2 }}>
+            <div className="badge border border-primary border-opacity-25 text-primary px-3 py-2 rounded-pill mb-4 animate-float glass-panel fw-bold shadow-sm" style={{ backgroundColor: 'var(--brand-50)' }}>
+               🚀 The Ultimate College Resource Hub
+            </div>
+            <h1 className="hero-title gradient-text mb-4">
+              Master Your Semesters <br className="d-none d-md-block" /> with GyanStack
             </h1>
-            <p className="lead fw-normal mb-5 opacity-75 mx-auto" style={{ maxWidth: '650px' }}>
+            <p className="lead fw-medium mb-5 mx-auto" style={{ maxWidth: '650px', color: 'var(--text-secondary)' }}>
               Access premium study notes, essential assignments, and previous year question papers
               across all academic fields instantly. Don't study hard, study smartly.
             </p>
-            <div className='d-flex justify-content-center gap-3 flex-wrap fade-in'>
-              <Link className="btn cta-gradient btn-lg px-5 py-3 rounded-pill" to={CTALink} role="button">
+            <div className='d-flex justify-content-center gap-3 flex-wrap animate-float-slow'>
+              <Link className="btn cta-gradient btn-lg px-5 py-3 rounded-pill fw-bold" to={CTALink} role="button">
                 <i className={`bi ${user ? 'bi-grid-fill' : 'bi-lightning-fill'} me-2`}></i>
                 {CTAText}
               </Link>
-              <Link className="btn btn-light text-primary btn-lg fw-bold px-5 py-3 rounded-pill glass-panel shadow-sm" to="/browse" role="button">
+              <Link className="btn btn-white text-primary btn-lg fw-bold px-5 py-3 rounded-pill glass-panel shadow-sm border-0" to="/browse" role="button">
                 Explore Content
               </Link>
             </div>
-            <p className="mt-4 small text-white-50 fade-in">Join {stats.studentCount || '...'} students scoring top grades.</p>
+            <p className="mt-4 small text-muted fw-bold">Join {stats.studentCount || '...'} students scoring top grades.</p>
           </div>
         </div>
       </div>
 
-      {/* 2. WHY REGISTER / FEATURE SHOWCASE (Stylish Cards) */}
       <section className="container py-5">
         <div className="text-center mb-5 fade-in">
           <h6 className="text-primary fw-bold text-uppercase tracking-wider">Features</h6>
@@ -447,58 +434,52 @@ export default function Home() {
         </div>
       </section>
 
-      {/* --- SECTION: Lazy Category Tree --- */}
       <CategorizedContent nestedCategories={nestedCategories} />
-      {/* ---------------------------------- */}
 
-      {/* 3. HOW IT WORKS / 3-STEP PROCESS */}
       <section className="py-5 position-relative">
         <div className="container">
           <div className="text-center mb-5">
-            <h6 className="text-primary fw-bold text-uppercase">Workflow</h6>
-            <h2 className="display-6 fw-bold">
+            <h6 className="text-primary fw-bold text-uppercase tracking-wider mb-2">Workflow</h6>
+            <h2 className="display-5 fw-bold gradient-text">
               3 Simple Steps to Success
             </h2>
           </div>
           <div className="row text-center">
             <div className="col-lg-4 mb-4">
-              <div className="process-step h-100">
-                <div className="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style={{ width: '100px', height: '100px' }}>
-                  <i className="bi bi-person-plus-fill display-5 text-primary"></i>
+              <div className="process-step glass-card h-100 p-4 p-md-5">
+                <div className="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-4 shadow-sm animate-pulse-glow" style={{ width: '80px', height: '80px' }}>
+                  <i className="bi bi-person-plus-fill fs-2 text-white"></i>
                 </div>
-                <h4 className="fw-bold">1. Join Community</h4>
-                <p className="text-muted">Create your account in 30 seconds and join our growing student network.</p>
+                <h4 className="fw-bold mb-3">1. Join Community</h4>
+                <p className="text-muted small">Create your account in 30 seconds and join our growing student network.</p>
               </div>
             </div>
             <div className="col-lg-4 mb-4">
-              <div className="process-step h-100">
-                <div className="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style={{ width: '100px', height: '100px' }}>
-                  <i className="bi bi-search-heart-fill display-5 text-success"></i>
+              <div className="process-step glass-card h-100 p-4 p-md-5">
+                <div className="bg-success rounded-circle d-inline-flex align-items-center justify-content-center mb-4 shadow-sm animate-pulse-glow" style={{ width: '80px', height: '80px' }}>
+                  <i className="bi bi-search-heart-fill fs-2 text-white"></i>
                 </div>
-                <h4 className="fw-bold">2. Find Topics</h4>
-                <p className="text-muted">Use smart search, tags or category tree to locate exactly what you need.</p>
+                <h4 className="fw-bold mb-3">2. Find Topics</h4>
+                <p className="text-muted small">Use smart search, tags or category tree to locate exactly what you need.</p>
               </div>
             </div>
             <div className="col-lg-4 mb-4">
-              <div className="process-step h-100">
-                <div className="bg-danger bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style={{ width: '100px', height: '100px' }}>
-                  <i className="bi bi-cloud-arrow-down-fill display-5 text-danger"></i>
+              <div className="process-step glass-card h-100 p-4 p-md-5">
+                <div className="bg-danger rounded-circle d-inline-flex align-items-center justify-content-center mb-4 shadow-sm animate-pulse-glow" style={{ width: '80px', height: '80px' }}>
+                  <i className="bi bi-cloud-arrow-down-fill fs-2 text-white"></i>
                 </div>
-                <h4 className="fw-bold">3. Access Always</h4>
-                <p className="text-muted">View online, save for later, or download offline. Ad-free forever.</p>
+                <h4 className="fw-bold mb-3">3. Access Always</h4>
+                <p className="text-muted small">View online, save for later, or download offline. Ad-free forever.</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 4. TRUST & STATS (Glassmorphic) */}
       <StatsSection stats={stats} />
 
-      {/* 5. TOP CONTRIBUTORS SECTION */}
       <ContributorSection uploaders={uploaders} />
 
-      {/* 6. APP PROMOTION SECTION */}
       <section className="py-5 bg-primary bg-opacity-10 border-top border-bottom border-primary border-opacity-10">
         <div className="container">
           <div className="row align-items-center g-5">
@@ -571,7 +552,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 5. FINAL CTA BLOCK */}
       <section className="py-5 text-center fade-in">
         <div className="container" style={{ maxWidth: '700px' }}>
           <h2 className="display-5 fw-bold mb-3">

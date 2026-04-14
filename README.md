@@ -29,7 +29,8 @@ Built with a focus on modern aesthetics (Glassmorphism), speed, and offline capa
 ### 👤 User & Social Features
 - **Contributor Ecosystem**: Real-time "Top Contributors" shelf highlighting community leaders.
 - **Request Tracker**: Dedicated dashboard section to track the status of your content requests in real-time.
-- **PWA Experience**: Fully installable as a mobile or desktop app with **Offline Notifications** and a persistent "Add to Home Screen" prompt.
+- **PWA Experience**: Fully installable as a mobile or desktop app with **Offline Notifications**.
+- **Cross-Device Sync**: Notifications read status and user preferences sync instantly between mobile and desktop using `fcmToken` tracking.
 - **Announcements**: Dynamic banner system with smart-truncation and mobile-optimized card designs.
 
 ### 🛡️ Hardened Security & Stability
@@ -42,13 +43,12 @@ Built with a focus on modern aesthetics (Glassmorphism), speed, and offline capa
 
 ## 🛠️ Technology Stack
 
-| Layer | Technologies |
-|---|---|
-|  - Frontend: React (Vite), Bootstrap 5, Lucide Icons, React Hot Toast
-  - Backend: Node.js, Express, MongoDB, Google Drive API v3
+| **Ecosystem** | React (Vite), Framer Motion, Bootstrap 5, Lucide Icons, React Hot Toast |
+| **Backend** | Node.js, Express, MongoDB, Google Drive API v3 |
 | **AI Brain** | Groq SDK (Llama 3.3 - 70b model) |
-| **Storage** | Google Drive API(Files), Cloudinary (Media/Profiles), MongoDB (Links/Notes) |
-| **Security** | Express Rate Limit, JWT, BcryptJS, Express Validator |
+| **Social Gear** | Firebase Cloud Messaging (FCM), Cross-Device State Sync |
+| **Storage** | Google Drive API(Files), Cloudinary (Media/Profiles) |
+| **Security** | AI interaction logging, JWT, BcryptJS, Express Rate Limit |
 | **DevOps** | Vite-Plugin-PWA, Dotenv, CORS |
 
 ---
@@ -127,5 +127,6 @@ Built with a focus on modern aesthetics (Glassmorphism), speed, and offline capa
 ---
 
 *Built with ❤️ for the student community by Jainish.*
- Branch (`git push origin feature/AmazingFeature`)
+
+*Last Updated: April 14, 2026 (Sync & Animation Overhaul)*
 

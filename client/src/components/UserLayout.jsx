@@ -4,13 +4,14 @@ import ThemeToggle from './ThemeToggle';
 import NotificationBell from './NotificationBell';
 import { useAuth } from '../context/AuthContext';
 import { Link, useLocation, Outlet } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { pageVariants } from '../utils/animations';
 
 export default function UserLayout({ children }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const { user } = useAuth();
     const location = useLocation();
 
-    // Fix for background scroll when sidebar is open on mobile
     React.useEffect(() => {
         if (isSidebarOpen) {
             document.body.style.overflow = 'hidden';
@@ -22,7 +23,6 @@ export default function UserLayout({ children }) {
         };
     }, [isSidebarOpen]);
 
-    // Mapping path names to page titles
     const getPageTitle = () => {
         const path = location.pathname;
         if (path === '/dashboard') return 'User Dashboard';
@@ -35,7 +35,6 @@ export default function UserLayout({ children }) {
 
     return (
         <div className="dashboard-container">
-            {/* Sidebar Overlay for Mobile */}
             {isSidebarOpen && (
                 <div 
                     className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-lg-none" 
@@ -82,9 +81,18 @@ export default function UserLayout({ children }) {
                     </div>
                 </header>
 
-                <main className="dashboard-content">
-                    <Outlet />
-                </main>
+                <AnimatePresence mode="wait">
+                    <motion.main 
+                        key={location.pathname}
+                        className="dashboard-content"
+                        variants={pageVariants}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                    >
+                        <Outlet />
+                    </motion.main>
+                </AnimatePresence>
             </div>
         </div>
     );

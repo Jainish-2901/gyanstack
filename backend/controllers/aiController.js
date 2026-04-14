@@ -3,6 +3,7 @@ const Content = require('../models/contentModel');
 const Category = require('../models/categoryModel');
 const Request = require('../models/requestModel');
 const User = require('../models/userModel');
+const Chat = require('../models/chatModel');
 
 // Initialize Groq
 const groq = new Groq({
@@ -14,24 +15,21 @@ exports.getAiResponse = async (req, res) => {
     if (!req.body || !req.body.message) {
       return res.status(400).json({ message: 'Message is required' });
     }
-    const { message, chatHistory, currentPath } = req.body;
+    const { message, chatHistory, currentPath, sessionId } = req.body;
 
     if (!process.env.GROQ_API_KEY) {
       return res.status(500).json({ message: 'Groq API Key (GROQ_API_KEY) is missing in backend .env' });
     }
 
-    // 1. Fetch context (Reduced to stay within 6000 TPM limit)
     const [categories, allContent] = await Promise.all([
       Category.find().select('name _id parentId'),
       Content.find().select('title _id categoryId').sort({ createdAt: -1 }).limit(100)
     ]);
 
-    // 1b. Build exact mapping
     const catFiles = {};
     const catSubs = {};
     const masterMap = {}; 
 
-    // Keyword optimization: Identify if user is asking about specific categories
     const messageLower = message.toLowerCase();
     const relevantCategoryIds = new Set();
     
@@ -60,7 +58,6 @@ exports.getAiResponse = async (req, res) => {
       }
     });
 
-    // 1c. Intelligent Shorthand Knowledge Base (Filtered by relevance to save tokens)
     const kbStr = categories.map(c => {
         const id = c._id.toString();
         // If message is generic, only show categories. If specific, show files inside matching categories.
@@ -75,7 +72,6 @@ exports.getAiResponse = async (req, res) => {
         return `SCOPE[${c.name}]::(${list})`;
     }).filter(x => x).slice(0, 15).join('\n'); // Limit to top 15 relevant scopes
 
-    // 1e. Master Platform Routes (Precise Mapping)
     const platformRoutes = {
         'home': '/',
         'browse': '/browse',
@@ -91,7 +87,13 @@ exports.getAiResponse = async (req, res) => {
     };
 
     const systemInstruction = `
-      You are "GyanStack AI Assistant". 
+      You are "GyanStack AI Assistant", a dedicated STUDY HELPER. 
+
+      STRICT GUIDELINES:
+      1. ONLY assist with GyanStack library content, study resources, and academic navigation.
+      2. REFUSE irrelevant tasks (coding outside study context, general life advice, non-academic trivia).
+      3. If a user asks something out of scope, politely reply: "I am here specifically to help you with GyanStack study materials. Let's get back to your studies! 📚🛡️"
+      4. Maintain a helpful, encouraging academic persona.
 
       NAVIGATION PROTOCOL:
       You MUST use [ACTION: {"type": "navigate", "path": "...", "label": "..."}] for ALL internal links.
@@ -130,7 +132,6 @@ exports.getAiResponse = async (req, res) => {
       ${kbStr}
     `;
 
-    // 2. Messages
     const history = (chatHistory || []).slice(-4).filter(h => h.content);
     let messages = [
       { role: "system", content: systemInstruction },
@@ -141,7 +142,6 @@ exports.getAiResponse = async (req, res) => {
       { role: "user", content: message }
     ];
 
-    // 3. AI Completion
     const chatCompletion = await groq.chat.completions.create({
       messages,
       model: "llama-3.3-70b-versatile",
@@ -151,7 +151,6 @@ exports.getAiResponse = async (req, res) => {
 
     let fullReply = chatCompletion.choices[0].message.content || "";
 
-    // 4. PARSE & REPAIR ACTION
     let reply = fullReply;
     let action = null;
 
@@ -193,7 +192,6 @@ exports.getAiResponse = async (req, res) => {
        } catch (e) { console.error("Action Parse Fail"); }
     }
 
-    // 5. EMERGENCY RECOVERY (Master Map Matching)
     if (!action) {
         for (const [key, path] of Object.entries(platformRoutes)) {
             if (message.toLowerCase().includes(`open ${key}`) || message.toLowerCase().includes(`go to ${key}`)) {
@@ -227,7 +225,6 @@ exports.getAiResponse = async (req, res) => {
         }
     }
 
-    // 6. FINAL SCRUB (Hardened Security)
     reply = reply
         .replace(/\(\s*\/content\/.*?\)/g, '')
         .replace(/\(\s*\/browse\/.*?\)/g, '')
@@ -243,13 +240,52 @@ exports.getAiResponse = async (req, res) => {
         .replace(/[\{\}\[\]|]/g, '')
         .trim();
 
-    if (!reply && action) reply = "Action executed successfully! ✨";
-    else if (!reply) reply = "How can I help you today? 📚";
+    const finalReply = reply || (action ? "Action executed successfully! ✨" : "How can I help you today? 📚");
 
-    return res.json({ reply, action });
+    if (req.user && sessionId) {
+        try {
+            const userMsg = { role: 'user', content: message, timestamp: new Date() };
+            const aiMsg = { role: 'assistant', content: finalReply, action: action, timestamp: new Date() };
+
+            await Chat.findOneAndUpdate(
+                { user: req.user._id, sessionId },
+                { 
+                    $push: { messages: { $each: [userMsg, aiMsg] } },
+                    $setOnInsert: { user: req.user._id, sessionId }
+                },
+                { upsert: true, new: true }
+            );
+        } catch (dbErr) {
+            console.error("Failed to save chat history:", dbErr);
+        }
+    }
+
+    return res.json({ reply: finalReply, action });
 
   } catch (err) {
     console.error("Groq/AI Error:", err);
     res.status(500).json({ message: 'The AI assistant is temporarily busy. Please try again soon.' });
+  }
+};
+
+exports.getChatHistory = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    
+    // If sessionId provided, find specific session, else get latest session
+    const query = { user: req.user._id };
+    if (sessionId) query.sessionId = sessionId;
+
+    const chat = await Chat.findOne(query).sort({ updatedAt: -1 });
+    
+    if (!chat) return res.json({ messages: [] });
+    
+    // Only return the last 50 messages to keep UI snappy
+    const history = chat.messages.slice(-50);
+    res.json({ messages: history });
+
+  } catch (err) {
+    console.error("Get History Error:", err);
+    res.status(500).json({ message: 'Failed to retrieve study history.' });
   }
 };

@@ -9,8 +9,6 @@ const announcementRoutes = require('./routes/announcementRoutes'); // <-- NAYA I
 
 dotenv.config();
 
-// --- RATE LIMITERS (Protective Shields) ---
-// 1. General API Limiter (100 requests/15min)
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: process.env.NODE_ENV === 'production' ? 100 : 1000, // Increased for development
@@ -19,7 +17,6 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// 2. Auth Limiter (Brute-force protection: 10 attempts/15min)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: process.env.NODE_ENV === 'production' ? 50 : 1000, // Increased for development
@@ -32,7 +29,6 @@ const aiLimiter = rateLimit({
   max: 20,
   message: { message: "AI daily limit reached for this session. Please try again later." },
 });
-// ------------------------------------------
 
 // --- REGISTER ALL MODELS FIRST (To avoid MissingSchemaError) ---
 require('./models/userModel');
@@ -42,16 +38,13 @@ require('./models/announcementModel');
 require('./models/subscriptionModel');
 require('./models/requestModel');
 require('./models/contactModel');
-// -------------------------------------------------------------
 
 const app = express();
 
-// --- THE CRITICAL FIX FOR VERCEL/PRODUCTION ---
 app.set('trust proxy', 1);
 
 const PORT = process.env.PORT || 5000;
 
-// Middleware
 const allowedOrigins = [
   'https://gyanstack.vercel.app',
   'https://gyanstack-admin.vercel.app',
@@ -73,14 +66,11 @@ app.use(cors({
   credentials: true
 }));
 
-// --- DIAGNOSTIC LOGGER (Proof of Life) ---
 if (process.env.NODE_ENV !== 'production') {
   app.use((req, res, next) => {
-    console.log(`[${new Date().toLocaleTimeString()}] ${req.method} ${req.url}`);
     next();
   });
 }
-// -----------------------------------------
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -90,10 +80,8 @@ let cachedConnection = null;
 let connectionPromise = null;
 
 const connectDB = async () => {
-  // If already connected, return immediately
   if (mongoose.connection.readyState === 1) return mongoose.connection;
 
-  // If a connection attempt is already in progress, wait for it
   if (connectionPromise) return connectionPromise;
 
   if (!process.env.MONGO_URI) {
@@ -102,7 +90,6 @@ const connectDB = async () => {
 
   connectionPromise = (async () => {
     try {
-      console.log('Attempting to connect to MongoDB...');
       const conn = await mongoose.connect(process.env.MONGO_URI, {
         serverSelectionTimeoutMS: 15000,
         connectTimeoutMS: 20000,
@@ -111,7 +98,6 @@ const connectDB = async () => {
         bufferCommands: true, // Re-enable buffering for startup stability
       });
 
-      console.log('MongoDB connection established successfully');
 
       // Watchdog for connection health
       if (mongoose.connection.listenerCount('error') === 0) {
@@ -158,7 +144,6 @@ app.get('/', (req, res) => {
   res.send('GyanStack Backend API is running... Status: OK');
 });
 
-// --- API Routes ko Use Karein ---
 app.use('/api', apiLimiter); // Global Shield
 app.use('/api/auth', authLimiter, require('./routes/authRoutes')); // Brute-force Shield
 app.use('/api/ai', aiLimiter, require('./routes/aiRoutes')); // AI Cost Shield
@@ -170,9 +155,7 @@ app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/contact', require('./routes/contactRoutes'));
 app.use('/api/stats', require('./routes/statsRoutes'));
-// ---------------------------------
 
-// --- Global Error Handler ---
 app.use((err, req, res, next) => {
   console.error("GLOBAL ERROR HANDLER:", err.stack);
   res.status(err.status || 500).json({
@@ -185,12 +168,10 @@ app.use((err, req, res, next) => {
 // Server ko start karein (Sirf local development ke liye zaroori hai)
 if (process.env.NODE_ENV !== 'production') {
   const server = app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
   });
 
   // High timeout for large file uploads (10 minutes)
   server.timeout = 600000;
 }
 
-// Vercel deployment ke liye app ko export karna zaroori hai
 module.exports = app;

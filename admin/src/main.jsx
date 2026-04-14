@@ -7,21 +7,17 @@ import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import App from './App';
 
-// 1. Bootstrap CSS
 import 'bootstrap/dist/css/bootstrap.min.css';
-// 2. Bootstrap JS (Dropdowns ke liye zaroori)
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
-// 3. Hamari custom CSS
 import './App.css'; 
 
-// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes default for general content
-      gcTime: 1000 * 60 * 10,    // 10 minutes garbage collection
+      staleTime: 1000 * 60 * 5, 
+      gcTime: 1000 * 60 * 10,    
       retry: 1,
-      refetchOnWindowFocus: false, // Prevent logs on browser tab switch
+      refetchOnWindowFocus: false, 
     },
   },
 });
@@ -37,7 +33,6 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
        }
     },
     onOfflineReady() {
-      console.log('Admin App ready to work offline (Static views only)');
     },
   });
 

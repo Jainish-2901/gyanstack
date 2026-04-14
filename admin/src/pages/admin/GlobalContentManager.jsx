@@ -7,13 +7,11 @@ import LoadingScreen from '../../components/LoadingScreen';
 import EditContentModal from '../../components/EditContentModal';
 
 const SITE_URL = import.meta.env.VITE_SITE_URL || 'http://localhost:5173';
-
-// 🚀 HELPER: Mobile Content Card
 const ContentCardMobile = memo(({ item, categoryMap, isSelected, onToggle, onEdit, onDelete, SITE_URL }) => {
     if (!item) return null;
     const uploader = item.uploadedBy || {};
     return (
-        <div className={`card mb-3 border-0 rounded-4 shadow-sm overflow-hidden ${isSelected ? 'ring-2 ring-primary bg-primary bg-opacity-5' : 'bg-white'}`}>
+        <div className={`glass-card mb-3 border-0 overflow-hidden ${isSelected ? 'ring-2 ring-primary bg-primary bg-opacity-5' : ''}`}>
             <div className="card-body p-3">
                 <div className="d-flex justify-content-between align-items-start mb-2">
                     <div className="d-flex align-items-center gap-2">
@@ -24,7 +22,7 @@ const ContentCardMobile = memo(({ item, categoryMap, isSelected, onToggle, onEdi
                         {categoryMap[item.categoryId] || 'General'}
                     </div>
                 </div>
-                <h6 className="fw-bold text-dark mb-1 text-truncate">{item.title}</h6>
+                <h6 className="fw-bold mb-1 text-truncate" style={{ color: 'var(--text-primary)' }}>{item.title}</h6>
                 <div className="small text-muted mb-3">
                     <i className="bi bi-person-circle me-1"></i>
                     {uploader.username || 'System'} {uploader.isDeleted && <span className="text-danger">(Deactivated)</span>}
@@ -39,7 +37,6 @@ const ContentCardMobile = memo(({ item, categoryMap, isSelected, onToggle, onEdi
     );
 });
 
-// 🚀 HELPER: Desktop Table Row
 const GlobalContentRow = memo(({ item, categoryMap, isSelected, onToggle, onEdit, onDelete, SITE_URL }) => {
     if (!item) return null;
     const uploader = item.uploadedBy || {};
@@ -54,7 +51,7 @@ const GlobalContentRow = memo(({ item, categoryMap, isSelected, onToggle, onEdit
                         <i className={`bi ${item.type === 'note' ? 'bi-card-text' : item.type === 'link' ? 'bi-link-45deg' : 'bi-file-earmark-pdf'}`}></i>
                     </div>
                     <div style={{ minWidth: 0 }}>
-                        <div className="fw-bold text-dark" style={{ wordBreak: 'break-word', whiteSpace: 'normal', lineHeight: '1.3' }}>{item.title}</div>
+                        <div className="fw-bold" style={{ wordBreak: 'break-word', whiteSpace: 'normal', lineHeight: '1.3', color: 'var(--text-primary)' }}>{item.title}</div>
                         <div className="small text-muted" style={{ wordBreak: 'break-all' }}>
                             {uploader.username || 'Unknown'} {uploader.isDeleted && <span className="badge bg-danger bg-opacity-10 text-danger ms-1" style={{ fontSize: '0.65rem' }}>Inactive</span>}
                         </div>
@@ -78,7 +75,6 @@ const GlobalContentRow = memo(({ item, categoryMap, isSelected, onToggle, onEdit
     );
 });
 
-// 🚀 HELPER: Handover Ownership Modal
 const HandoverModal = ({ show, onClose, selectedIds, admins, onSuccess, onError }) => {
     const [targetId, setTargetId] = useState('');
     const { reassignContent } = useAdminContentMutation();
@@ -101,7 +97,7 @@ const HandoverModal = ({ show, onClose, selectedIds, admins, onSuccess, onError 
     return (
         <div className="modal show d-block bg-dark bg-opacity-50" tabIndex="-1" style={{ zIndex: 1060 }}>
             <div className="modal-dialog modal-dialog-centered">
-                <div className="modal-content border-0 rounded-4 shadow-lg">
+                <div className="modal-content border-0 rounded-4 shadow-lg" style={{ background: 'var(--surface-color)' }}>
                     <div className="modal-header bg-primary text-white border-0 py-3">
                         <h5 className="modal-title fw-bold">Handover Platform Content</h5>
                         <button type="button" className="btn-close btn-close-white" onClick={onClose} disabled={reassignContent.isPending}></button>
@@ -134,12 +130,10 @@ const HandoverModal = ({ show, onClose, selectedIds, admins, onSuccess, onError 
 export default function GlobalContentManager() {
     const { user } = useAuth();
 
-    // 1. Data Fetching Hooks
     const { data: content = [], isLoading: loading, refetch: refreshData } = useManageAllContent();
     const { data: categoryMap = {} } = useCategoryMap();
     const { data: users = [] } = useAllUsers();
     
-    // Derived state
     const admins = useMemo(() => users.filter(u => u && u.role !== 'student'), [users]);
     
     const { deleteContent, bulkDeleteContent } = useAdminContentMutation();
@@ -153,8 +147,6 @@ export default function GlobalContentManager() {
     const [isEditing, setIsEditing] = useState(false);
     const [currentItem, setCurrentItem] = useState(null);
     const [showHandover, setShowHandover] = useState(false);
-
-    // loadData is gone as TanStack Query handles it
 
     const filtered = useMemo(() => {
         return (content || []).filter(item => {
@@ -199,7 +191,9 @@ export default function GlobalContentManager() {
         <div className="container-fluid px-3 px-md-4 py-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h1 className="h3 fw-bold text-primary mb-1">Global Platform Library</h1>
+                    <h4 className="fw-bold mb-1" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>
+                        <i className="bi bi-collection text-primary me-2"></i>Global Platform Library
+                    </h4>
                     <p className="text-muted small mb-0">Total visibility and management of all uploaded resources.</p>
                 </div>
                 <button className="btn btn-primary rounded-circle shadow-sm d-flex align-items-center justify-content-center" style={{ width: '38px', height: '38px' }} onClick={() => refreshData()} title="Sync"><i className="bi bi-arrow-clockwise"></i></button>
@@ -208,7 +202,7 @@ export default function GlobalContentManager() {
             {alert.msg && <div className={`alert alert-${alert.type} shadow-sm border-0 rounded-4 mb-4`} onClick={() => setAlert({ type: '', msg: '' })}>{alert.msg}</div>}
 
             {/* Filters */}
-            <div className="card border-0 shadow-sm rounded-4 mb-4 bg-light bg-opacity-50">
+            <div className="glass-card mb-4" style={{ background: 'var(--surface-elevated)', opacity: 0.9 }}>
                 <div className="card-body p-3">
                     <div className="row g-2">
                         <div className="col-12 col-md-4">
@@ -251,10 +245,10 @@ export default function GlobalContentManager() {
             )}
 
             {/* Content List */}
-            <div className="card border-0 shadow-sm rounded-4 overflow-hidden flex-grow-1">
+            <div className="glass-card border-0 overflow-hidden flex-grow-1">
                 <div className="table-responsive d-none d-lg-block" style={{ maxHeight: 'calc(100vh - 290px)', overflowY: 'auto' }}>
-                    <table className="table table-hover align-middle mb-0 compact-table">
-                        <thead className="bg-light sticky-top shadow-sm" style={{ zIndex: 10, backgroundColor: '#f8f9fa' }}>
+                    <table className="table table-hover align-middle mb-0 compact-table border-0 shadow-none">
+                        <thead className="sticky-top shadow-sm" style={{ zIndex: 10 }}>
                             <tr>
                                 <th className="ps-4" style={{ width: '40px' }}>
                                     <input type="checkbox" className="form-check-input border-2 border-primary" checked={filtered.length > 0 && selectedIds.length === filtered.length} onChange={() => {

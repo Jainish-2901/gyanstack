@@ -67,7 +67,6 @@ router.get('/me', authMiddleware, getUserProfile);
 // Route 6: Get Saved Content (GET /api/auth/saved-content)
 router.get('/saved-content', authMiddleware, getSavedContent);
 
-// --- YEH NAYE ROUTES HAIN ---
 
 // Route 7: Update User Profile (PUT /api/auth/update-profile)
 router.put(
@@ -94,7 +93,6 @@ router.put(
 
 // Route 9: Content ko Save/Unsave Karna (PUT /api/auth/save/:id)
 router.put('/save/:id', authMiddleware, toggleSaveContent);
-// ---------------------------------
 
 // Route 10: Public Uploader Profile (GET /api/auth/uploader/:id)
 router.get('/uploader/:id', getPublicUserProfile);

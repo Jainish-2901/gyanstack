@@ -1,9 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 
-/**
- * Hook to fetch all users for management.
- */
 export const useAllUsers = () => {
   return useQuery({
     queryKey: ['admin-users'],
@@ -14,9 +11,6 @@ export const useAllUsers = () => {
   });
 };
 
-/**
- * Mutation hooks for user management.
- */
 export const useAdminUserMutation = () => {
   const queryClient = useQueryClient();
 

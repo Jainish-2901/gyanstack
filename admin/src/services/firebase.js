@@ -10,11 +10,7 @@ export const firebaseConfig = {
     appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// --- FIX START ---
-// Check if any apps are already initialized. 
-// If yes, use the existing one. If not, initialize a new one.
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-// --- FIX END ---
 
 export const messaging = getMessaging(app);
 export default app;

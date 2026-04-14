@@ -4,6 +4,8 @@ import ThemeToggle from './ThemeToggle';
 import NotificationBell from './NotificationBell';
 import { useAuth } from '../context/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { pageVariants } from '../utils/animations';
 
 export default function AdminLayout({ children }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -69,9 +71,18 @@ export default function AdminLayout({ children }) {
                     </div>
                 </header>
 
-                <main className="dashboard-content">
-                    {children}
-                </main>
+                <AnimatePresence mode="wait">
+                    <motion.main 
+                        key={location.pathname}
+                        className="dashboard-content"
+                        variants={pageVariants}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                    >
+                        {children}
+                    </motion.main>
+                </AnimatePresence>
             </div>
         </div>
     );

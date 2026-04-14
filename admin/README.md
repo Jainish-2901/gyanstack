@@ -16,11 +16,13 @@ The GyanStack Admin Panel is the central governance hub for managing academic re
 
 ### 👑 Governance & Security
 - **Role-Based Access (RBAC)**: Fine-grained permissions for Admins, Moderators, and Super-Admins.
-- **Announcement Pipeline**: Broadcast critical updates and resources via Firebase Cloud Messaging (FCM).
+- **Announcement Pipeline**: Broadcast critical updates via Firebase Cloud Messaging (FCM).
+- **Professional UI Transitions**: Integrated **Framer Motion** for high-fidelity page entries, matching the student portal's premium feel.
 - **Manual Verification**: Review and approve community-submitted resources before they go live.
 
 ## 🛠️ Tech Stack
 - **Framework**: React 19 (Vite)
+- **Animations**: Framer Motion
 - **Styling**: Bootstrap 5 + Dynamic Admin CSS
 - **Visualization**: Chart.js (Real-time Engagement Analytics)
 - **Integration**: Google Googleapis (Drive v3), Cloudinary SDK
@@ -43,4 +45,4 @@ npm run dev
 ```
 
 ---
-*Last Updated: April 12, 2026 (Diagnostic & Sync Update)*
+*Last Updated: April 14, 2026 (UI Refresh Update)*

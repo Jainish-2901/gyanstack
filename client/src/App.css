@@ -1,81 +1,85 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 :root {
-  /* Core Colors - Light Mode */
-  --primary: #6366f1;
-  /* Indigo */
-  --primary-hover: #4f46e5;
-  --secondary: #06b6d4;
-  /* Cyan */
-  --accent: #ec4899;
-  /* Pink */
+  /* Fonts */
+  --font-inter: 'Inter', sans-serif;
+  --font-display: 'Space Grotesk', sans-serif;
+
+  /* Brand Colors - Mint / Green Palette */
+  --primary: #10b981;
+  --primary-hover: #059669;
+  --secondary: #14b8a6;
+  --accent: #f43f5e;
+  --brand-50: #ecfdf5;
+  --brand-100: #d1fae5;
+  --brand-200: #a7f3d0;
+  --brand-300: #6ee7b7;
+  --brand-400: #34d399;
+  --brand-500: #10b981;
+  --brand-600: #059669;
+  --brand-700: #047857;
 
   /* Backgrounds & Surfaces */
   --bg-gradient-start: #fdfbfb;
   --bg-gradient-end: #ebedee;
   --surface-color: #ffffff;
+  --surface-elevated: #f8f9fc;
 
   /* Text */
   --text-primary: #0f172a;
   --text-secondary: #475569;
   --text-muted: #94a3b8;
 
-  /* Glassmorphism Light */
-  --glass-bg: rgba(255, 255, 255, 0.85);
-  --glass-border: rgba(255, 255, 255, 0.6);
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+  /* Glassmorphism Redefined */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-shadow: 0 8px 32px 0 rgba(16, 185, 129, 0.05);
 
   /* Bootstrap Overrides */
   --bs-primary: var(--primary);
-  --bs-primary-rgb: 99, 102, 241;
+  --bs-primary-rgb: 16, 185, 129;
   --bs-secondary: var(--secondary);
   --bs-body-color: var(--text-primary);
-  --bs-border-color: rgba(255, 255, 255, 0.6);
-  --bs-card-bg: var(--glass-bg);
+  --bs-border-color: rgba(0, 0, 0, 0.08);
 
-  /* Hero Section - Light */
-  --hero-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  --hero-shadow: 0 20px 40px rgba(99, 102, 241, 0.15);
-
-  /* Layout constraints */
+  /* Hero Section Redesign - Light: High Contrast */
+  --hero-gradient: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  --hero-shadow: 0 20px 40px rgba(16, 185, 129, 0.1);
   --nav-height: 80px;
 }
 
 [data-bs-theme="dark"] {
-  /* Core Colors - Dark Mode */
-  --primary: #818cf8;
-  --primary-hover: #6366f1;
-  --secondary: #22d3ee;
-  --accent: #f472b6;
+  /* Surfaces Dark */
+  --surface-color: #0a0a0f;
+  --surface-card: #111118;
+  --surface-elevated: #16161f;
 
-  /* Backgrounds & Surfaces */
-  --bg-gradient-start: #0f172a;
-  --bg-gradient-end: #020617;
-  --surface-color: #1e293b;
-
-  /* Text */
+  /* Text Dark */
   --text-primary: #f8fafc;
   --text-secondary: #cbd5e1;
   --text-muted: #64748b;
 
-  /* Glassmorphism Dark */
-  --glass-bg: rgba(15, 23, 42, 0.75);
-  --glass-border: rgba(255, 255, 255, 0.1);
+  /* Brand Adjustments for Dark Mode */
+  --primary: #34d399;
+  --primary-hover: #10b981;
+
+  /* Glassmorphism Dark Redefined */
+  --glass-bg: rgba(10, 10, 15, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.06);
   --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
 
   /* Bootstrap Overrides Dark */
   --bs-primary: var(--primary);
   --bs-secondary: var(--secondary);
   --bs-body-color: var(--text-primary);
-  --bs-border-color: rgba(255, 255, 255, 0.1);
-  --bs-card-bg: rgba(15, 23, 42, 0.75);
+  --bs-border-color: rgba(255, 255, 255, 0.06);
+  --bs-card-bg: var(--glass-bg);
 
-  /* Hero Section - Dark */
-  --hero-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+  /* Hero Section - Dark Redesign */
+  --hero-gradient: linear-gradient(135deg, #0a0a0f 0%, #064e3b 100%);
   --hero-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-  --bs-heading-color: var(--text-primary);
-  --text-muted: #94a3b8;
-  /* Brighter for dark mode */
+  --bg-gradient-start: #0a0a0f;
+  --bg-gradient-end: #020617;
 }
 
 html,
@@ -83,14 +87,12 @@ body,
 #root {
   min-height: 100vh;
   width: 100%;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  /* Removed scroll-behavior: smooth — it blocks the main thread on scroll events */
+  font-family: var(--font-inter);
+  scroll-behavior: smooth;
 }
 
 body {
   background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
-  /* Removed background-attachment: fixed — it forces re-paint on every scroll frame
-     and prevents GPU-accelerated scrolling (major FPS killer) */
   color: var(--text-primary);
   transition: background 0.5s ease;
 }
@@ -110,12 +112,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(79, 70, 229, 0.3);
+  background: var(--brand-300);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(79, 70, 229, 0.6);
+  background: var(--brand-500);
 }
 
 /* --- GLOBAL FORM STYLES: Explicit Borders --- */
@@ -156,19 +158,35 @@ select:focus {
   outline: none;
 }
 
-/* ------------------------------------------- */
-
 /* Base App Container */
 .App {
   background-color: transparent !important;
 }
 
-/* Glassmorphism Classes */
+/* Mesh Gradient Backgrounds */
+.mesh-gradient {
+  background-color: #f9fefb;
+  background-image:
+    radial-gradient(at 0% 0%, hsla(152, 80%, 94%, 0.8) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsla(168, 70%, 93%, 0.6) 0px, transparent 50%),
+    radial-gradient(at 100% 60%, hsla(140, 60%, 94%, 0.5) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsla(160, 70%, 94%, 0.6) 0px, transparent 50%);
+}
+
+[data-bs-theme="dark"] .mesh-gradient {
+  background-color: #0a0a0f;
+  background-image:
+    radial-gradient(at 0% 0%, hsla(152, 50%, 10%, 1) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsla(168, 40%, 8%, 0.8) 0px, transparent 50%),
+    radial-gradient(at 100% 60%, hsla(140, 50%, 7%, 0.6) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsla(160, 40%, 8%, 0.7) 0px, transparent 50%);
+}
+
+/* Glassmorphism Classes Redefined */
 .glass-panel {
   background: var(--glass-bg);
-  /* backdrop-filter kept here — panels are modals/dropdowns, not repeated scroll items */
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   border-radius: 1.5rem;
@@ -176,54 +194,68 @@ select:focus {
 
 .glass-card {
   background: var(--glass-bg);
-  /* PERF: Removed backdrop-filter — applying blur to dozens of cards on every scroll
-     frame causes 'Forced reflow' violations. Use box-shadow + background for the effect. */
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   border-radius: 1rem;
-  /* PERF: Only transition transform + box-shadow (GPU composited, no reflow) */
   transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease;
   will-change: transform;
 }
 
 .glass-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 12px 30px rgba(16, 185, 129, 0.1);
 }
 
 [data-bs-theme="dark"] .glass-card:hover {
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(16, 185, 129, 0.05);
 }
 
-/* Animations */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Glow Effects */
+.glow-brand {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.15), 0 0 60px rgba(16, 185, 129, 0.08);
 }
 
-.fade-in {
-  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+[data-bs-theme="dark"] .glow-brand {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.2), 0 0 80px rgba(16, 185, 129, 0.1);
 }
 
+.glow-input:focus-within {
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+[data-bs-theme="dark"] .glow-input:focus-within {
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.2);
+}
+
+/* Animations Higher Fidelity */
 @keyframes float {
-  0% {
-    transform: translateY(0px);
-  }
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-8px) rotate(1deg); }
+  66% { transform: translateY(4px) rotate(-1deg); }
+}
 
-  50% {
-    transform: translateY(-10px);
-  }
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
 
-  100% {
-    transform: translateY(0px);
-  }
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  background-size: 200% auto;
+  animation: shimmer 3s linear infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
 }
 
 .floating {
@@ -281,9 +313,10 @@ select:focus {
 }
 
 .navbar-brand {
+  font-family: var(--font-display);
   font-weight: 800;
-  font-size: 1.4rem;
-  letter-spacing: -0.5px;
+  font-size: 1.6rem;
+  letter-spacing: -1px;
   background: linear-gradient(135deg, var(--primary), var(--secondary));
   -webkit-background-clip: text;
   background-clip: text;
@@ -312,15 +345,23 @@ select:focus {
   color: var(--primary) !important;
 }
 
-/* --- RESPONSIVE UTILITIES --- */
-.text-md-nowrap-custom {
-  white-space: normal;
+/* Gradient Text - High Contrast for Light Theme */
+.gradient-text {
+  background: linear-gradient(135deg, var(--brand-700), var(--brand-600), var(--brand-500));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-@media (min-width: 768px) {
-  .text-md-nowrap-custom {
-    white-space: nowrap !important;
-  }
+[data-bs-theme="dark"] .gradient-text {
+  background: linear-gradient(135deg, #4ade80, #2dd4bf, #22d3ee);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
 }
 
 .nav-link::after {
@@ -350,27 +391,27 @@ select:focus {
   font-weight: 600;
   letter-spacing: 0.3px;
   padding: 0.6rem 1.5rem;
-  /* PERF: Replaced 'transition: all' with specific GPU-composited properties */
   transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
 .btn-primary {
   background: var(--primary);
   border: none;
-  box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+  color: white !important;
 }
 
 .btn-primary:hover {
   background: var(--primary-hover);
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(79, 70, 229, 0.4);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
 }
 
 .cta-gradient {
-  background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+  background: linear-gradient(135deg, #10b981 0%, #14b8a6 50%, #0ea5e9 100%);
   border: none;
   color: white !important;
-  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
   background-size: 200% 200%;
   animation: gradientShift 5s ease infinite;
 }
@@ -396,7 +437,7 @@ select:focus {
 
 /* Home Page Hero Section */
 .hero-section {
-  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%234f46e5" fill-opacity="0.05" d="M0,160L48,165.3C96,171,192,181,288,165.3C384,149,480,107,576,101.3C672,96,768,128,864,154.7C960,181,1056,203,1152,192C1248,181,1344,139,1392,117.3L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>'), var(--hero-gradient);
+  background: var(--hero-gradient);
   background-size: cover;
   background-position: center bottom;
   padding: 6rem 1rem;
@@ -425,11 +466,17 @@ select:focus {
 }
 
 .hero-title {
-  font-size: 3.5rem;
+  font-family: var(--font-display);
+  font-size: 4rem;
   font-weight: 800;
-  line-height: 1.2;
-  margin-bottom: 1.5rem;
-  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  line-height: 1.1;
+  letter-spacing: -2px;
+  margin-bottom: 2rem;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+[data-bs-theme="dark"] .hero-title {
+  text-shadow: 0 4px 40px rgba(16, 185, 129, 0.2);
 }
 
 /* Feature Cards */

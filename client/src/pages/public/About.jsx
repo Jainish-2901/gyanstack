@@ -20,7 +20,6 @@ const FeatureBox = ({ icon, title, description, colorClass }) => (
 export default function About() {
     return (
         <div style={{ minHeight: '100vh', background: 'var(--bg-primary)' }}>
-            {/* --- HERO SECTION --- */}
             <div className="py-5" style={{
                 background: 'linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(6,182,212,0.06) 100%)',
                 borderBottom: '1px solid var(--glass-border)'
@@ -42,7 +41,6 @@ export default function About() {
             </div>
 
             <div className="container py-5">
-                {/* --- OUR MISSION SECTION --- */}
                 <div className="row align-items-center mb-5 pb-lg-4">
                     <div className="col-lg-6 mb-4 mb-lg-0">
                         <div className="pe-lg-5">
@@ -81,7 +79,6 @@ export default function About() {
                     </div>
                     <div className="col-lg-6">
                         <div className="glass-panel p-2 rounded-5 shadow-lg overflow-hidden position-relative">
-                            {/* Image with object-fit to ensure it fills the container nicely */}
                             <img
                                 src="https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=1000&q=80"
                                 alt="Modern Education Library"
@@ -102,7 +99,6 @@ export default function About() {
                     </div>
                 </div>
 
-                {/* --- WHAT WE OFFER (Universal Features) --- */}
                 <div className="row mb-5 text-center mt-5">
                     <div className="col-12 mb-5">
                         <h6 className="text-primary fw-bold text-uppercase tracking-wider">Features Recap</h6>
@@ -134,7 +130,6 @@ export default function About() {
                     />
                 </div>
 
-                {/* --- DEVELOPER PROFILE --- */}
                 <div className="row justify-content-center mt-5">
                     <div className="col-lg-10">
                         <div className="glass-panel rounded-5 p-4 p-md-5 border-primary border-opacity-10 shadow-sm overflow-hidden position-relative">

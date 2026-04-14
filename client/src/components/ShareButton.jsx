@@ -4,7 +4,6 @@ export default function ShareButton({ title, url, className = "btn btn-light rou
   const [copied, setCopied] = useState(false);
 
   const handleShare = async () => {
-    // If no URL is provided, default to current page's full URL
     const targetUrl = url || window.location.href;
     const fullUrl = targetUrl.startsWith('http') ? targetUrl : `${window.location.origin}${targetUrl.startsWith('/') ? '' : '/'}${targetUrl}`;
     
@@ -21,7 +20,6 @@ export default function ShareButton({ title, url, className = "btn btn-light rou
         console.error('Error sharing:', err);
       }
     } else {
-      // Fallback: Copy to clipboard (including title for context)
       try {
         const copyText = title ? `${title}\n${fullUrl}` : fullUrl;
         await navigator.clipboard.writeText(copyText);

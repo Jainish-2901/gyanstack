@@ -23,7 +23,7 @@ export default function Sidebar({ show, onMobileClose }) {
             <div className="sidebar-brand">
                 <Link className="navbar-brand d-flex align-items-center" to="/" onClick={onMobileClose}>
                     <img src="/logo.png" alt="Logo" className="me-2" style={{ height: '35px' }} />
-                    <span>GyanStack Admin</span>
+                    <span className="fw-bold fs-5 gradient-text">GyanStack Admin</span>
                 </Link>
             </div>
 

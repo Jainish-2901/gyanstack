@@ -11,14 +11,11 @@ export const useAdminCategories = (parentId = 'root') => {
       const { data } = await api.get(`/categories?parentId=${parentId}`);
       return data.categories.sort((a, b) => a.order - b.order);
     },
-    staleTime: 1000 * 60 * 10, // 10 minutes cache for category trees
-    gcTime: 1000 * 60 * 15,    // Keep in garbage collection for 15 mins
+    staleTime: 1000 * 60 * 10, 
+    gcTime: 1000 * 60 * 15,    
   });
 };
 
-/**
- * Hook for flat list (useful for dropdowns/maps).
- */
 export const useAllCategoriesFlat = () => {
   return useQuery({
     queryKey: ['admin-categories-flat'],
@@ -34,13 +31,10 @@ export const useAllCategoriesFlat = () => {
       flatten(data.categories || data);
       return flattened;
     },
-    staleTime: 1000 * 60 * 30, // Flat list rarely changes, cache for 30 mins
+    staleTime: 1000 * 60 * 30, 
   });
 };
 
-/**
- * Mutation hooks for category management.
- */
 export const useCategoryMutation = () => {
   const queryClient = useQueryClient();
 
@@ -61,7 +55,7 @@ export const useCategoryMutation = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-categories'] }); // Invalidate all for moves
+      queryClient.invalidateQueries({ queryKey: ['admin-categories'] }); 
       queryClient.invalidateQueries({ queryKey: ['admin-categories-flat'] });
     },
   });
@@ -90,16 +84,14 @@ export const useCategoryMutation = () => {
   return { createCategory, updateCategory, deleteCategory, reorderCategories };
 };
 
-/**
- * Hook to fetch a map of category ID to category name.
- */
+
 export const useCategoryMap = () => {
   return useQuery({
     queryKey: ['category-map'],
     queryFn: async () => {
       try {
         const { data } = await api.get('/categories/all-nested');
-        const map = { 'root': 'Root / General' }; // Default root entry
+        const map = { 'root': 'Root / General' }; 
         
         const buildMap = (categories) => {
           if (!categories || !Array.isArray(categories)) return;
@@ -111,7 +103,6 @@ export const useCategoryMap = () => {
           });
         };
         
-        // Handle both { categories: [] } and raw [] response
         const categoriesData = data.categories || data;
         buildMap(categoriesData);
         
@@ -121,6 +112,6 @@ export const useCategoryMap = () => {
         return { 'root': 'Root / General' };
       }
     },
-    staleTime: 1000 * 60 * 30, // Category Map cache (highly stable)
+    staleTime: 1000 * 60 * 30, 
   });
 };

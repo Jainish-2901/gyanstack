@@ -5,6 +5,8 @@ import SearchBar from '../../components/SearchBar';
 import ContentList from '../../components/ContentList';
 import ShareButton from '../../components/ShareButton';
 import LoadingScreen from '../../components/LoadingScreen';
+import { motion } from 'framer-motion';
+import { fadeInUp, staggerContainer, hoverScale } from '../../utils/animations';
 
 export default function Browse() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -15,14 +17,11 @@ export default function Browse() {
   const sortBy = searchParams.get('sortBy') || 'date';
   const order = searchParams.get('order') || 'desc';
 
-  // Use TanStack Query hook
   const { data: categories = [], isLoading: categoriesLoading } = useNestedCategories();
 
-  // Breadcrumb Path Tracking: [{id, name, children}]
   const [currentPath, setCurrentPath] = useState([]);
   const [displaySubCats, setDisplaySubCats] = useState([]);
 
-  // 2. Sync UI when URL changes (Direct Link support)
   useEffect(() => {
     if (!categories || categories.length === 0) return;
 
@@ -44,11 +43,9 @@ export default function Browse() {
       findAndBuildPath(categories, categoryId);
     }
 
-    // Only update if path OR sub-categories actually changed to prevent infinite loop
     const leaf = newPath[newPath.length - 1];
     const newSubCats = leaf ? (leaf.children || []) : categories;
 
-    // Guard: Compare with current state before updating
     setCurrentPath(prev => {
       if (JSON.stringify(prev) === JSON.stringify(newPath)) return prev;
       return newPath;
@@ -60,7 +57,6 @@ export default function Browse() {
     });
   }, [categoryId, categories]);
 
-  // Handle auto-scroll for breadcrumbs
   useEffect(() => {
     if (activeBreadcrumbRef.current) {
       activeBreadcrumbRef.current.scrollIntoView({
@@ -71,7 +67,6 @@ export default function Browse() {
     }
   }, [categoryId, currentPath]);
 
-  // 3. Navigation Logic (Folder Click)
   const handleFolderClick = (id) => {
     const params = new URLSearchParams(searchParams);
     params.set('category', id);
@@ -131,7 +126,7 @@ export default function Browse() {
       <div className="row g-4">
 
         {/* TOP SECTION: Search & Breadcrumbs */}
-        <div className="col-12">
+        <motion.div className="col-12" variants={fadeInUp} initial="initial" animate="animate">
           <div className="glass-panel p-4 rounded-5 border-0 shadow-sm mb-4">
             <h2 className="fw-bold mb-4" style={{ color: 'var(--text-primary)' }}>
               <i className="bi bi-search-heart text-primary me-2"></i>Browse Library
@@ -143,8 +138,7 @@ export default function Browse() {
             />
           </div>
 
-          {/* FOLDER EXPLORER BREADCRUMB */}
-          <div className="glass-panel p-2 px-3 rounded-pill mb-4 d-flex align-items-center gap-2 shadow-sm border-0 overflow-auto no-scrollbar" style={{ background: 'rgba(255,255,255,0.7)' }}>
+          <div className="glass-panel p-2 px-3 rounded-pill mb-4 d-flex align-items-center gap-2 shadow-sm border-0 overflow-auto no-scrollbar" style={{ background: 'var(--glass-bg)' }}>
             <button
               onClick={handleGoRoot}
               className={`btn btn-sm rounded-pill flex-shrink-0 ${!categoryId ? 'btn-primary shadow' : 'btn-link text-decoration-none text-dark'}`}
@@ -175,38 +169,44 @@ export default function Browse() {
               </button>
             )}
           </div>
-        </div>
+        </motion.div>
 
-        {/* MAIN AREA */}
         <div className="col-12">
-          {/* Sub-Folders Grid (Visible only when not searching) */}
           {!searchTerm && displaySubCats.length > 0 && (
             <div className="row g-3 mb-5">
               <div className="col-12">
                 <h6 className="fw-bold text-primary small text-uppercase tracking-wider mb-0">Folders</h6>
               </div>
-              {displaySubCats.map(cat => (
-                <div key={cat._id} className="col-6 col-md-6 col-lg-4 col-xl-3">
-                  <div
-                    onClick={() => handleFolderClick(cat._id)}
-                    className="folder-card glass-panel p-2 p-md-3 rounded-4 border-0 d-flex flex-column flex-md-row align-items-center align-items-md-center gap-2 gap-md-3 cursor-pointer shadow-sm h-100 text-center text-md-start"
-                  >
-                    <div className="folder-icon bg-warning bg-opacity-10 rounded-3 p-1 p-md-2 d-flex align-items-center justify-content-center cursor-pointer">
-                      <i className="bi bi-folder-fill text-warning fs-5 fs-md-4"></i>
-                    </div>
-                    <div className="overflow-hidden cursor-pointer w-100">
-                      <div className="fw-bold extra-small-title text-dark text-break" style={{ fontSize: '0.85rem' }}>{cat.name}</div>
-                      <small className="text-muted extra-small d-block">
-                        {cat.children?.length || 0} {cat.children?.length === 1 ? 'folder' : 'folders'} • {cat.itemCount || 0} {cat.itemCount === 1 ? 'item' : 'items'}
-                      </small>
-                    </div>
-                  </div>
-                </div>
-              ))}
+              <motion.div 
+                className="row g-3 w-100 mx-0"
+                variants={staggerContainer}
+                initial="initial"
+                animate="animate"
+              >
+                {displaySubCats.map(cat => (
+                  <motion.div key={cat._id} className="col-6 col-md-6 col-lg-4 col-xl-3" variants={fadeInUp}>
+                    <motion.div
+                      onClick={() => handleFolderClick(cat._id)}
+                      whileHover={{ scale: 1.03, y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="folder-card glass-panel p-2 p-md-3 rounded-4 border-0 d-flex flex-column flex-md-row align-items-center align-items-md-center gap-2 gap-md-3 cursor-pointer shadow-sm h-100 text-center text-md-start"
+                    >
+                      <div className="folder-icon bg-warning bg-opacity-10 rounded-3 p-1 p-md-2 d-flex align-items-center justify-content-center cursor-pointer">
+                        <i className="bi bi-folder-fill text-warning fs-5 fs-md-4"></i>
+                      </div>
+                      <div className="overflow-hidden cursor-pointer w-100">
+                        <div className="fw-bold extra-small-title text-dark text-break" style={{ fontSize: '0.85rem' }}>{cat.name}</div>
+                        <small className="text-muted extra-small d-block">
+                          {cat.children?.length || 0} {cat.children?.length === 1 ? 'folder' : 'folders'} • {cat.itemCount || 0} {cat.itemCount === 1 ? 'item' : 'items'}
+                        </small>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                ))}
+              </motion.div>
             </div>
           )}
 
-          {/* TITLE & SHARE BAR */}
           <div className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between mb-4 pb-3 border-bottom border-light gap-3">
             <div className="flex-grow-1">
               <h4 className="fw-bold mb-0 text-md-nowrap-custom">
@@ -225,7 +225,7 @@ export default function Browse() {
                 <i className="bi bi-filter-left text-muted d-none d-md-block"></i>
                 <select
                   className="form-select form-select-sm rounded-pill border-light shadow-sm"
-                  style={{ width: 'auto', minWidth: '140px', background: 'rgba(255,255,255,0.7)', paddingRight: '2rem' }}
+                  style={{ width: 'auto', minWidth: '140px', background: 'var(--glass-bg)', paddingRight: '2rem' }}
                   value={`${sortBy}_${order}`}
                   onChange={handleSortChange}
                 >
@@ -247,7 +247,6 @@ export default function Browse() {
             </div>
           </div>
 
-          {/* ACTUAL CONTENT LIST */}
           <ContentList
             categoryId={categoryId}
             searchTerm={searchTerm}
@@ -259,8 +258,8 @@ export default function Browse() {
       </div>
 
       <style>{`
-        .folder-card { transition: all 0.2s; background: #fff !important; }
-        .folder-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.05) !important; border: 1px solid var(--bs-primary) !important; }
+        .folder-card { transition: all 0.2s; background: var(--glass-bg) !important; border: 1px solid var(--glass-border) !important; }
+        .folder-card:hover { transform: translateY(-3px); box-shadow: var(--glass-shadow) !important; border: 1px solid var(--primary) !important; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .extra-small { font-size: 0.7rem; }
       `}</style>

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-// --- FIX: Sahi import paths (bina .js/.jsx) ---
 import api from '../../services/api';
 import LoadingScreen from '../../components/LoadingScreen';
 import { useAuth } from '../../context/AuthContext';
@@ -9,9 +8,7 @@ import ShareButton from '../../components/ShareButton';
 import ContentCard from '../../components/ContentCard';
 import NotFound from './NotFound';
 import toast from 'react-hot-toast';
-// ---------------------------------------------
 
-// --- Helper Functions ---
 
 const cleanTitle = (title) => {
   if (!title) return '';
@@ -53,12 +50,10 @@ const getDownloadUrl = (item) => {
   const { url, title, googleDriveId } = item;
   if (!url) return '#';
 
-  // 1. Google Drive URL handled specifically
   if (googleDriveId) {
     return `https://drive.google.com/uc?export=download&id=${googleDriveId}`;
   }
 
-  // 2. Legacy Cloudinary Logic
   if (url.includes('/upload/')) {
     const baseTitle = cleanTitle(title) || 'download';
     const safeName = baseTitle.trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
@@ -69,16 +64,12 @@ const getDownloadUrl = (item) => {
 };
 
 
-// --- Drive Iframe Preview with CSP fallback ---
-// Google Drive's CSP `frame-ancestors` policy may block preview on deployed sites.
-// We detect this and show a graceful fallback with direct links.
 const DrivePreview = ({ previewUrl, item }) => {
   const [blocked, setBlocked] = React.useState(false);
   const [loaded, setLoaded] = React.useState(false);
-  const viewUrl = item.url; // webViewLink stored from Drive
+  const viewUrl = item.url; 
   const downloadUrl = `https://drive.google.com/uc?export=download&id=${item.googleDriveId}`;
 
-  // If the iframe fails to load within 6 seconds, assume CSP block
   React.useEffect(() => {
     const timer = setTimeout(() => {
       if (!loaded) setBlocked(true);
@@ -88,7 +79,7 @@ const DrivePreview = ({ previewUrl, item }) => {
 
   if (blocked) {
     return (
-      <div className="text-center p-4 p-md-5 rounded-4 border-0 shadow-sm animate-pulse" style={{ background: 'rgba(255,255,255,0.4)', backdropFilter: 'blur(10px)' }}>
+      <div className="text-center p-4 p-md-5 rounded-4 border-0 shadow-sm animate-pulse" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(10px)' }}>
         <div className="mb-4">
           <div className="bg-primary bg-opacity-10 rounded-circle d-inline-flex p-4 mb-3">
             <i className="bi bi-shield-lock-fill display-5 text-primary"></i>
@@ -135,18 +126,15 @@ const DrivePreview = ({ previewUrl, item }) => {
   );
 };
 
-// --- Detail Preview Component ---
 const DetailPreview = ({ item }) => {
   const fileType = item.type || '';
   const resourceType = item.fileResourceType || 'raw';
 
-  // 0. Google Drive Preview logic (Responsive)
   if (item.googleDriveId) {
     const previewUrl = `https://drive.google.com/file/d/${item.googleDriveId}/preview`;
     return <DrivePreview previewUrl={previewUrl} item={item} />;
   }
 
-  // 1. Text/Note Type
   if (fileType === 'note' || item.textNote) {
     return (
       <div className="card shadow-sm border-0">
@@ -162,7 +150,6 @@ const DetailPreview = ({ item }) => {
     );
   }
 
-  // 2. Link Type
   if (fileType === 'link') {
     const embedUrl = getYoutubeEmbedUrl(item.url);
     if (embedUrl) {
@@ -193,7 +180,6 @@ const DetailPreview = ({ item }) => {
     );
   }
 
-  // 3. Image Type
   if (resourceType === 'image' || fileType.includes('image')) {
     return (
       <div className="text-center bg-light p-2 rounded">
@@ -202,7 +188,6 @@ const DetailPreview = ({ item }) => {
     );
   }
 
-  // 4. Video Type
   if (resourceType === 'video' || fileType.includes('video') || fileType.includes('avi')) {
     return (
       <div className="shadow rounded bg-dark overflow-hidden">
@@ -216,7 +201,6 @@ const DetailPreview = ({ item }) => {
     );
   }
 
-  // 5. PDF Type
   if (fileType.includes('pdf')) {
     return (
       <div className="shadow-sm rounded overflow-hidden border">
@@ -232,7 +216,6 @@ const DetailPreview = ({ item }) => {
     );
   }
 
-  // 6. Fallback (DOCX, ZIP, etc.)
   if (item.url && fileType !== 'note' && fileType !== 'link') {
     const iconClass = getIcon(item.type);
     return (
@@ -270,19 +253,16 @@ const formatBytes = (bytes, decimals = 2) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 };
 
-// --- Main Page Component ---
 export default function ContentDetailPage() {
 // ...
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // 1. Data Fetching Hooks
   const { data: item, isLoading: contentLoading } = useContentDetail(id);
   const { data: relatedItems = [] } = useRelatedContent(item?.categoryId, id);
   const { toggleLike, toggleSave, incrementDownload } = useContentMutation();
 
-  // --- View count guard (ref-based) ---
   const lastCountedId = useRef(null);
 
   useEffect(() => {
@@ -399,7 +379,7 @@ export default function ContentDetailPage() {
 
           {/* AGGREGATED METADATA SECTION (from Aggregator Pattern) */}
           {(item.externalMetadata?.googleDrive || item.externalMetadata?.cloudinary) && (
-            <div className="mb-4 glass-panel p-3 p-md-4 rounded-4 border-0 shadow-sm animate-slide-up" style={{ background: 'rgba(255,255,255,0.6)' }}>
+            <div className="mb-4 glass-panel p-3 p-md-4 rounded-4 border-0 shadow-sm animate-slide-up" style={{ background: 'var(--glass-bg)' }}>
               <h6 className="fw-bold text-dark mb-3 d-flex align-items-center">
                 <i className="bi bi-info-square-fill text-primary me-2"></i>Resource Intelligence
               </h6>

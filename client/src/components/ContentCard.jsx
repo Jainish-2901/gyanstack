@@ -5,11 +5,6 @@ import toast from 'react-hot-toast';
 import api from '../services/api';
 import ShareButton from './ShareButton';
 
-// --- Helper Functions ---
-
-/**
- * YouTube URL ko embeddable URL me convert karta hai
- */
 const getYoutubeEmbedUrl = (url) => {
   try {
     const urlObj = new URL(url);
@@ -31,12 +26,7 @@ const getYoutubeEmbedUrl = (url) => {
   return null;
 };
 
-/**
- * File type ke hisaab se icon return karta hai (Download Box ke liye)
- */
 const getIcon = (type) => {
-  // Yahaan hum 'fileResourceType' ki jagah 'type' (mimetype) par check karenge
-  // Taaki image aur video ke liye bhi icon mile
   if (type.includes('pdf')) return 'bi-file-earmark-pdf-fill text-danger';
   if (type.includes('video')) return 'bi-file-earmark-play-fill text-info';
   if (type.includes('image')) return 'bi-file-earmark-image-fill text-success';
@@ -47,18 +37,10 @@ const getIcon = (type) => {
   return 'bi-file-earmark-fill text-secondary';
 };
 
-// --- Preview Component ---
-
-/**
- * Ye naya component hai jo content type ke hisaab se preview dikhata hai
- * YEH AB SIRF 'NOTE' AUR 'LINK' KE LIYE CHALEGA
- */
 const ContentPreview = ({ item }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   
-  // 1. Text/Note Type
   if (item.type === 'note' || item.textNote) {
-    // Agar textNote null/undefined hai to empty string use karein
     const textNote = item.textNote || '';
     const previewText = textNote.slice(0, 150);
     
@@ -80,11 +62,9 @@ const ContentPreview = ({ item }) => {
     );
   }
 
-  // 2. Link Type (YouTube ya Normal Link)
   if (item.type === 'link') {
     const embedUrl = getYoutubeEmbedUrl(item.url);
     if (embedUrl) {
-      // YouTube Video - USe high-res thumbnail instead of heavy iframe in card
       const videoId = embedUrl.split('/').pop();
       const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
       
@@ -105,7 +85,6 @@ const ContentPreview = ({ item }) => {
         </div>
       );
     }
-    // Normal Link
     return (
       <div className="preview-box download-box">
         <i className="bi bi-link-45deg fs-1 text-primary"></i>
@@ -114,15 +93,12 @@ const ContentPreview = ({ item }) => {
     );
   }
 
-  // --- CHANGE ---
-  // Baaki sabhi types (Image, Video, Raw) ke liye 'null' return karein
   return null;
 };
 
 
 const cleanTitle = (title) => {
   if (!title) return '';
-  // Split by common separators and check if they are all identical
   const parts = title.split(/[,\-]+/).map(p => p.trim()).filter(p => p);
   const unique = [...new Set(parts)];
   return unique.length === 1 ? unique[0] : title;
@@ -131,17 +107,12 @@ const cleanTitle = (title) => {
 export default function ContentCard({ item }) {
   const { user } = useAuth();
   
-  // Local state for like count and status
   const [isLiked, setIsLiked] = useState(user && item.likedBy?.includes(user.id));
   const [likesCount, setLikesCount] = useState(item.likesCount || 0);
   const [loading, setLoading] = useState(false);
-
-  // --- CHANGE ---
-  // Check karein ki preview dikhana hai ya icon
   const showPreview = item.type === 'note' || item.type === 'link';
   const isFileType = !showPreview;
   
-  // Agar file type hai, to icon class fetch karein
   const iconClass = isFileType ? getIcon(item.type) : null;
   
   const navigate = useNavigate();
@@ -151,7 +122,7 @@ export default function ContentCard({ item }) {
   };
 
   const handleLike = async (e) => {
-    e.stopPropagation(); // Card click trigger na ho
+    e.stopPropagation(); 
     if (!user) {
       toast.error("Please log in to like content.");
       return;
@@ -168,9 +139,6 @@ export default function ContentCard({ item }) {
     }
   };
 
-  // --- CHANGE ---
-  // Niche waale button ko content type ke hisaab se change karein
-  // Ab sabhi buttons 'View Details' page par jayenge
   const renderActionButton = () => {
     return (
       <Link 
@@ -190,15 +158,11 @@ export default function ContentCard({ item }) {
       style={{ cursor: 'pointer' }}
     >
       
-      {/* --- YEH SIRF NOTE/LINK KE LIYE CHALEGA --- */}
       {showPreview && <ContentPreview item={item} />}
-      {/* ------------------------------------------- */}
 
       <div className="card-body d-flex flex-column p-4">
         
-        {/* --- YEH SIRF FILE TYPES (PDF, IMG, VID) KE LIYE CHALEGA --- */}
         {isFileType ? (
-          // Puraana Icon waala layout
           <div className="d-flex align-items-center mb-3">
             <div className="icon-wrapper bg-light rounded-circle shadow-sm me-3 flex-shrink-0" style={{width: '50px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                <i className={`bi ${iconClass} fs-3`}></i>
@@ -222,7 +186,6 @@ export default function ContentCard({ item }) {
             </div>
           </div>
         ) : (
-          // Naya 'Note/Link' waala layout (bina icon)
           <div className="mb-3 overflow-hidden">
             <h5 className="card-title fw-bold mt-2 text-dark" style={{ fontSize: '1rem', lineHeight: '1.3' }}>{cleanTitle(item.title)}</h5>
             <div className="d-flex flex-wrap gap-2 mb-2">
@@ -241,7 +204,6 @@ export default function ContentCard({ item }) {
             </div>
           </div>
         )}
-        {/* ----------------------------------------------------------- */}
         
         {/* Tags */}
         <div className="mb-3 d-flex flex-wrap gap-1 overflow-hidden">
@@ -252,9 +214,7 @@ export default function ContentCard({ item }) {
 
         <div className="mt-auto d-flex justify-content-between align-items-center border-top border-light pt-3">
           
-          {/* --- YEH NAYA SMART ACTION BUTTON HAI --- */}
           {renderActionButton()}
-          {/* --------------------------------------- */}
 
           <div className="d-flex gap-2" onClick={(e) => e.stopPropagation()}>
             <ShareButton 

@@ -1,9 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 
-/**
- * Hook to fetch public statistics (content count, student count, views).
- */
 export const useStats = () => {
   return useQuery({
     queryKey: ['public-stats'],
@@ -14,9 +11,6 @@ export const useStats = () => {
   });
 };
 
-/**
- * Hook to fetch top contributors/uploaders.
- */
 export const useTopUploaders = () => {
   return useQuery({
     queryKey: ['top-uploaders'],

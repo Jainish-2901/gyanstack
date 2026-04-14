@@ -1,6 +1,5 @@
 const Request = require('../models/requestModel');
 
-// 1. Nayi Request Banana (User Only)
 exports.createRequest = async (req, res) => {
   const { topic, message } = req.body;
   try {
@@ -17,7 +16,6 @@ exports.createRequest = async (req, res) => {
   }
 };
 
-// 2. Sabhi Requests Lena (Admin Only)
 exports.getRequests = async (req, res) => {
   try {
     const requests = await Request.find()
@@ -30,7 +28,6 @@ exports.getRequests = async (req, res) => {
   }
 };
 
-// 3. Request Status Update Karna (Admin Only)
 exports.updateRequestStatus = async (req, res) => {
   const { status } = req.body;
   try {
@@ -47,7 +44,6 @@ exports.updateRequestStatus = async (req, res) => {
   }
 };
 
-// 4. User Apni Requests Lena (User Only)
 exports.getUserRequests = async (req, res) => {
   try {
     const requests = await Request.find({ requestedBy: req.user.id })
@@ -59,7 +55,6 @@ exports.getUserRequests = async (req, res) => {
   }
 };
 
-// 5. Request Delete Karna (Admin Only)
 exports.deleteRequest = async (req, res) => {
   try {
     const request = await Request.findByIdAndDelete(req.params.id);

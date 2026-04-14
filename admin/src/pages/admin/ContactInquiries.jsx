@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
-// -------------------
 import LoadingScreen from '../../components/LoadingScreen';
 
 export default function ContactInquiries() {
@@ -26,7 +25,7 @@ export default function ContactInquiries() {
     const handleUpdateStatus = async (id, newStatus) => {
         try {
             await api.put(`/contact/${id}/status`, { status: newStatus });
-            fetchMessages(); // Refresh
+            fetchMessages(); 
         } catch (err) {
             alert("Failed to update status");
         }
@@ -49,16 +48,22 @@ export default function ContactInquiries() {
     if (loading) return <LoadingScreen text="Fetching inquiries..." />;
 
     return (
-        <div className="container-fluid fade-in px-0 overflow-x-hidden">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h4 className="fw-bold text-primary mb-1">Contact Inquiries</h4>
-                    <p className="text-muted small">Manage and respond to user messages from the "Get into touch" page.</p>
-                </div>
+        <div className="container-fluid py-3 px-2">
+      <div className="d-flex justify-content-between align-items-center mb-4 px-1">
+        <div>
+          <h4 className="fw-bold mb-0" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>
+             <i className="bi bi-envelope-paper text-primary me-2"></i>Contact Inquiries
+          </h4>
+          <small className="text-muted extra-small tracking-wider text-uppercase">Support & general platform queries</small>
+        </div>
+        <button className="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm" onClick={() => fetchInquiries()}>
+          <i className="bi bi-arrow-clockwise me-1"></i> Refresh
+        </button>
+      </div>
                 <div className="d-flex gap-2">
                     <select 
                         className="form-select" 
-                            style={{ width: '150px' }}
+                            style={{ width: '150px', backgroundColor: 'var(--glass-bg)', color: 'var(--text-primary)' }}
                             value={filter}
                             onChange={(e) => setFilter(e.target.value)}
                         >
@@ -71,7 +76,6 @@ export default function ContactInquiries() {
                             <i className="bi bi-arrow-clockwise"></i>
                         </button>
                     </div>
-                </div>
 
                 <div className="row gx-lg-2 gy-4">
                     {filteredMessages.length === 0 ? (
@@ -82,7 +86,7 @@ export default function ContactInquiries() {
                     ) : (
                         filteredMessages.map((msg) => (
                             <div key={msg._id} className="col-lg-6">
-                                <div className="card border-0 rounded-4 h-100 position-relative overflow-hidden inquiry-card">
+                                <div className="glass-card shadow-sm h-100 position-relative overflow-hidden inquiry-card">
                                     <div className={`status-indicator ${msg.status}`}></div>
                                     <div className="card-body p-4">
                                         <div className="d-flex justify-content-between align-items-start mb-3">
@@ -91,7 +95,7 @@ export default function ContactInquiries() {
                                                     {msg.name.charAt(0).toUpperCase()}
                                                 </div>
                                                 <div>
-                                                    <h5 className="fw-bold mb-0">{msg.name}</h5>
+                                                    <h5 className="fw-bold mb-0" style={{ color: 'var(--text-primary)' }}>{msg.name}</h5>
                                                     <small className="text-muted">{new Date(msg.createdAt).toLocaleString()}</small>
                                                 </div>
                                             </div>
@@ -106,16 +110,16 @@ export default function ContactInquiries() {
                                         <div className="contact-info-grid mb-4">
                                             <div className="d-flex align-items-center mb-2">
                                                 <i className="bi bi-envelope text-primary me-2"></i>
-                                                <a href={`mailto:${msg.email}`} className="text-decoration-none small text-dark fw-medium">{msg.email}</a>
+                                                <a href={`mailto:${msg.email}`} className="text-decoration-none small fw-medium" style={{ color: 'var(--text-primary)' }}>{msg.email}</a>
                                             </div>
                                             <div className="d-flex align-items-center">
                                                 <i className="bi bi-telephone text-primary me-2"></i>
-                                                <a href={`tel:${msg.phone}`} className="text-decoration-none small text-dark fw-medium">{msg.phone}</a>
+                                                <a href={`tel:${msg.phone}`} className="text-decoration-none small fw-medium" style={{ color: 'var(--text-primary)' }}>{msg.phone}</a>
                                             </div>
                                         </div>
 
-                                        <div className="bg-light p-3 rounded-3 mb-4">
-                                            <p className="mb-0 small text-dark lh-base" style={{ whiteSpace: 'pre-wrap' }}>{msg.message}</p>
+                                        <div className="bg-primary bg-opacity-5 p-3 rounded-3 mb-4">
+                                            <p className="mb-0 small lh-base" style={{ whiteSpace: 'pre-wrap', color: 'var(--text-primary)' }}>{msg.message}</p>
                                         </div>
 
                                         <div className="d-flex justify-content-between align-items-center pt-3 border-top">

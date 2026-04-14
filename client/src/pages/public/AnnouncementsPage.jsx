@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../../services/api'; // FIX: Standard relative path
-import LoadingScreen from '../../components/LoadingScreen'; // FIX: Standard relative path
-import { useAuth } from '../../context/AuthContext'; // FIX: Standard relative path
+import api from '../../services/api';
+import LoadingScreen from '../../components/LoadingScreen';
+import { useAuth } from '../../context/AuthContext';
 
-// Announcement Item Card Component
 const AnnouncementItem = ({ ann }) => {
   return (
     <div className="card mb-4 border-0 rounded-4 shadow-sm glass-panel transition-hover overflow-hidden bg-white">
@@ -53,33 +52,34 @@ export default function AnnouncementsPage() {
   
   const isAuth = !!user;
 
-  // Function to simulate marking all announcements as read
   const markAllAsRead = async (announcementIds) => {
-    if (!isAuth) return;
+    if (!isAuth || !announcements.length) return;
     
-    // Note: Production environment में, आप यहां एक single API call करेंगे:
-    // await api.put('/announcements/mark-all-read', { ids: announcementIds });
-    console.log("Simulating: Marking all visible announcements as read for user.");
+    try {
+      const latestId = announcements[0]._id;
+      await api.put('/announcements/mark-all-read', { latestId });
+      
+      setAnnouncements(prev => prev.map(ann => ({ ...ann, isRead: true })));
+    } catch (err) {
+      console.error("Failed to mark all as read:", err);
+    }
   };
 
   const fetchAllAnnouncements = async () => {
     setLoading(true);
     try {
-      // FIX: URL को /announcements?status=approved किया गया है
       const { data } = await api.get('/announcements?status=approved'); 
       
       const announcementsList = data.announcements.map(ann => ({
         ...ann,
-        isRead: true, // Frontend में default read status
-        // RequestedBy data को यहां से हटा दिया गया है
+        isRead: true,
       }));
 
       setAnnouncements(announcementsList);
       
-      // Announcements fetch hone ke turant baad mark as read API ko call karein
       if (isAuth && announcementsList.length > 0) {
           const ids = announcementsList.map(ann => ann._id);
-          markAllAsRead(ids); // Automatic Mark as Read
+          markAllAsRead(ids); 
       }
 
     } catch (err) {
@@ -89,12 +89,9 @@ export default function AnnouncementsPage() {
     setLoading(false);
   };
   
-  // Page load hone par fetch karein
   useEffect(() => {
     fetchAllAnnouncements();
-  }, [user]); // user state change hone par refresh ho
-
-  // handleMarkAsRead function ki ab zaroorat nahi hai.
+  }, [user]); 
 
   if (loading) return <LoadingScreen text="Fetching all announcements..." />;
   

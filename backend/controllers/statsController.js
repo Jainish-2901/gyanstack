@@ -1,7 +1,6 @@
 const SystemStats = require('../models/systemStatsModel');
 const Announcement = require('../models/announcementModel');
 
-// 1. Get All FCM Pulse Data
 exports.getFCMPulse = async (req, res) => {
     try {
         let stats = await SystemStats.findOne();

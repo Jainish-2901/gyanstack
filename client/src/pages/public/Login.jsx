@@ -22,7 +22,6 @@ export default function Login() {
     try {
         const loggedInUser = await login(loginId, password); 
         
-        // --- CLIENT LOGIC: ONLY STUDENTS ALLOWED ---
         const role = loggedInUser?.role;
         if (role === 'admin' || role === 'superadmin') {
             logout();
@@ -31,12 +30,10 @@ export default function Login() {
             return;
         }
 
-        // --- ANALYTICS: Login Event ---
         if (analytics) {
           logEvent(analytics, 'login', { method: 'manual' });
         }
 
-        // --- PUSH NOTIFICATION PERMISSION ---
         await requestForToken();
 
         navigate('/dashboard');
@@ -50,11 +47,9 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
-        console.log("Attempting Google Sign-In via Popup...");
         const result = await signInWithPopup(auth, googleProvider);
         const { user: firebaseUser } = result;
 
-        // Send to our MERN backend
         const { data } = await api.post('/auth/google-login', {
             email: firebaseUser.email,
             username: firebaseUser.displayName,
@@ -71,7 +66,6 @@ export default function Login() {
             return;
         }
 
-        // --- ANALYTICS: Login Event ---
         if (analytics) {
           logEvent(analytics, 'login', { method: 'google' });
         }

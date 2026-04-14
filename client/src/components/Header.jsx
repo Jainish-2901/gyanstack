@@ -35,11 +35,10 @@ export default function Header() {
       )}
 
       <div className="container-fluid px-3 px-lg-4">
-        {/* --- BRAND & MOBILE ICONS --- */}
         <div className="d-flex align-items-center justify-content-between w-100 w-lg-auto py-2">
           <Link className="navbar-brand d-flex align-items-center" to="/" onClick={() => setIsNavOpen(false)}>
             <img src="/logo.png" alt="Logo" className="me-2" style={{ height: '32px', width: 'auto' }} />
-            <span className="fw-bold">GyanStack</span>
+            <span className="fw-bold gradient-text">GyanStack</span>
           </Link>
 
           <div className="d-flex align-items-center d-lg-none gap-2">
@@ -51,10 +50,8 @@ export default function Header() {
           </div>
         </div>
 
-        {/* --- NAVIGATION COLLAPSE --- */}
         <div className={`navbar-collapse ${isNavOpen ? 'show mobile-sidebar' : 'collapse'}`} id="navbarNav">
 
-          {/* --- NEW ALIGNED MOBILE HEADER --- */}
           <div className="d-lg-none d-flex align-items-center justify-content-between mb-4 pb-3 border-bottom border-opacity-10">
             <div className="d-flex align-items-center">
               <i className="bi bi-compass text-primary me-2 fs-5"></i>
@@ -70,7 +67,6 @@ export default function Header() {
             </button>
           </div>
 
-          {/* 1. MOBILE PROFILE CARD (If logged in) */}
           {user && (
             <div className="d-lg-none mb-4 p-3 glass-panel rounded-4 border-0 shadow-sm">
               <div className="d-flex align-items-center mb-3">
@@ -86,7 +82,6 @@ export default function Header() {
             </div>
           )}
 
-          {/* 2. MAIN NAV LINKS */}
           <ul className="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3 gap-lg-1">
             <li className="nav-item"><NavLink className={activeClass} to="/">Home</NavLink></li>
             <li className="nav-item"><NavLink className={activeClass} to="/browse">Browse</NavLink></li>
@@ -122,7 +117,6 @@ export default function Header() {
             </li>
           </ul>
 
-          {/* --- DESKTOP ACTIONS --- */}
           <div className="d-none d-lg-flex align-items-center gap-3 ms-auto py-2">
             <ThemeToggle />
             <NotificationBell user={user} />
@@ -159,7 +153,6 @@ export default function Header() {
             )}
           </div>
 
-          {/* --- MOBILE LOGOUT OR LOGIN/SIGNUP BUTTONS --- */}
           <div className="d-lg-none mt-auto pt-3 border-top border-opacity-10">
             {user ? (
               <button
@@ -182,7 +175,8 @@ export default function Header() {
       <style>{`
         .fancy-header { 
           background: var(--glass-bg); 
-          backdrop-filter: blur(12px); 
+          backdrop-filter: blur(24px) saturate(180%); 
+          -webkit-backdrop-filter: blur(24px) saturate(180%);
           border-bottom: 1px solid var(--glass-border) !important;
         }
         

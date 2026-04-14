@@ -1,7 +1,6 @@
 importScripts('https://www.gstatic.com/firebasejs/9.1.1/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.1.1/firebase-messaging-compat.js');
 
-// URL se config parameters nikalein
 const urlParams = new URLSearchParams(self.location.search);
 
 firebase.initializeApp({

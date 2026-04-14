@@ -4,12 +4,10 @@ const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
-    // Pehle user ki local storage check karo
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
       return savedTheme;
     }
-    // Varna system preference check karo
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
 
@@ -17,10 +15,10 @@ export function ThemeProvider({ children }) {
     const root = window.document.documentElement;
     if (theme === 'dark') {
       root.classList.add('dark');
-      root.setAttribute('data-bs-theme', 'dark'); // Bootstrap 5.3+ dark mode
+      root.setAttribute('data-bs-theme', 'dark');
     } else {
       root.classList.remove('dark');
-      root.setAttribute('data-bs-theme', 'light'); // Bootstrap 5.3+ light mode
+      root.setAttribute('data-bs-theme', 'light');
     }
     localStorage.setItem('theme', theme);
   }, [theme]);

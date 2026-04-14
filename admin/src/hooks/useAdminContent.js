@@ -1,9 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 
-/**
- * Hook to fetch admin's own uploaded content.
- */
 export const useMyContent = () => {
   return useQuery({
     queryKey: ['my-content'],
@@ -14,9 +11,6 @@ export const useMyContent = () => {
   });
 };
 
-/**
- * Hook to fetch all content for global management.
- */
 export const useManageAllContent = () => {
   return useQuery({
     queryKey: ['manage-all-content'],
@@ -27,9 +21,7 @@ export const useManageAllContent = () => {
   });
 };
 
-/**
- * Mutation hooks for content management (Creation, Edit, Delete).
- */
+
 export const useAdminContentMutation = () => {
   const queryClient = useQueryClient();
 

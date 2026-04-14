@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
 
-// Yeh component password field aur toggle button ko handle karta hai
 export default function PasswordInput({ label, value, onChange, required = true, isConfirm = false, ...props }) {
   const [showPassword, setShowPassword] = new useState(false);
   const type = showPassword ? 'text' : 'password';
-
-  // Password strength check (Simple logic)
   const getPasswordStrength = (p) => {
     if (p.length === 0) return { text: '', color: 'muted' };
     
@@ -23,7 +20,7 @@ export default function PasswordInput({ label, value, onChange, required = true,
   };
 
   const strength = getPasswordStrength(value);
-  const id = label.replace(/\s/g, ''); // Generate unique ID
+  const id = label.replace(/\s/g, ''); 
 
   return (
     <div className="input-group mb-0">
@@ -49,7 +46,6 @@ export default function PasswordInput({ label, value, onChange, required = true,
         <i className={`bi ${showPassword ? 'bi-eye-slash-fill' : 'bi-eye-fill'} fs-5`}></i>
       </button>
       
-      {/* Strength Indicator */}
       {!isConfirm && strength.text && (
         <div className="w-100 text-start mt-1">
           <small className={`text-${strength.color} fw-bold ms-1`}>

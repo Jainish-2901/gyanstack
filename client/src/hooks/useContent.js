@@ -1,9 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 
-/**
- * Hook to fetch content for a specific category (limited for preview).
- */
 export const useCategoryContent = (categoryId, enabled = false) => {
   return useQuery({
     queryKey: ['category-content', categoryId],
@@ -12,13 +9,10 @@ export const useCategoryContent = (categoryId, enabled = false) => {
       return data.content || [];
     },
     enabled,
-    staleTime: 1000 * 60 * 10, // 10 minutes cache for previews
+    staleTime: 1000 * 60 * 10,
   });
 };
 
-/**
- * Hook to fetch a list of content based on filters.
- */
 export const useContentList = (params) => {
   return useQuery({
     queryKey: ['content-list', params],
@@ -30,15 +24,12 @@ export const useContentList = (params) => {
           skip: params.skip || 0
         } 
       });
-      return data; // Return whole object including hasMore/total
+      return data; 
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes fresh for search results
+    staleTime: 1000 * 60 * 5,
   });
 };
 
-/**
- * Hook to fetch single content detail.
- */
 export const useContentDetail = (id) => {
   return useQuery({
     queryKey: ['content', id],
@@ -50,9 +41,6 @@ export const useContentDetail = (id) => {
   });
 };
 
-/**
- * Hook to fetch related content.
- */
 export const useRelatedContent = (categoryId, excludeId) => {
   return useQuery({
     queryKey: ['related-content', categoryId, excludeId],
@@ -64,9 +52,6 @@ export const useRelatedContent = (categoryId, excludeId) => {
   });
 };
 
-/**
- * Mutation hooks for content actions.
- */
 export const useContentMutation = () => {
   const queryClient = useQueryClient();
 
@@ -76,7 +61,6 @@ export const useContentMutation = () => {
       return data;
     },
     onSuccess: (data, id) => {
-      // Update the specific content in cache
       queryClient.setQueryData(['content', id], (old) => {
         if (!old) return old;
         return { ...old, likesCount: data.likesCount, likedBy: data.likedBy || old.likedBy };

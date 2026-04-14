@@ -16,19 +16,16 @@ export default function UploaderProfile() {
   const sortBy = searchParams.get('sortBy') || 'date';
   const order = searchParams.get('order') || 'desc';
   
-  // 1. Data Fetching Hooks
   const { data: profileData, isLoading: profileLoading, error: profileError } = useUploaderProfile(id);
   const { data: categories = [], isLoading: categoriesLoading } = useNestedCategories();
 
   const profile = profileData?.user;
   const contents = profileData?.contents || [];
   
-  // Breadcrumb Path Tracking
   const [currentPath, setCurrentPath] = useState([]);
   const [displaySubCats, setDisplaySubCats] = useState([]);
   const [copySuccess, setCopySuccess] = useState(false);
 
-  // 2. Sync UI when URL changes (Category Path building)
   useEffect(() => {
     if (categories.length > 0 && categoryId) {
       const path = [];
@@ -56,7 +53,6 @@ export default function UploaderProfile() {
     }
   }, [categoryId, categories]);
 
-  // 3. Navigation Actions
   const handleFolderClick = (cid) => {
     const params = new URLSearchParams(searchParams);
     params.set('category', cid);
@@ -115,7 +111,6 @@ export default function UploaderProfile() {
     <div className="container-fluid py-3 py-md-5 fade-in px-2 px-md-4 px-lg-5">
       <div className="row g-3 g-lg-4">
 
-        {/* --- SIDEBAR: Complete Profile Info --- */}
         <div className="col-12 col-lg-4 col-xl-3">
           <div className="glass-panel p-4 rounded-4 shadow-sm border-0 sticky-profile">
             <div className="d-flex flex-row flex-lg-column align-items-center gap-3">
@@ -180,7 +175,6 @@ export default function UploaderProfile() {
           </div>
         </div>
 
-        {/* --- MAIN AREA: Explorer & Search --- */}
         <div className="col-12 col-lg-8 col-xl-9">
           
           <div className="glass-panel p-3 p-md-4 rounded-4 border-0 shadow-sm mb-4">

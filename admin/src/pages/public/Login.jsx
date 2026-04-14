@@ -20,7 +20,6 @@ export default function Login() {
     try {
         const loggedInUser = await login(loginId, password); 
         
-        // --- ADMIN LOGIC: ONLY ADMIN/SUPERADMIN ALLOWED ---
         const role = loggedInUser?.role; 
         if (role !== 'admin' && role !== 'superadmin') {
             logout();
@@ -29,11 +28,10 @@ export default function Login() {
             return;
         }
 
-        // --- PUSH NOTIFICATION PERMISSION ---
         await requestForToken();
 
         if (role === 'superadmin') {
-            navigate('/dashboard/admin'); // Both go to admin analytics overview
+            navigate('/dashboard/admin');
         } else {
             navigate('/dashboard/admin');
         }

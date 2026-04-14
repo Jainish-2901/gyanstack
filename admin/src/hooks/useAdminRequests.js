@@ -1,9 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 
-/**
- * Hook to fetch all user content requests for admin management.
- */
 export const useContentRequests = () => {
   return useQuery({
     queryKey: ['admin-requests'],
@@ -14,9 +11,6 @@ export const useContentRequests = () => {
   });
 };
 
-/**
- * Mutation hooks for request management.
- */
 export const useRequestMutation = () => {
   const queryClient = useQueryClient();
 
@@ -27,7 +21,6 @@ export const useRequestMutation = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-requests'] });
-      // Also potentially invalidate user-specific queries if they were viewing their own
       queryClient.invalidateQueries({ queryKey: ['my-requests'] });
     },
   });

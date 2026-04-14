@@ -1,7 +1,6 @@
 const Contact = require('../models/contactModel');
 const nodemailer = require('nodemailer');
 
-// 1. Submit Contact Form (Public)
 exports.submitContactForm = async (req, res) => {
   try {
     const { name, email, phone, message, userId } = req.body;
@@ -60,7 +59,6 @@ exports.submitContactForm = async (req, res) => {
   }
 };
 
-// 2. Get All Contact List (Admin/SuperAdmin)
 exports.getContactMessages = async (req, res) => {
   try {
     // Only Admin or SuperAdmin should hit this route via middleware
@@ -73,7 +71,6 @@ exports.getContactMessages = async (req, res) => {
   }
 };
 
-// 3. Update Status (Admin)
 exports.updateMessageStatus = async (req, res) => {
   try {
     const { status } = req.body;
@@ -89,7 +86,6 @@ exports.updateMessageStatus = async (req, res) => {
   }
 };
 
-// 4. Delete Message (Admin)
 exports.deleteMessage = async (req, res) => {
   try {
     await Contact.findByIdAndDelete(req.params.id);
@@ -99,7 +95,6 @@ exports.deleteMessage = async (req, res) => {
   }
 };
 
-// 5. Get Logged-in User's Inquiries
 exports.getMyInquiries = async (req, res) => {
   try {
     const inquiries = await Contact.find({ user: req.user.id }).sort({ createdAt: -1 });

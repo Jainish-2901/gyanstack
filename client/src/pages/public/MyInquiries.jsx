@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
-// DashboardLayout removed
 import LoadingScreen from '../../components/LoadingScreen';
 
 export default function MyInquiries() {

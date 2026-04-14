@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import ResetPasswordForm from '../../components/ResetPasswordForm.jsx'; // Component for OTP verification
+import ResetPasswordForm from '../../components/ResetPasswordForm.jsx'; 
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
-  const [step, setStep] = useState(1); // 1: Email, 2: OTP/Reset
+  const [step, setStep] = useState(1); 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { forgotPasswordRequest } = useAuth();
@@ -15,9 +15,8 @@ export default function ForgotPassword() {
     setError('');
     setLoading(true);
     try {
-      // Backend ko email bhejein aur OTP generate karne ko kahein
       await forgotPasswordRequest(email); 
-      setStep(2); // OTP verification step par jaayein
+      setStep(2); 
     } catch (err) {
       setError(err.message || 'Failed to send OTP. Check your email or try again.');
     }

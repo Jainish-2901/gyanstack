@@ -2,7 +2,6 @@ const Category = require('../models/categoryModel'); // Apne model ka path check
 const Content = require('../models/contentModel');
 const { updateDriveFile } = require('../utils/googleDrive');
 
-// --- RECURSIVE CHECK HELPER ---
 const isDescendantOf = async (targetParentId, categoryId) => {
   if (targetParentId === categoryId) return true;
   if (!targetParentId || targetParentId === 'root') return false;
@@ -13,7 +12,6 @@ const isDescendantOf = async (targetParentId, categoryId) => {
   return await isDescendantOf(parent.parentId, categoryId);
 };
 
-// --- NAYA HELPER FUNCTION ---
 // --- Sabhi nested categories ko fetch karne ke liye (Optimized for Vercel) ---
 const fetchNestedCategories = async (parentId, depth = 0) => {
   // Infinite recursion safety check
@@ -41,11 +39,8 @@ const fetchNestedCategories = async (parentId, depth = 0) => {
   
   return categoryList;
 };
-// -----------------------------
 
 
-// --- YEH NAYA FUNCTION HAI ---
-// 1. Nayi Category Banana
 exports.createCategory = async (req, res) => {
   const { name, parentId, order } = req.body;
   try {
@@ -71,8 +66,6 @@ exports.createCategory = async (req, res) => {
   }
 };
 
-// --- YEH NAYA FUNCTION HAI ---
-// 2. Categories Lena (Sirf ek level, ?parentId=... ke hisaab se)
 exports.getCategories = async (req, res) => {
   try {
     const { parentId } = req.query;
@@ -89,8 +82,6 @@ exports.getCategories = async (req, res) => {
   }
 };
 
-// --- YEH NAYA FUNCTION HAI ---
-// 3. Category Update Karna (Naam)
 exports.updateCategory = async (req, res) => {
   const { name, parentId } = req.body;
   try {
@@ -99,7 +90,6 @@ exports.updateCategory = async (req, res) => {
       return res.status(404).json({ message: 'Category not found' });
     }
 
-    // --- PARENT UPDATED (MOVE LOGIC) ---
     if (parentId && parentId !== category.parentId) {
       // Infinite recursion safety: check if parentId is a descendant of current category
       const isRecursive = await isDescendantOf(parentId, req.params.id);
@@ -145,8 +135,6 @@ exports.updateCategory = async (req, res) => {
   }
 };
 
-// --- YEH NAYA FUNCTION HAI ---
-// 4. Category Delete Karna
 exports.deleteCategory = async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
@@ -179,8 +167,6 @@ exports.deleteCategory = async (req, res) => {
 };
 
 
-// --- YEH NAYA FUNCTION HAI ---
-// 5. Sabhi Nested Categories Lena (AdminPanel Map ke liye)
 exports.getAllNestedCategories = async (req, res) => {
   try {
     if (!Category) {
@@ -197,11 +183,8 @@ exports.getAllNestedCategories = async (req, res) => {
     });
   }
 };
-// -----------------------------
 
 
-// --- YEH FUNCTION AAPKE PAAS PEHLE SE THA ---
-// 6. Categories Reorder Karna
 exports.reorderCategories = async (req, res) => {
   try {
     const { orderedCategories } = req.body;
@@ -232,5 +215,4 @@ exports.reorderCategories = async (req, res) => {
       error: process.env.NODE_ENV === 'production' ? err.message : err.stack 
     });
   }
-};
-// -----------------------------
+};

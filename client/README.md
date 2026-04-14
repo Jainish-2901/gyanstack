@@ -5,9 +5,10 @@ The GyanStack Student Portal is a premium academic resource discovery platform b
 ## 🌟 Key Features
 
 ### 💎 Premium User Experience
-- **Glassmorphism Design**: A high-fidelity UI featuring translucent panels, blurred backgrounds, and sleek shadows.
-- **Smart Notifications**: Integrated `react-hot-toast` for real-time, non-blocking feedback during Likes, Saves, and Downloads.
-- **Adaptive Typography**: Intelligent text handling that supports single-line headers on desktop and natural word-wrapping on mobile.
+- **Glassmorphism Design**: A high-fidelity UI featuring translucent panels and blurred backgrounds.
+- **Fluid Transitions**: Smooth page entries and scroll-triggered reveals powered by **Framer Motion**.
+- **Smart Notifications**: Integrated `react-hot-toast` for real-time feedback.
+- **Back-To-Top**: A floating glassmorphic button for instant home-view access.
 
 ### 🧭 Intelligent Navigation
 - **2x2 Mobile Grid**: Optimized folder display for mobile devices to maximize vertical space.
@@ -21,8 +22,9 @@ The GyanStack Student Portal is a premium academic resource discovery platform b
 
 ## 🛠️ Tech Stack
 - **Framework**: React 19 (Vite)
+- **Animations**: Framer Motion
 - **Styling**: Bootstrap 5 + Custom Modern CSS
-- **State Management**: TanStack Query (React Query)
+- **State Management**: TanStack Query
 - **Interactions**: React Hot Toast, Bootstrap Icons
 - **Storage Connectivity**: Google Drive API v3
 
@@ -46,4 +48,4 @@ npm run dev
 ```
 
 ---
-*Last Updated: April 12, 2026 (Premium Interaction Update)*
+*Last Updated: April 14, 2026 (Fluid Navigation Update)*

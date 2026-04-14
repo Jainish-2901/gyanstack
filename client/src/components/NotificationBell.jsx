@@ -4,7 +4,6 @@ import api from '../services/api';
 import { messaging, firebaseConfig } from '../services/firebase';
 import { getToken, onMessage } from 'firebase/messaging';
 
-// Initialize sound once outside the component
 const pingSound = new Audio('/notification-ping.mp3');
 
 const NotificationBell = ({ user }) => {
@@ -13,21 +12,19 @@ const NotificationBell = ({ user }) => {
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
 
-  // --- 1. DATA FETCHING (Memoized) ---
   const fetchAnnouncements = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     try {
       const { data } = await api.get('/announcements?status=approved&limit=5');
-      const lastSeenId = localStorage.getItem('lastSeenAnnId');
 
       const items = data.announcements.map((ann) => ({
         ...ann,
-        isRead: lastSeenId ? (ann._id <= lastSeenId) : false,
+        isRead: user.lastSeenAnnId ? (ann._id <= user.lastSeenAnnId) : false,
       }));
 
       setAnnouncements(items);
-      const unread = items.filter(i => !lastSeenId || i._id > lastSeenId).length;
+      const unread = items.filter(i => !user.lastSeenAnnId || i._id > user.lastSeenAnnId).length;
       setUnreadCount(unread);
     } catch (err) {
       console.error("Failed to fetch announcements:", err);
@@ -36,7 +33,6 @@ const NotificationBell = ({ user }) => {
     setLoading(false);
   }, [user]);
 
-  // --- 2. FIREBASE SETUP & PUSH LOGIC ---
   useEffect(() => {
     if (!user) return;
 
@@ -44,7 +40,6 @@ const NotificationBell = ({ user }) => {
       try {
         const permission = await Notification.requestPermission();
         if (permission === 'granted') {
-          // Construct SW URL with dynamic config
           const swUrl = `/firebase-messaging-sw.js?apiKey=${firebaseConfig.apiKey}` +
             `&authDomain=${firebaseConfig.authDomain}` +
             `&projectId=${firebaseConfig.projectId}` +
@@ -60,9 +55,7 @@ const NotificationBell = ({ user }) => {
           });
 
           if (token) {
-            // Sync token to your Route 12 on backend
             await api.post('/auth/update-fcm-token', { fcmToken: token });
-            console.log("FCM Token synced successfully.");
           }
         }
       } catch (err) {
@@ -72,12 +65,9 @@ const NotificationBell = ({ user }) => {
 
     setupFCM();
 
-    // Foreground Listener (When app is open)
     const unsubscribe = onMessage(messaging, (payload) => {
-      // 1. Play Sound (Catch error if user hasn't interacted yet)
       pingSound.play().catch(() => console.log("Sound blocked by browser until user click"));
 
-      // 2. Show native notification
       if (Notification.permission === 'granted') {
         new Notification(`GyanStack: ${payload.notification.title}`, {
           body: payload.notification.body,
@@ -85,7 +75,6 @@ const NotificationBell = ({ user }) => {
         });
       }
 
-      // 3. Refresh list
       fetchAnnouncements();
     });
 
@@ -96,7 +85,6 @@ const NotificationBell = ({ user }) => {
     fetchAnnouncements();
   }, [fetchAnnouncements]);
 
-  // --- 3. UI HANDLERS ---
   useEffect(() => {
     const isMobile = window.innerWidth <= 490;
     if (isOpen && isMobile) {
@@ -112,7 +100,11 @@ const NotificationBell = ({ user }) => {
 
     if (!isOpen && announcements.length > 0) {
       const latestId = announcements[0]._id;
-      localStorage.setItem('lastSeenAnnId', latestId);
+      
+      api.put('/announcements/mark-all-read', { latestId }).catch(err => {
+          console.error("Failed to sync read status:", err);
+      });
+
       setAnnouncements(prev => prev.map(ann => ({ ...ann, isRead: true })));
       setUnreadCount(0);
     }
@@ -125,8 +117,8 @@ const NotificationBell = ({ user }) => {
       <a className="nav-link p-2" href="#" onClick={toggleDropdown}>
         <i className={`bi ${unreadCount > 0 ? 'bi-bell-fill shadow-pulse' : 'bi-bell'} fs-5 text-primary`}></i>
         {unreadCount > 0 && (
-          <span className="position-absolute translate-middle badge rounded-pill bg-danger"
-            style={{ top: '8px', right: '0px', border: '2px solid white', fontSize: '10px' }}>
+          <span className="position-absolute translate-middle badge rounded-pill bg-danger shadow-sm"
+            style={{ top: '8px', right: '0px', border: '2px solid var(--surface-color)', fontSize: '10px' }}>
             {unreadCount}
           </span>
         )}
@@ -136,16 +128,18 @@ const NotificationBell = ({ user }) => {
         <>
           <div className="notification-overlay d-md-none" onClick={() => setIsOpen(false)}></div>
           <ul className="dropdown-menu dropdown-menu-end shadow-lg show position-absolute glass-panel border-0 p-0 overflow-hidden"
-            style={{
-              minWidth: '320px',
-              maxHeight: '480px',
-              right: 0,
-              top: '130%',
-              zIndex: 2100,
-              borderRadius: '1rem',
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
-              backdropFilter: 'blur(10px)'
-            }}>
+              style={{
+                minWidth: '320px',
+                maxHeight: '480px',
+                right: 0,
+                top: '130%',
+                zIndex: 2100,
+                borderRadius: '1.25rem',
+                backgroundColor: 'var(--glass-bg)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                border: '1px solid var(--glass-border)'
+              }}>
 
             <li className='dropdown-header border-bottom d-flex justify-content-between align-items-center py-3 px-4'>
               <span className="text-dark fw-bold h6 mb-0">Notifications</span>
@@ -176,7 +170,7 @@ const NotificationBell = ({ user }) => {
                             </small>
                           </div>
                         </div>
-                        <span className="btn btn-sm btn-light border rounded-pill px-3 fw-bold text-primary extra-small">View</span>
+                        <span className="btn btn-sm btn-light border-0 rounded-pill px-3 fw-bold text-primary extra-small shadow-sm">View</span>
                       </div>
                     </Link>
                   </li>

@@ -1,45 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import PasswordInput from './PasswordInput'; // Strength meter ke liye
+import PasswordInput from './PasswordInput';
 
 export default function ResetPasswordForm({ email, onDone }) {
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { resetPassword, forgotPasswordRequest } = useAuth(); // forgotPasswordRequest ko import karein
+  const { resetPassword, forgotPasswordRequest } = useAuth();
 
-  // --- Naye Features (Timer & Resend) ---
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
 
   useEffect(() => {
-    // Timer shuru karein
     if (timer === 0) {
-      setCanResend(true); // Resend button enable karein
+      setCanResend(true);
       return;
     }
     const intervalId = setInterval(() => {
       setTimer((prev) => prev - 1);
     }, 1000);
-    return () => clearInterval(intervalId); // Cleanup
+    return () => clearInterval(intervalId);
   }, [timer]);
 
   const handleResendOtp = async () => {
     if (!canResend) return;
 
     setCanResend(false);
-    setTimer(60); // Timer reset karein
+    setTimer(60);
     setError('');
     
     try {
-      // Backend ko dobara request bhej kar naya OTP generate karein
       await forgotPasswordRequest(email); 
     } catch (err) {
       setError(err.message || 'Failed to resend OTP.');
     }
   };
-  // ------------------------------------
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -54,7 +50,7 @@ export default function ResetPasswordForm({ email, onDone }) {
 
     try {
       await resetPassword(otp, newPassword);
-      onDone(); // Parent component ko batayein ki kam ho gaya
+      onDone();
     } catch (err) {
       setError(err.message || 'Reset failed. Invalid or expired OTP.');
     }
@@ -75,7 +71,6 @@ export default function ResetPasswordForm({ email, onDone }) {
           <label htmlFor="otp">Enter OTP (6 digits)</label>
         </div>
         
-        {/* Naya PasswordInput component (Strength meter ke saath) */}
         <div className="mb-4">
           <PasswordInput
             label="Enter New Password"

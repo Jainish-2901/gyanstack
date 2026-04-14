@@ -1,9 +1,5 @@
 import React, { memo } from 'react';
 
-/**
- * GlobalContentRow: Dedicated table row for global content management.
- * 🚀🛡️💎✨⚖️🎓💎🏙️❤️
- */
 const GlobalContentRow = memo(({ item, categoryMap, isSelected, onToggle, onEdit, onDelete, SITE_URL }) => {
     return (
         <tr className={`align-middle transition-all ${isSelected ? 'table-primary bg-opacity-10' : ''}`}>
