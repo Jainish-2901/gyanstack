@@ -42,7 +42,7 @@ export default function Footer() {
           {/* Brand Info */}
           <div className="col-lg-4 col-md-12">
             <Link className="navbar-brand d-inline-flex align-items-center mb-3" to="/" onClick={() => window.scrollTo(0, 0)}>
-              <img src="/logo.png" alt="Logo" className="me-2" style={{ height: '35px' }} />
+              <img src="/logo_v2.png" alt="Logo" className="me-2" style={{ height: '35px' }} />
               <span className="fw-bold fs-4 gradient-text">GyanStack</span>
             </Link>
             <p className="footer-text mb-4 opacity-75 pe-lg-4 mx-auto mx-lg-0" style={{ maxWidth: '400px' }}>

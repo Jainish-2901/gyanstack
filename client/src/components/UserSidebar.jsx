@@ -18,7 +18,7 @@ export default function UserSidebar({ show, onMobileClose }) {
             {/* SIDEBAR HEADER: Brand Left, Close Right */}
             <div className="sidebar-brand d-flex align-items-center justify-content-between px-3 py-2 border-bottom border-opacity-10">
                 <Link className="navbar-brand d-flex align-items-center" to="/" onClick={onMobileClose}>
-                    <img src="/logo.png" alt="Logo" className="me-2" style={{ height: '32px' }} />
+                    <img src="/logo_v2.png" alt="Logo" className="me-2" style={{ height: '32px' }} />
                     <span className="fw-bold fs-5">GyanStack</span>
                 </Link>
 

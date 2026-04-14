@@ -22,7 +22,7 @@ export default function Sidebar({ show, onMobileClose }) {
         <aside className={`dashboard-sidebar ${show ? 'show' : ''}`}>
             <div className="sidebar-brand">
                 <Link className="navbar-brand d-flex align-items-center" to="/" onClick={onMobileClose}>
-                    <img src="/logo.png" alt="Logo" className="me-2" style={{ height: '35px' }} />
+                    <img src="/logo_v2.png" alt="Logo" className="me-2" style={{ height: '35px' }} />
                     <span className="fw-bold fs-5 gradient-text">GyanStack Admin</span>
                 </Link>
             </div>

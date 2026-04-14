@@ -11,7 +11,7 @@ export default defineConfig({
         enabled: false,
         navigateFallbackAllowlist: [/^index.html$/]
       },
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg', 'logo.png'],
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg', 'logo_v2.png'],
       manifest: {
         name: 'GyanStack | Admin Dashboard',
         short_name: 'GS Admin',

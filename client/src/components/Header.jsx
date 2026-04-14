@@ -37,7 +37,7 @@ export default function Header() {
       <div className="container-fluid px-3 px-lg-4">
         <div className="d-flex align-items-center justify-content-between w-100 w-lg-auto py-2">
           <Link className="navbar-brand d-flex align-items-center" to="/" onClick={() => setIsNavOpen(false)}>
-            <img src="/logo.png" alt="Logo" className="me-2" style={{ height: '32px', width: 'auto' }} />
+            <img src="/logo_v2.png" alt="Logo" className="me-2" style={{ height: '32px', width: 'auto' }} />
             <span className="fw-bold gradient-text">GyanStack</span>
           </Link>
 

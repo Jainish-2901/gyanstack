@@ -69,7 +69,7 @@ const sendPushNotification = async (title, body, announcementId = null) => {
                     },
                     webpush: {
                         headers: {
-                            image: "https://gyanstack.vercel.app/logo.png"
+                            image: "https://gyanstack.vercel.app/logo_v2.png"
                         },
                         fcm_options: {
                             link: "https://gyanstack.vercel.app/announcements"

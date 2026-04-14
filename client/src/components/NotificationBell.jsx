@@ -73,7 +73,7 @@ const NotificationBell = () => {
       if (Notification.permission === 'granted') {
         new Notification(`GyanStack: ${payload.notification.title}`, {
           body: payload.notification.body,
-          icon: '/logo.png',
+          icon: '/logo_v2.png',
         });
       }
 
