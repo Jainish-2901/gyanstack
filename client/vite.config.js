@@ -15,7 +15,7 @@ export default defineConfig({
       },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg', 'logo.png'],
       manifest: {
-        name: 'GyanStack - BCA/MCA Resource Hub',
+        name: 'GyanStack | BCA MCA Resource Hub',
         short_name: 'GyanStack',
         description: 'The Ultimate College Resource Hub for BCA/MCA Students',
         theme_color: '#10b981',
@@ -34,7 +34,7 @@ export default defineConfig({
             type: 'image/png'
           },
           {
-            src: 'pwa-512x512-v2.png',
+            src: 'maskable-icon-v2.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'

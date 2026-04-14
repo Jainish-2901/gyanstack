@@ -13,7 +13,7 @@ export default defineConfig({
       },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg', 'logo.png'],
       manifest: {
-        name: 'GyanStack - Admin Portal',
+        name: 'GyanStack | Admin Dashboard',
         short_name: 'GS Admin',
         description: 'Manage and Moderate GyanStack Resources',
         theme_color: '#10b981',
@@ -32,7 +32,7 @@ export default defineConfig({
             type: 'image/png'
           },
           {
-            src: 'pwa-512x512-v2.png',
+            src: 'maskable-icon-v2.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
