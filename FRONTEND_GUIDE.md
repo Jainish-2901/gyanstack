@@ -22,6 +22,7 @@ The client frontend is optimized for seamless content discovery and a "premium" 
 - **Auto-Focus Navigation**: The breadcrumb bar automatically scrolls and centers the active folder.
 - **Back-To-Top Utility**: A floating, transparent glassmorphism button appears during deep scrolling for instant home access.
 - **Semantic Legal Icons**: Terms and Privacy pages use contextually relevant iconography (shields, graduation caps, bugs) for improved scannability.
+- **Dynamic Social OG Tags**: `react-helmet-async` updates `og:image`, `og:title`, and Twitter Card tags per route. The home page (`/`) uses the full `og-banner.png` (1200×630) for rich link previews; all inner pages (browse, content detail, etc.) switch to `logo.png` for a clean, branded square icon on WhatsApp, Telegram, iMessage, and Twitter.
 
 ---
 
@@ -68,4 +69,23 @@ To maximize development velocity, GyanStack utilizes a **Vite-Optimized Context 
 - **Fault-Tolerant State Sync**: The `AuthContext` supports explicit `user` updates from children components (e.g., NotificationBell), ensuring real-time UI synchronization without full page reloads.
 
 ---
-*Last Updated: April 14, 2026 (Compliance & UX Overhaul Update)*
+
+## 🖼️ OG Banner & Social Sharing
+The `og-banner.png` (1200×630) is generated via **Sharp** (Node.js image compositing):
+- Background: SVG-rendered dark teal glassmorphism with dot grid, mesh lines, and aurora blooms
+- Logo: Real `logo.png` composited at full fidelity (no AI replacement)
+- Text: GyanStack · College Study Partner · feature pill badges (Notes, Assignments, PYQs, NEP 2020)
+- Regenerate: `node client/scripts/generate-og-banner.mjs`
+
+| Route | `og:image` served |
+|---|---|
+| `/` (Home) | `og-banner.png` (wide banner, 1200×630) |
+| `/content/:id` | `logo.png` + content title |
+| `/browse` | `logo.png` + category name |
+| All other pages | `logo.png` (default) |
+
+---
+
+*Built with ❤️ for the student community by Jainish.*
+
+*Last Updated: April 15, 2026 (Dynamic OG Social Sharing & SEOHead Component)*

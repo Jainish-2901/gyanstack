@@ -7,6 +7,7 @@ import ShareButton from '../../components/ShareButton';
 import LoadingScreen from '../../components/LoadingScreen';
 import { motion } from 'framer-motion';
 import { fadeInUp, staggerContainer, hoverScale } from '../../utils/animations';
+import SEOHead from '../../components/SEOHead';
 
 export default function Browse() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -123,6 +124,11 @@ export default function Browse() {
 
   return (
     <div className="container-fluid py-4 fade-in px-3 px-lg-5">
+      <SEOHead
+        title={pageTitle !== 'All Content' ? `${pageTitle} | Browse` : 'Browse Library'}
+        description={`Browse ${pageTitle} on GyanStack. Access study notes, PYQs, and NEP 2020 materials for Gujarat University students.`}
+        isHomePage={false}
+      />
       <div className="row g-4">
 
         {/* TOP SECTION: Search & Breadcrumbs */}

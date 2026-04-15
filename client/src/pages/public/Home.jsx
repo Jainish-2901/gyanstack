@@ -7,6 +7,7 @@ import { useNestedCategories } from '../../hooks/useCategories';
 import { useCategoryContent } from '../../hooks/useContent';
 import ContentCard from '../../components/ContentCard';
 import { StatsSkeleton, CardSkeleton, ListSkeleton } from '../../components/SkeletonLoaders';
+import SEOHead from '../../components/SEOHead';
 const FeatureCard = ({ icon, title, text, colorClass }) => (
   <div className="col-lg-3 col-md-6 mb-4 fade-in">
     <div className={`feature-card d-flex flex-column h-100`}>
@@ -331,6 +332,7 @@ export default function Home() {
 
   return (
     <div className="fade-in">
+      <SEOHead isHomePage={true} />
       <div className="container mt-0">
         <AnnouncementBanner />
       </div>

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { pageVariants, fadeInUp } from '../../utils/animations';
 
-const LAST_UPDATED = 'April 14, 2026';
+const LAST_UPDATED = 'April 15, 2026';
 const APP_NAME = 'GyanStack';
 const APP_URL = 'https://gyanstack.vercel.app';
 const CONTACT_EMAIL = 'jainishdabgar2901@gmail.com';

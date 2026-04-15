@@ -10,6 +10,7 @@ The GyanStack Student Portal is a premium academic resource discovery platform b
 - **Smart Notifications**: Integrated `react-hot-toast` with **Fault-Tolerant Cross-Device Sync**.
 - **Announcement Detail**: Dedicated high-fidelity routes (`/announcements/:id`) for full-screen update reading.
 - **Back-To-Top**: A floating glassmorphic button for instant home-view access.
+- **🔗 Smart Social Sharing**: `react-helmet-async` dynamically sets `og:image` and `og:title` per route — the home page uses the premium `og-banner.png` (1200×630) for rich previews on WhatsApp/Telegram/Twitter; all inner pages (content, browse) use `logo.png` for a clean branded icon.
 
 ### 🧭 Intelligent Navigation
 - **2x2 Mobile Grid**: Optimized folder display for mobile devices to maximize vertical space.
@@ -27,8 +28,10 @@ The GyanStack Student Portal is a premium academic resource discovery platform b
 - **Styling**: Bootstrap 5 + Custom Modern CSS
 - **State Management**: TanStack Query
 - **Interactions**: React Hot Toast, Bootstrap Icons, **FCM Push Notifications**
+- **SEO / Social**: `react-helmet-async` (Dynamic OG & Twitter Card meta per route)
 - **Architecture**: **HMR-Optimized Context Patterns** for maximum dev-speed.
 - **Storage Connectivity**: Google Drive API v3
+- **OG Banner**: Generated via **Sharp** — run `node scripts/generate-og-banner.mjs` to regenerate `public/og-banner.png`
 
 ## 🚀 Getting Started
 
@@ -50,4 +53,4 @@ npm run dev
 ```
 
 ---
-*Last Updated: April 14, 2026 (Fluid Navigation Update)*
+*Last Updated: April 15, 2026 (Dynamic OG Social Sharing & SEOHead Component)*

@@ -45,4 +45,4 @@ npm run dev
 ```
 
 ---
-*Last Updated: April 14, 2026 (UI Refresh Update)*
+*Last Updated: April 15, 2026 (OG Meta Fix — twitter:card & og:image corrected for admin portal)*

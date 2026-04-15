@@ -8,6 +8,7 @@ import ShareButton from '../../components/ShareButton';
 import ContentCard from '../../components/ContentCard';
 import NotFound from './NotFound';
 import toast from 'react-hot-toast';
+import SEOHead from '../../components/SEOHead';
 
 
 const cleanTitle = (title) => {
@@ -67,7 +68,7 @@ const getDownloadUrl = (item) => {
 const DrivePreview = ({ previewUrl, item }) => {
   const [blocked, setBlocked] = React.useState(false);
   const [loaded, setLoaded] = React.useState(false);
-  const viewUrl = item.url; 
+  const viewUrl = item.url;
   const downloadUrl = `https://drive.google.com/uc?export=download&id=${item.googleDriveId}`;
 
   React.useEffect(() => {
@@ -254,7 +255,7 @@ const formatBytes = (bytes, decimals = 2) => {
 };
 
 export default function ContentDetailPage() {
-// ...
+  // ...
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -266,14 +267,8 @@ export default function ContentDetailPage() {
   const lastCountedId = useRef(null);
 
   useEffect(() => {
-    // We still want to increment view count on entry, but we don't need a state for it
-    // since the 'item' query will fetch the updated count, or we can just fire and forget.
     if (lastCountedId.current === id) return;
     lastCountedId.current = id;
-    
-    // Note: The backend handles the increment on the GET request usually, 
-    // but if it's a separate call, we'd fire it here.
-    // Based on original code, it was part of the GET /content/:id call.
   }, [id]);
 
   const handleLike = () => {
@@ -325,6 +320,12 @@ export default function ContentDetailPage() {
 
   return (
     <div className="container my-4 my-md-5 mx-auto fade-in">
+      <SEOHead
+        title={cleanTitle(item.title)}
+        description={item.description || `Access ${cleanTitle(item.title)} on GyanStack – Notes, PYQs, and study materials for Gujarat University students.`}
+        url={window.location.href}
+        isHomePage={false}
+      />
       <div className="row justify-content-center">
         <div className="col-12">
 
@@ -334,7 +335,7 @@ export default function ContentDetailPage() {
 
           <header className="mb-4">
             <h1 className="fw-bold mb-3 text-break fs-2 fs-md-1 lh-sm">{cleanTitle(item.title)}</h1>
-            
+
             <div className="d-flex flex-wrap align-items-center gap-2 text-muted small mb-3">
               <div className="bg-light px-3 py-1 rounded-pill d-flex align-items-center">
                 <i className="bi bi-person-circle me-2 text-primary"></i>
@@ -417,9 +418,9 @@ export default function ContentDetailPage() {
                           ))}
                         </div>
                         {item.externalMetadata.cloudinary.ocr?.adv_ocr?.data?.[0]?.textAnnotations?.[0]?.description && (
-                           <div className="extra-small text-muted mt-1 text-truncate" style={{ maxWidth: '200px' }}>
-                             OCR: {item.externalMetadata.cloudinary.ocr.adv_ocr.data[0].textAnnotations[0].description.substring(0, 50)}...
-                           </div>
+                          <div className="extra-small text-muted mt-1 text-truncate" style={{ maxWidth: '200px' }}>
+                            OCR: {item.externalMetadata.cloudinary.ocr.adv_ocr.data[0].textAnnotations[0].description.substring(0, 50)}...
+                          </div>
                         )}
                       </div>
                     </div>
@@ -431,11 +432,10 @@ export default function ContentDetailPage() {
 
           {/* Action Buttons Section */}
           <div className="row g-3 mb-5">
-            {/* Logic for balanced alignment (3 buttons = col-md-4, 4 buttons = col-md-3) */}
             {(() => {
               const hasDownload = item.url && item.type !== 'note' && item.type !== 'link';
               const colClass = hasDownload ? "col-12 col-sm-6 col-md-3" : "col-12 col-sm-4 col-md-4";
-              
+
               return (
                 <>
                   <div className={colClass}>
@@ -461,9 +461,9 @@ export default function ContentDetailPage() {
                   </div>
 
                   <div className={colClass}>
-                    <ShareButton 
-                      title={item.title} 
-                      url={window.location.href} 
+                    <ShareButton
+                      title={item.title}
+                      url={window.location.href}
                       isCircle={false}
                       className={`btn w-100 py-3 d-flex align-items-center justify-content-center h-100 btn-outline-primary`}
                     >
@@ -498,8 +498,8 @@ export default function ContentDetailPage() {
                   </div>
                   <h3 className="fw-bold mb-0">Recommended for You</h3>
                 </div>
-                <Link 
-                  to={`/browse?categoryId=${item.categoryId}`} 
+                <Link
+                  to={`/browse?categoryId=${item.categoryId}`}
                   className="btn btn-primary btn-sm rounded-pill px-3 py-2 shadow-sm"
                 >
                   View More <i className="bi bi-arrow-right ms-1"></i>

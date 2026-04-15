@@ -33,6 +33,7 @@ Built with a focus on modern aesthetics (Glassmorphism), speed, and offline capa
 - **Cross-Device Sync**: Notifications read status and user preferences sync instantly between mobile and desktop using a **Fault-Tolerant AuthContext Sync** pattern.
 - **Announcements**: Dynamic banner system with **High-Fidelity Detail Routes** (`/announcements/:id`) on both Client and Admin applications.
 - **Universal Dark Mode**: Intelligent self-healing theme engineering that ensures 100% visibility for critical alerts across light and dark modes.
+- **🔗 Smart Social Sharing**: Dynamic per-route Open Graph meta tags via `react-helmet-async` — home page shares the full og-banner (1200×630), inner/content pages share the G logo for clean, branded link previews on WhatsApp, Telegram, and Twitter.
 
 ### 🛡️ Hardened Security & Stability
 - **Multi-Tier Rate Limiting**: Specialized shields for Global API (100req/15m), Authentication (10req/15m), and AI Services (20req/15m).
@@ -47,10 +48,10 @@ Built with a focus on modern aesthetics (Glassmorphism), speed, and offline capa
 | **Ecosystem** | React (Vite), Framer Motion, Bootstrap 5, Lucide Icons, React Hot Toast |
 | **Backend** | Node.js, Express, MongoDB, Google Drive API v3 |
 | **AI Brain** | Groq SDK (Llama 3.3 - 70b model) |
-| **Social Gear** | Firebase Cloud Messaging (FCM), Cross-Device State Sync |
+| **Social Gear** | Firebase Cloud Messaging (FCM), Cross-Device State Sync, `react-helmet-async` (Dynamic OG Tags) |
 | **Storage** | Google Drive API(Files), Cloudinary (Media/Profiles) |
 | **Security** | AI interaction logging, JWT, BcryptJS, Express Rate Limit |
-| **DevOps** | Vite-Plugin-PWA, Dotenv, CORS, **HMR-Optimized Context Architecture** |
+| **DevOps** | Vite-Plugin-PWA, Sharp (OG Banner), Dotenv, CORS, **HMR-Optimized Context Architecture** |
 
 ---
 
@@ -122,6 +123,8 @@ Built with a focus on modern aesthetics (Glassmorphism), speed, and offline capa
 │   ├── routes/       # Protected & Public Endpoints
 │   └── utils/        # AI Cleaning & Data Streamers
 ├── client/           # Student-facing PWA (Vite)
+│   ├── public/       # Static assets (og-banner.png, logo.png, PWA icons)
+│   └── scripts/      # Dev tools (generate-og-banner.mjs)
 └── README.md
 ```
 
@@ -129,5 +132,5 @@ Built with a focus on modern aesthetics (Glassmorphism), speed, and offline capa
 
 *Built with ❤️ for the student community by Jainish.*
 
-*Last Updated: April 14, 2026 (Universal Sync & High-Fidelity Theming Overhaul)*
+*Last Updated: April 15, 2026 (Dynamic OG Social Sharing & Premium OG Banner with Real Branding)*
 
