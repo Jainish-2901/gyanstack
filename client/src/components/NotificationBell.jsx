@@ -1,11 +1,64 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { messaging, firebaseConfig } from '../services/firebase';
 import { getToken, onMessage } from 'firebase/messaging';
 import { useAuth } from '../context/AuthContext';
 
-const pingSound = new Audio('/notification-ping.mp3');
+// ─── Audio Engine ────────────────────────────────────────────────────────────
+// We use AudioContext + decoded buffer instead of new Audio().
+// AudioContext can resume/play after a single user interaction anywhere in the
+// page, whereas HTMLAudioElement.play() requires the *exact* click that called it.
+let audioCtx = null;
+let soundBuffer = null;
+let audioUnlocked = false;
+
+const initAudio = async () => {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  try {
+    const response = await fetch('/notification-ping.mp3');
+    const arrayBuffer = await response.arrayBuffer();
+    soundBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+  } catch (e) {
+    console.warn('GyanStack: Could not load notification sound.', e);
+  }
+};
+
+const unlockAudio = async () => {
+  if (audioUnlocked) return;
+  if (!audioCtx) await initAudio();
+  if (audioCtx && audioCtx.state === 'suspended') {
+    await audioCtx.resume();
+  }
+  audioUnlocked = true;
+};
+
+const playPing = async () => {
+  try {
+    if (!audioCtx || !soundBuffer) await initAudio();
+    if (!audioCtx || !soundBuffer) return;
+    if (audioCtx.state === 'suspended') await audioCtx.resume();
+    const source = audioCtx.createBufferSource();
+    source.buffer = soundBuffer;
+    source.connect(audioCtx.destination);
+    source.start(0);
+  } catch (e) {
+    console.warn('GyanStack: Notification sound blocked:', e.message);
+  }
+};
+
+// Unlock audio on any user interaction — this is the key trick.
+// Once unlocked, AudioContext can play sounds programmatically.
+if (typeof window !== 'undefined') {
+  const unlock = () => { unlockAudio(); };
+  window.addEventListener('click',      unlock, { once: false, passive: true });
+  window.addEventListener('touchstart', unlock, { once: false, passive: true });
+  window.addEventListener('keydown',    unlock, { once: false, passive: true });
+  // Pre-load the audio file immediately
+  initAudio();
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 const NotificationBell = () => {
   const { user, setUser } = useAuth();
@@ -68,20 +121,31 @@ const NotificationBell = () => {
     setupFCM();
 
     const unsubscribe = onMessage(messaging, (payload) => {
-      pingSound.play().catch(() => console.log("Sound blocked by browser until user click"));
-
+      playPing();
       if (Notification.permission === 'granted') {
-        new Notification(`GyanStack: ${payload.notification.title}`, {
-          body: payload.notification.body,
-          icon: '/logo.png',
-        });
+        const title = payload.notification?.title || payload.data?.title || 'GyanStack';
+        const body  = payload.notification?.body  || payload.data?.body  || 'New update!';
+        new Notification(`📢 ${title}`, { body, icon: '/logo.png' });
       }
 
       fetchAnnouncements();
     });
 
-    return () => unsubscribe();
+    const handleSWMessage = (event) => {
+      if (event.data?.type === 'PLAY_NOTIFICATION_SOUND') {
+        playPing();
+        fetchAnnouncements();
+      }
+    };
+    navigator.serviceWorker?.addEventListener('message', handleSWMessage);
+
+    return () => {
+      unsubscribe();
+      navigator.serviceWorker?.removeEventListener('message', handleSWMessage);
+    };
   }, [user, fetchAnnouncements]);
+
+
 
   useEffect(() => {
     fetchAnnouncements();

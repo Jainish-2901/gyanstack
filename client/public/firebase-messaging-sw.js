@@ -15,12 +15,30 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+/**
+ * Sends a message to all active client windows.
+ * The NotificationBell component listens for PLAY_NOTIFICATION_SOUND
+ * and plays the custom ping audio via AudioContext (which is allowed
+ * after the user has previously interacted with the page).
+ */
+const notifyClients = async (type) => {
+    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    clients.forEach(client => client.postMessage({ type }));
+};
+
 messaging.onBackgroundMessage((payload) => {
-    const notificationTitle = payload.notification.title;
+    // Signal all active tabs to play the sound
+    notifyClients('PLAY_NOTIFICATION_SOUND');
+
+    const notificationTitle = payload.notification?.title || payload.data?.title || 'GyanStack';
     const notificationOptions = {
-        body: payload.notification.body,
-        icon: '/logo.png'
+        body: payload.notification?.body || payload.data?.body || 'You have a new update.',
+        icon: '/logo.png',
+        badge: '/pwa-192x192-v2.png',
+        data: payload.data,
+        // Note: 'sound' property in showNotification() was removed from browsers.
+        // Custom sounds must be played via postMessage → client AudioContext.
     };
 
-    self.registration.showNotification(notificationTitle, notificationOptions);
-});
+    return self.registration.showNotification(notificationTitle, notificationOptions);
+});

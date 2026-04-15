@@ -1,8 +1,36 @@
 {
     "rewrites": [
         {
+            "source": "/content/:id",
+            "destination": "/api/og?type=content&id=:id"
+        },
+        {
+            "source": "/",
+            "destination": "/api/og?type=home"
+        },
+        {
+            "source": "/browse",
+            "destination": "/api/og?type=page&path=/browse"
+        },
+        {
+            "source": "/about",
+            "destination": "/api/og?type=page&path=/about"
+        },
+        {
+            "source": "/contact",
+            "destination": "/api/og?type=page&path=/contact"
+        },
+        {
+            "source": "/announcements",
+            "destination": "/api/og?type=page&path=/announcements"
+        },
+        {
+            "source": "/announcements/:id",
+            "destination": "/api/og?type=page&path=/announcements/:id"
+        },
+        {
             "source": "/(.*)",
             "destination": "/index.html"
         }
     ]
-}
+}

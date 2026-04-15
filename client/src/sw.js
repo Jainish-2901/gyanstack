@@ -64,6 +64,9 @@ onBackgroundMessage(messaging, (payload) => {
     }).catch(err => console.error("SW: Failed to track external sent:", err));
   }
 
+  self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+    .then(clients => clients.forEach(c => c.postMessage({ type: 'PLAY_NOTIFICATION_SOUND' })));
+
   if (payload.notification) {
     return;
   }
@@ -72,12 +75,13 @@ onBackgroundMessage(messaging, (payload) => {
   const notificationOptions = {
     body: body || 'Check the latest updates on GyanStack.',
     icon: '/logo.png',
-    badge: '/pwa-192x192.png',
+    badge: '/pwa-192x192-v2.png',
     data: payload.data
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
+
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
