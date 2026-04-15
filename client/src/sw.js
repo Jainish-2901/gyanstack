@@ -71,7 +71,7 @@ onBackgroundMessage(messaging, (payload) => {
   const notificationTitle = title || 'GyanStack Update';
   const notificationOptions = {
     body: body || 'Check the latest updates on GyanStack.',
-    icon: '/logo_v2.png',
+    icon: '/logo.png',
     badge: '/pwa-192x192.png',
     data: payload.data
   };

@@ -13,7 +13,7 @@ export default defineConfig({
       devOptions: {
         enabled: false,
       },
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg', 'logo_v2.png'],
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg', 'logo.png', 'og-banner.png'],
       manifest: {
         name: 'GyanStack | Resource Hub',
         short_name: 'GyanStack',

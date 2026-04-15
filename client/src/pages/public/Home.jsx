@@ -526,7 +526,7 @@ export default function Home() {
                 <div className="glass-panel p-5 shadow-lg border-primary border-opacity-25 floating" style={{ maxWidth: '300px' }}>
                   <div className="text-center">
                     <div className="rounded-4 overflow-hidden mb-4 shadow-sm mx-auto" style={{ width: '120px', height: '120px' }}>
-                      <img src="/logo_v2.png" alt="GyanStack" className="w-100 h-100 object-fit-cover" />
+                      <img src="/logo.png" alt="GyanStack" className="w-100 h-100 object-fit-cover" />
                     </div>
                     <h4 className="fw-bold mb-1">GyanStack App</h4>
                     <p className="small text-muted mb-4">Your pocket study library</p>

@@ -10,28 +10,11 @@ export default function ShareButton({
 }) {
   const [copied, setCopied] = useState(false);
 
-  // Helper to fetch logo and give it a descriptive name
-  const fetchLogoAsFile = async (descriptiveName) => {
-    try {
-      const response = await fetch('/maskable-icon-v2.png');
-      const blob = await response.blob();
-      // Sanitize name for filename
-      const safeName = descriptiveName ? descriptiveName.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'gyanstack';
-      return new File([blob], `${safeName}_share.png`, { type: 'image/png' });
-    } catch (error) {
-      console.error('Error fetching logo for sharing:', error);
-      return null;
-    }
-  };
-
   const handleShare = async () => {
     const targetUrl = url || window.location.href;
     const fullUrl = targetUrl.startsWith('http') ? targetUrl : `${window.location.origin}${targetUrl.startsWith('/') ? '' : '/'}${targetUrl}`;
-    
-    // Detect if we are on a mobile device
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-    let shareData = {
+    const shareData = {
       title: title || 'GyanStack',
       text: title ? `${title} | GyanStack Resources` : 'Check out these resources on GyanStack!',
       url: fullUrl,
@@ -39,13 +22,6 @@ export default function ShareButton({
 
     if (navigator.share) {
       try {
-        if (isMobile) {
-          const logoFile = await fetchLogoAsFile(title);
-          if (logoFile && navigator.canShare && navigator.canShare({ files: [logoFile] })) {
-            shareData.files = [logoFile];
-          }
-        }
-        
         await navigator.share(shareData);
       } catch (err) {
         if (err.name !== 'AbortError') {

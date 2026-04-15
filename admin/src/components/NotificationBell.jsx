@@ -65,7 +65,7 @@ export default function NotificationBell({ user }) {
       if (Notification.permission === 'granted') {
         new Notification(payload.notification.title, {
           body: payload.notification.body,
-          icon: '/logo_v2.png',
+          icon: '/logo.png',
         });
       }
       fetchAnnouncements();
