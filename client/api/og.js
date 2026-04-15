@@ -98,6 +98,7 @@ export default function handler(req, res) {
       '/about':         'About GyanStack',
       '/contact':       'Contact Us | GyanStack',
       '/announcements': 'Announcements | GyanStack',
+      '/request':       'Request Content | GyanStack',
       '/login':         'Login | GyanStack',
       '/signup':        'Sign Up | GyanStack',
       '/privacy':       'Privacy Policy | GyanStack',

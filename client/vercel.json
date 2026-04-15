@@ -36,6 +36,11 @@
             "destination": "/api/og?type=page&path=/announcements"
         },
         {
+            "source": "/request",
+            "has": [{ "type": "header", "key": "user-agent", "value": ".*(facebookexternalhit|WhatsApp|Twitterbot|TelegramBot|LinkedInBot|Googlebot|Slackbot|Discordbot|bingbot|Applebot|Pinterest).*" }],
+            "destination": "/api/og?type=page&path=/request"
+        },
+        {
             "source": "/(.*)",
             "destination": "/index.html"
         }
