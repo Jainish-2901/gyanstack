@@ -1,18 +1,13 @@
 /**
- * /api/og.js  –  Vercel Serverless Function
+ * /api/og.js  –  Vercel Serverless Function (BOT-ONLY)
  *
- * Social-media crawlers (WhatsApp, Telegram, Facebook, Twitter) don't run
- * JavaScript, so React-Helmet tags are invisible to them.  This function
- * intercepts requests that *look* like they come from a crawler, fetches the
- * real content from the backend, and returns a thin HTML shell that has the
- * correct og:image / og:title / og:description baked in.
+ * Only social-media crawlers reach this function (filtered by vercel.json
+ * conditional rewrites that match User-Agent headers). Real users always
+ * get index.html directly — no redirect, no loop.
  *
- * Real browsers are redirected straight to the SPA (index.html).
- *
- * Deployed URL pattern (set via vercel.json rewrites):
- *   /content/:id  → /api/og?type=content&id=:id    (for bots)
- *   /             → /api/og?type=home               (for bots)
- *   everything else → /api/og?type=page&path=...    (for bots)
+ * This function returns a thin HTML page with the correct og:image baked in:
+ *   - Home page  → og-banner.png  (1200×630, summary_large_image)
+ *   - All others → logo.png       (500×500, summary card)
  */
 
 const BASE_URL     = 'https://gyanstack.vercel.app';
@@ -20,20 +15,6 @@ const API_BASE     = 'https://gyanstack-server.vercel.app/api';
 const BANNER_IMG   = `${BASE_URL}/og-banner.png`;
 const LOGO_IMG     = `${BASE_URL}/logo.png`;
 const DEFAULT_DESC = 'The ultimate resource hub for Gujarat University BCA/MCA students. Access NEP 2020 Study Material, Notes, Assignments, and PYQs.';
-
-// ─── Bot detection ────────────────────────────────────────────────────────────
-const BOT_UA = [
-  'facebookexternalhit', 'facebook', 'twitterbot', 'whatsapp',
-  'telegrambot', 'linkedinbot', 'slackbot', 'discordbot',
-  'googlebot', 'bingbot', 'applebot', 'pinterest',
-  'vkshare', 'w3c_validator', 'curl', 'python-requests', 'axios',
-  'preview', 'embedly', 'quora', 'outbrain', 'developers.google.com',
-];
-
-function isBot(ua = '') {
-  const lower = ua.toLowerCase();
-  return BOT_UA.some(b => lower.includes(b));
-}
 
 // ─── HTML builder ─────────────────────────────────────────────────────────────
 function buildHtml({ title, description, image, url, isLargeImage }) {
@@ -59,15 +40,13 @@ function buildHtml({ title, description, image, url, isLargeImage }) {
   <meta property="og:image:height"content="${h}" />
   <meta property="og:site_name"   content="GyanStack" />
   <meta itemprop="image"          content="${escHtml(image)}" />
+  <link rel="image_src"           href="${escHtml(image)}" />
 
   <!-- Twitter Card -->
   <meta name="twitter:card"        content="${card}" />
   <meta name="twitter:title"       content="${escHtml(title)}" />
   <meta name="twitter:description" content="${escHtml(description)}" />
   <meta name="twitter:image"       content="${escHtml(image)}" />
-
-  <!-- Redirect real users to the SPA immediately -->
-  <meta http-equiv="refresh" content="0;url=${escHtml(url)}" />
 </head>
 <body>
   <p>Redirecting to <a href="${escHtml(url)}">GyanStack</a>…</p>
@@ -85,24 +64,11 @@ function escHtml(str = '') {
 
 // ─── Main handler ─────────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
-  const ua   = req.headers['user-agent'] || '';
   const type = req.query.type  || 'page';
   const id   = req.query.id    || '';
   const path = req.query.path  || '/';
 
-  // ── If real user, just redirect to the SPA ──────────────────────────────
-  if (!isBot(ua)) {
-    const dest = type === 'content' && id
-      ? `/content/${id}`
-      : type === 'home'
-      ? '/'
-      : path;
-    res.writeHead(302, { Location: dest });
-    res.end();
-    return;
-  }
-
-  // ── Home page ─────────────────────────────────────────────────────────────
+  // ── Home page → BANNER image ─────────────────────────────────────────────
   if (type === 'home') {
     const html = buildHtml({
       title       : 'GyanStack: College Study Partner | Notes & PYQs',
@@ -113,27 +79,25 @@ module.exports = async function handler(req, res) {
     });
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600');
-    res.status(200).send(html);
-    return;
+    return res.status(200).send(html);
   }
 
-  // ── Content detail page ───────────────────────────────────────────────────
+  // ── Content detail page → LOGO image ──────────────────────────────────────
   if (type === 'content' && id) {
     let title       = 'GyanStack Resource';
     let description = DEFAULT_DESC;
-    let image       = LOGO_IMG;
 
     try {
-      const apiRes  = await fetch(`${API_BASE}/content/${id}`, { signal: AbortSignal.timeout(5000) });
+      const apiRes = await fetch(`${API_BASE}/content/${id}`, {
+        signal: AbortSignal.timeout(5000)
+      });
       if (apiRes.ok) {
-        const data  = await apiRes.json();
-        const item  = data.content || data;
+        const data = await apiRes.json();
+        const item = data.content || data;
         if (item?.title) {
           title       = `${item.title} | GyanStack`;
           description = item.description
             || `Access ${item.title} on GyanStack – Notes, PYQs, and study materials for Gujarat University students.`;
-          // Use logo (not banner) for inner pages
-          image       = LOGO_IMG;
         }
       }
     } catch (e) {
@@ -143,17 +107,16 @@ module.exports = async function handler(req, res) {
     const html = buildHtml({
       title,
       description,
-      image,
+      image       : LOGO_IMG,
       url         : `${BASE_URL}/content/${id}`,
       isLargeImage: false,
     });
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=600, s-maxage=600');
-    res.status(200).send(html);
-    return;
+    return res.status(200).send(html);
   }
 
-  // ── All other pages (Browse, About, Announcements, etc.) ──────────────────
+  // ── All other pages (Browse, About, etc.) → LOGO image ────────────────────
   const pageTitles = {
     '/browse'        : 'Browse Resources | GyanStack',
     '/about'         : 'About GyanStack | Notes & PYQs',
@@ -169,11 +132,11 @@ module.exports = async function handler(req, res) {
   const html = buildHtml({
     title       : resolvedTitle,
     description : DEFAULT_DESC,
-    image       : LOGO_IMG,      // ← logo for ALL non-home pages
+    image       : LOGO_IMG,
     url         : `${BASE_URL}${path}`,
     isLargeImage: false,
   });
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=1800, s-maxage=1800');
-  res.status(200).send(html);
+  return res.status(200).send(html);
 };

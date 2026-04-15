@@ -1,36 +1,43 @@
 {
     "rewrites": [
         {
-            "source": "/content/:id",
-            "destination": "/api/og?type=content&id=:id"
-        },
-        {
             "source": "/",
+            "has": [{ "type": "header", "key": "user-agent", "value": ".*(facebookexternalhit|WhatsApp|Twitterbot|TelegramBot|LinkedInBot|Googlebot|Slackbot|Discordbot|bingbot|Applebot|Pinterest).*" }],
             "destination": "/api/og?type=home"
         },
         {
+            "source": "/content/:id",
+            "has": [{ "type": "header", "key": "user-agent", "value": ".*(facebookexternalhit|WhatsApp|Twitterbot|TelegramBot|LinkedInBot|Googlebot|Slackbot|Discordbot|bingbot|Applebot|Pinterest).*" }],
+            "destination": "/api/og?type=content&id=:id"
+        },
+        {
             "source": "/browse",
+            "has": [{ "type": "header", "key": "user-agent", "value": ".*(facebookexternalhit|WhatsApp|Twitterbot|TelegramBot|LinkedInBot|Googlebot|Slackbot|Discordbot|bingbot|Applebot|Pinterest).*" }],
             "destination": "/api/og?type=page&path=/browse"
         },
         {
             "source": "/about",
+            "has": [{ "type": "header", "key": "user-agent", "value": ".*(facebookexternalhit|WhatsApp|Twitterbot|TelegramBot|LinkedInBot|Googlebot|Slackbot|Discordbot|bingbot|Applebot|Pinterest).*" }],
             "destination": "/api/og?type=page&path=/about"
         },
         {
             "source": "/contact",
+            "has": [{ "type": "header", "key": "user-agent", "value": ".*(facebookexternalhit|WhatsApp|Twitterbot|TelegramBot|LinkedInBot|Googlebot|Slackbot|Discordbot|bingbot|Applebot|Pinterest).*" }],
             "destination": "/api/og?type=page&path=/contact"
         },
         {
             "source": "/announcements",
+            "has": [{ "type": "header", "key": "user-agent", "value": ".*(facebookexternalhit|WhatsApp|Twitterbot|TelegramBot|LinkedInBot|Googlebot|Slackbot|Discordbot|bingbot|Applebot|Pinterest).*" }],
             "destination": "/api/og?type=page&path=/announcements"
         },
         {
             "source": "/announcements/:id",
-            "destination": "/api/og?type=page&path=/announcements/:id"
+            "has": [{ "type": "header", "key": "user-agent", "value": ".*(facebookexternalhit|WhatsApp|Twitterbot|TelegramBot|LinkedInBot|Googlebot|Slackbot|Discordbot|bingbot|Applebot|Pinterest).*" }],
+            "destination": "/api/og?type=page&path=/announcements"
         },
         {
             "source": "/(.*)",
             "destination": "/index.html"
         }
     ]
-}
+}
