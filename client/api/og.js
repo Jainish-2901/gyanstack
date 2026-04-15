@@ -48,7 +48,7 @@ function makeHtml(title, desc, image, url, large) {
   ].join('\n');
 }
 
-module.exports = function handler(req, res) {
+export default function handler(req, res) {
   var type = (req.query && req.query.type) || 'page';
   var id   = (req.query && req.query.id)   || '';
   var path = (req.query && req.query.path) || '/';
