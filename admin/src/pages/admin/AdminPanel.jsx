@@ -372,7 +372,7 @@ export default function AdminPanel() {
 
                 {/* Mode Selector for Files */}
                 {type === 'file' && (
-                  <div className="mb-4 p-3 bg-primary bg-opacity-5 rounded-3 border border-primary border-opacity-10">
+                  <div className="mb-4 p-3 rounded-3 border" style={{ backgroundColor: 'var(--surface-color, #f8fafc)', borderColor: 'var(--glass-border)' }}>
                     <label className="form-label fw-bold d-block mb-3 tracking-wider">Step 2: UPLOAD MODE</label>
                     <div className="btn-group w-100" role="group">
                       <input
@@ -437,8 +437,21 @@ export default function AdminPanel() {
 
                   <div className="mb-4">
                     <label className="form-label fw-bold">Step 3: Select Category</label>
-                    <div className="p-3 border rounded-3 bg-primary bg-opacity-5 overflow-hidden shadow-sm">
-                      <p className="mb-2">Selected: <span className="fw-bold text-primary">{categoryName}</span></p>
+                    <div className="p-3 border rounded-3 overflow-hidden shadow-sm" style={{ backgroundColor: 'var(--surface-color, #f8fafc)', borderColor: 'var(--glass-border)' }}>
+                      <div className="d-flex align-items-center gap-2 mb-3">
+                        <span className="small fw-semibold" style={{ color: 'var(--text-secondary, #64748b)' }}>Selected:</span>
+                        <span
+                          className="fw-bold px-3 py-1 rounded-pill"
+                          style={{
+                            backgroundColor: categoryId && categoryId !== '' ? 'var(--primary, #10b981)' : 'var(--glass-border, #e2e8f0)',
+                            color: categoryId && categoryId !== '' ? '#ffffff' : 'var(--text-secondary, #94a3b8)',
+                            fontSize: '0.875rem',
+                            letterSpacing: '0.01em'
+                          }}
+                        >
+                          {categoryName || 'None Selected'}
+                        </span>
+                      </div>
                       <div style={{ maxHeight: '350px', overflowY: 'auto' }}>
                         <CategoryManager
                           onSelectCategory={(id, name) => {

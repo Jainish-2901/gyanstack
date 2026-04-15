@@ -85,11 +85,10 @@ const CategoryItem = ({ category, index, allCategories, onSelect, selectedId, on
         <div
           ref={provided.innerRef}
           {...provided.draggableProps}
-          className="list-group-item p-0 border-0"
+          className="p-0"
           style={{
             ...provided.draggableProps.style,
             backgroundColor: snapshot.isDragging ? 'var(--brand-100)' : 'transparent',
-            color: 'var(--text-primary)'
           }}
         >
           {isEditing ? (
@@ -101,8 +100,16 @@ const CategoryItem = ({ category, index, allCategories, onSelect, selectedId, on
             />
           ) : (
             <div 
-              className={`d-flex justify-content-between align-items-center p-2 ps-3 ${isSelected ? 'bg-primary text-white shadow-sm' : ''}`}
-              style={{ cursor: 'pointer', borderRadius: '0.75rem', marginBottom: '4px', color: isSelected ? 'white' : 'var(--text-primary)' }}
+              className={`d-flex justify-content-between align-items-center p-2 ps-3`}
+              style={{
+                cursor: 'pointer',
+                borderRadius: '0.75rem',
+                marginBottom: '4px',
+                backgroundColor: isSelected ? 'var(--primary, #10b981)' : 'transparent',
+                color: isSelected ? '#ffffff' : 'var(--text-primary)',
+                boxShadow: isSelected ? '0 2px 8px rgba(16, 185, 129, 0.4)' : 'none',
+                transition: 'background-color 0.2s ease, box-shadow 0.2s ease'
+              }}
               onClick={() => onSelect(category)}
             >
               <span className="flex-grow-1 text-break pe-2">
@@ -110,7 +117,8 @@ const CategoryItem = ({ category, index, allCategories, onSelect, selectedId, on
                   <i className="bi bi-grip-vertical me-2 d-none d-md-inline-block text-muted" {...provided.dragHandleProps}></i>
                 )}
                 <i 
-                  className={`bi ${isOpen ? 'bi-chevron-down' : 'bi-chevron-right'} me-2 ${isSelected ? 'text-white' : 'text-primary'}`}
+                  className={`bi ${isOpen ? 'bi-chevron-down' : 'bi-chevron-right'} me-2`}
+                  style={{ color: isSelected ? '#ffffff' : 'var(--primary)' }}
                   onClick={(e) => { e.stopPropagation(); handleToggle(); }}
                 ></i>
                 {category.name}
@@ -233,11 +241,17 @@ export default function CategoryManager({ onSelectCategory, isSelectOnly = false
         <DragDropContext onDragEnd={onRootDragEnd}>
           <div className="list-group category-tree" style={{ maxHeight: '450px', overflowY: 'auto', overflowX: 'auto', width: '100%' }}>
             <div 
-              className={`d-flex align-items-center p-2 ps-3 fw-bold rounded-3 mb-2 transition-all ${selectedCategory._id === 'root' ? 'bg-primary text-white shadow-sm' : 'hover-bg-light'}`}
-              style={{ cursor: 'pointer', color: selectedCategory._id === 'root' ? 'white' : 'var(--text-primary)' }}
+              className={`d-flex align-items-center p-2 ps-3 fw-bold rounded-3 mb-2`}
+              style={{
+                cursor: 'pointer',
+                backgroundColor: selectedCategory._id === 'root' ? 'var(--primary, #10b981)' : 'transparent',
+                color: selectedCategory._id === 'root' ? '#ffffff' : 'var(--text-primary)',
+                boxShadow: selectedCategory._id === 'root' ? '0 2px 8px rgba(16, 185, 129, 0.4)' : 'none',
+                transition: 'background-color 0.2s ease, box-shadow 0.2s ease'
+              }}
               onClick={() => handleSelect({ _id: 'root', name: 'Root' })}
             >
-              <i className={`bi bi-diagram-3-fill me-2 ${selectedCategory._id === 'root' ? 'text-white' : 'text-primary'}`}></i> Root
+              <i className="bi bi-diagram-3-fill me-2" style={{ color: selectedCategory._id === 'root' ? '#ffffff' : 'var(--primary)' }}></i> Root
             </div>
             
             {loadingRoots ? ( <p className="p-3 text-center">Loading tree...</p> ) : (
