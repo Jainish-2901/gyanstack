@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { pageVariants, fadeInUp } from '../../utils/animations';
 
-const LAST_UPDATED = 'April 15, 2026';
+const LAST_UPDATED = 'April 16, 2026';
 const APP_NAME = 'GyanStack';
 const APP_URL = 'https://gyanstack.vercel.app';
 const CONTACT_EMAIL = 'jainishdabgar2901@gmail.com';
@@ -96,8 +96,16 @@ export default function TermsOfService() {
                 </ul>
               </Section>
 
-              <Section icon="bi-robot" title="3. AI Chatbot Acceptable Use">
-                <p>Our platform includes an AI-powered academic assistant. You agree to use it responsibly:</p>
+              <Section icon="bi-robot" title="3. AI Study Buddy — Acceptable Use">
+                <p>Our platform includes <strong>GyanStack AI</strong>, an AI-powered Study Buddy for academic assistance. You can use it to:</p>
+                <ul className="list-unstyled mb-3 small">
+                  <li className="mb-1 d-flex align-items-center gap-2"><i className="bi bi-check2-circle text-success"></i><span>Find documents by exact or partial name</span></li>
+                  <li className="mb-1 d-flex align-items-center gap-2"><i className="bi bi-check2-circle text-success"></i><span>Generate structured study notes from library content</span></li>
+                  <li className="mb-1 d-flex align-items-center gap-2"><i className="bi bi-check2-circle text-success"></i><span>Create practice questions (MCQ / short answer)</span></li>
+                  <li className="mb-1 d-flex align-items-center gap-2"><i className="bi bi-check2-circle text-success"></i><span>Look up who uploaded a resource</span></li>
+                  <li className="mb-1 d-flex align-items-center gap-2"><i className="bi bi-check2-circle text-success"></i><span>Submit content requests to the admin team</span></li>
+                </ul>
+                <p>You agree to use the Study Buddy responsibly:</p>
                 <div className="p-3 rounded-3 mb-3" style={{ background: 'rgba(99, 102, 241, 0.05)', border: '1px solid rgba(99,102,241,0.1)' }}>
                   <ul className="list-unstyled mb-0 small">
                     <li className="mb-2 d-flex align-items-center gap-2">
@@ -110,11 +118,11 @@ export default function TermsOfService() {
                     </li>
                     <li className="mb-0 d-flex align-items-center gap-2">
                        <i className="bi bi-mortarboard text-success"></i>
-                       <span><strong>Academic Focus:</strong> The bot is strictly for educational purposes (GyanStack support).</span>
+                       <span><strong>Academic Focus:</strong> The AI is strictly for educational purposes on GyanStack.</span>
                     </li>
                   </ul>
                 </div>
-                <p className="small text-muted italic">Misuse of the AI Chatbot may lead to immediate account suspension.</p>
+                <p className="small text-muted italic">Misuse of the AI Study Buddy may lead to immediate account suspension.</p>
               </Section>
 
               <Section icon="bi-shield-shaded" title="4. Prohibited Activities">

@@ -14,10 +14,14 @@ The GyanStack Admin Panel is the central governance hub for managing academic re
 - **Aggregated Analytics**: Real-time tracking of resource performance, user engagement, and download hotspots.
 - **Credential Integrity**: Secure management of OAuth2 tokens and service accounts.
 
+### 📬 Content Request Management
+- **Request Tracker**: View all student content requests submitted via the AI Study Buddy or the Request Content page.
+- **Status Updates**: Mark requests as `pending` or `fulfilled` directly from the admin panel.
+
 ### 👑 Governance & Security
 - **Role-Based Access (RBAC)**: Fine-grained permissions for Admins, Moderators, and Super-Admins.
 - **Announcement Pipeline**: Broadcast critical updates via Firebase Cloud Messaging (FCM).
-- **Professional UI Transitions**: Integrated **Framer Motion** for high-fidelity page entries, matching the student portal's premium feel.
+- **Professional UI Transitions**: Integrated **Framer Motion** for high-fidelity page entries.
 - **Manual Verification**: Review and approve community-submitted resources before they go live.
 
 ## 🛠️ Tech Stack
@@ -45,4 +49,6 @@ npm run dev
 ```
 
 ---
-*Last Updated: April 15, 2026 (OG Meta Fix — twitter:card & og:image corrected for admin portal)*
+*Built with ❤️ for the student community by Jainish.*
+
+*Last Updated: April 16, 2026 — Content Request Management panel added; AI Study Buddy real request DB integration.*

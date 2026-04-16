@@ -1,37 +1,50 @@
 # 🎓 GyanStack — Student Portal (Client)
 
-The GyanStack Student Portal is a premium academic resource discovery platform built for the modern student. It provides a sleek, glassmorphism-inspired interface for browsing notes, PYQs, and assignments with real-time analytics and intelligent navigation.
+The GyanStack Student Portal is a premium academic resource discovery platform built for the modern student. It provides a sleek, glassmorphism-inspired interface for browsing notes, PYQs, and assignments — plus a powerful **AI Study Buddy** for intelligent academic assistance.
 
 ## 🌟 Key Features
 
+### 🤖 GyanStack AI — Study Buddy
+The AI assistant is the centrepiece of the student experience:
+- **🔍 Exact & Fuzzy Search**: Find any document by name — exact matches navigate instantly; partial matches show up to 5 clickable suggestions.
+- **📝 Notes Generator**: "Make notes on [topic]" — generates structured study notes from available library content.
+- **❓ Practice Questions**: "Generate practice questions for [topic]" — returns MCQ/short answer questions.
+- **👤 Uploader Lookup**: "Who uploaded [content]?" — returns the contributor's name with a profile link.
+- **📬 Content Requests**: "Request notes on [topic]" — actually saves a request to the admin database with a tracking link.
+- **⚡ Quick-Action Chips**: One-click starters for all major capabilities.
+- **📋 Copy & Clear**: Copy any AI message, or reset the chat with one click.
+
 ### 💎 Premium User Experience
-- **Glassmorphism Design**: A high-fidelity UI featuring translucent panels and blurred backgrounds.
+- **Glassmorphism Design**: High-fidelity UI featuring translucent panels and blurred backgrounds.
 - **Fluid Transitions**: Smooth page entries and scroll-triggered reveals powered by **Framer Motion**.
-- **Smart Notifications**: Integrated `react-hot-toast` with **Fault-Tolerant Cross-Device Sync**.
-- **Announcement Detail**: Dedicated high-fidelity routes (`/announcements/:id`) for full-screen update reading.
+- **Smart Notifications**: `react-hot-toast` with Fault-Tolerant Cross-Device Sync.
+- **Announcement Detail**: Dedicated routes (`/announcements/:id`) for full-screen update reading.
 - **Back-To-Top**: A floating glassmorphic button for instant home-view access.
-- **🔗 Smart Social Sharing**: `react-helmet-async` dynamically sets `og:image` and `og:title` per route — the home page uses the premium `og-banner.png` (1200×630) for rich previews on WhatsApp/Telegram/Twitter; all inner pages (content, browse) use `logo.png` for a clean branded icon.
+- **🔗 Smart Social Sharing**: `react-helmet-async` dynamically sets `og:image` and `og:title` per route.
 
 ### 🧭 Intelligent Navigation
-- **2x2 Mobile Grid**: Optimized folder display for mobile devices to maximize vertical space.
-- **Breadcrumb Auto-Scroll**: Deep navigation paths automatically center themselves to keep your current location in focus.
-- **Smart Breadcrumbs**: Clickable navigation badges for instant deep-linking through the academic hierarchy.
+- **2×2 Mobile Grid**: Optimized folder display for mobile devices.
+- **Breadcrumb Auto-Scroll**: Deep navigation paths automatically center themselves.
+- **Smart Breadcrumbs**: Clickable navigation badges for instant deep-linking.
+- **Uploader Profiles**: Every piece of content links to the contributor's profile at `/uploader/:id`.
 
 ### 📊 Resource Intelligence
-- **Real-time Folder Stats**: Folders display exactly how many sub-folders and items they contain before you enter them.
-- **Enriched Previews**: Real-time file metadata (Size, Type, Created Date) pulled directly from the Google Drive API.
-- **Dynamic Sorting**: Effortlessly find materials by popularity, recency, or alphabetical order.
+- **Real-time Folder Stats**: Folders display sub-folder and item counts before you enter them.
+- **Enriched Previews**: Real-time file metadata (Size, Type, Created Date) from the Google Drive API.
+- **🗂️ Type-Aware Drive Previews**: DOCX opens in Google Docs viewer, PPTX in Slides viewer, XLSX in Sheets viewer — no more lock screens.
+- **Dynamic Sorting**: Find materials by popularity, recency, or alphabetical order.
 
 ## 🛠️ Tech Stack
 - **Framework**: React 19 (Vite)
 - **Animations**: Framer Motion
 - **Styling**: Bootstrap 5 + Custom Modern CSS
 - **State Management**: TanStack Query
-- **Interactions**: React Hot Toast, Bootstrap Icons, **FCM Push Notifications**
+- **AI**: Groq SDK — `meta-llama/llama-4-scout-17b-16e-instruct`
+- **Interactions**: React Hot Toast, Bootstrap Icons, FCM Push Notifications
 - **SEO / Social**: `react-helmet-async` (Dynamic OG & Twitter Card meta per route)
-- **Architecture**: **HMR-Optimized Context Patterns** for maximum dev-speed.
-- **Storage Connectivity**: Google Drive API v3
-- **OG Banner**: Generated via **Sharp** — run `node scripts/generate-og-banner.mjs` to regenerate `public/og-banner.png`
+- **Architecture**: HMR-Optimized Context Patterns for maximum dev speed
+- **Storage Connectivity**: Google Drive API v3, Cloudinary
+- **OG Banner**: Generated via **Sharp** — `node scripts/generate-og-banner.mjs`
 
 ## 🚀 Getting Started
 
@@ -53,4 +66,6 @@ npm run dev
 ```
 
 ---
-*Last Updated: April 15, 2026 (Dynamic OG Social Sharing & SEOHead Component)*
+*Built with ❤️ for the student community by Jainish.*
+
+*Last Updated: April 16, 2026 — GyanStack AI Study Buddy (notes, questions, search, uploader lookup, real requests), Llama 4 Scout model, type-aware Google Drive previews.*

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { pageVariants, fadeInUp } from '../../utils/animations';
 
-const LAST_UPDATED = 'April 15, 2026';
+const LAST_UPDATED = 'April 16, 2026';
 const APP_NAME = 'GyanStack';
 const APP_URL = 'https://gyanstack.vercel.app';
 const CONTACT_EMAIL = 'jainishdabgar2901@gmail.com';
@@ -106,11 +106,18 @@ export default function PrivacyPolicy() {
                   <div className="mb-3 d-flex align-items-start gap-3">
                     <div className="p-2 rounded-2 bg-light"><i className="bi bi-robot text-primary"></i></div>
                     <div>
-                      <p className="fw-bold text-dark mb-1">b) AI Chatbot Interaction</p>
-                      <p className="small mb-0">To improve our academic support, our AI Chatbot may process your queries. These interactions are logged to provide context and improve response quality.</p>
+                      <p className="fw-bold text-dark mb-1">b) AI Study Buddy Interactions</p>
+                      <p className="small mb-0">Our AI Study Buddy processes your queries to find documents, generate notes, create practice questions, and look up uploaders. Session history is stored for logged-in users to provide continuity across sessions. Guest queries are not persistently stored.</p>
                     </div>
                   </div>
 
+                  <div className="mb-3 d-flex align-items-start gap-3">
+                    <div className="p-2 rounded-2 bg-light"><i className="bi bi-envelope-plus text-primary"></i></div>
+                    <div>
+                      <p className="fw-bold text-dark mb-1">c) Content Requests</p>
+                      <p className="small mb-0">When you submit a content request (via the AI or the Request Content page), we store your user ID, the requested topic, and submission timestamp to enable admin fulfilment and status tracking.</p>
+                    </div>
+                  </div>
                   <div className="mb-3 d-flex align-items-start gap-3">
                     <div className="p-2 rounded-2 bg-light"><i className="bi bi-cloud-arrow-down text-primary"></i></div>
                     <div>
@@ -153,8 +160,9 @@ export default function PrivacyPolicy() {
                 <p>Your data powers key features including:</p>
                 <ul className="list-unstyled">
                   <li className="mb-2"><i className="bi bi-check2-circle text-success me-2"></i>Personalized "Saved" library across devices</li>
-                  <li className="mb-2"><i className="bi bi-check2-circle text-success me-2"></i>Real-time academic support via AI Chat</li>
+                  <li className="mb-2"><i className="bi bi-check2-circle text-success me-2"></i>Real-time academic support via AI Study Buddy (notes, questions, search)</li>
                   <li className="mb-2"><i className="bi bi-check2-circle text-success me-2"></i>Cross-device notification read-state sync</li>
+                  <li className="mb-2"><i className="bi bi-check2-circle text-success me-2"></i>Content request submission and fulfilment tracking</li>
                   <li className="mb-2"><i className="bi bi-check2-circle text-success me-2"></i>Quality monitoring of academic resources</li>
                 </ul>
               </Section>

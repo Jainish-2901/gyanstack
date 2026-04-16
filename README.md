@@ -1,6 +1,6 @@
 # 🚀 GyanStack: The Ultimate College Resource Hub
 
-GyanStack is a premium, high-performance **MERN Stack** platform designed specifically for college students (BCA/MCA) to share, manage, and discover academic resources like Notes, Assignments, and Previous Year Question Papers (PYQs). 
+GyanStack is a premium, high-performance **MERN Stack** platform designed specifically for college students (BCA/MCA) to share, manage, and discover academic resources like Notes, Assignments, and Previous Year Question Papers (PYQs).
 
 Built with a focus on modern aesthetics (Glassmorphism), speed, and offline capability (PWA), it serves as a centralized community-driven library.
 
@@ -10,34 +10,39 @@ Built with a focus on modern aesthetics (Glassmorphism), speed, and offline capa
 
 ## ✨ Key Features
 
-### 🤖 Spatial AI Assistant (Powered by Groq/Llama 3.3)
-- **Contextual Intelligence**: Aware of the user's current page location to provide relevant, immediate help.
-- **Universal Navigator**: Can instantly open any public page or dashboard section (Saved, Settings, Requests) via direct commands.
-- **Auto-Request System**: Automatically detects if content is missing and allows users to submit formal requests to admin with one click.
-- **Auth Guarded**: Intelligently requests login for protected sections while acting as a polite concierge for guests.
-- **Interactive Buttons**: Dynamic selection pills for seamless content discovery without typing.
+### 🤖 GyanStack AI — "Study Buddy" (Powered by Groq / Llama 4 Scout)
+- **🔍 Exact & Fuzzy Document Search**: Type any document name — exact matches open instantly; partial matches return up to 5 clickable suggestions using Dice-coefficient similarity scoring.
+- **📄 Direct Content Navigation**: AI can open any content detail page by name without the user having to manually browse.
+- **📝 AI Notes & Summaries**: Ask the AI to "make notes on X" or "summarize Y" — it fetches available content and generates structured study notes via Groq.
+- **❓ Practice Question Generator**: Ask "generate practice questions for Z" — returns MCQ/short answer questions from library content.
+- **👤 Uploader Lookup**: Ask "who uploaded [topic]?" — AI returns the contributor's name and links to their profile page.
+- **📬 Real Content Requests**: Asking AI to "request [topic]" actually saves a Request document to MongoDB and provides a tracking link — no more fake confirmations.
+- **🛡️ Auth-Guarded**: Intelligently prompts login for protected actions while serving guests with quick-action chips.
+- **⚡ Quick-Action Chips**: Contextual prompt starters for instant access to all Study Buddy features.
+- **📋 Copy Button**: One-click copy on every AI message.
 
 ### 📚 Resource Management
 - **Categorized Hub**: Quick-access categorized view on the homepage for recently uploaded materials.
 - **Multi-Format Support**: Native handling of PDFs, Video lectures, External links, and Image-based notes.
 - **🚀 Premium Interactions**: Real-time glassmorphism notifications for all user actions (Like, Save, Download).
-- **📱 Mobile-First Library**: Intelligent 2x2 folder grid and responsive header titles.
+- **📱 Mobile-First Library**: Intelligent 2×2 folder grid and responsive header titles.
 - **🧭 Smart Navigation**: Breadcrumb auto-scrolling and direct category metadata links.
 - **📊 Resource Intelligence**: Folders display real-time item counts before you click them.
-- **🗂️ Google Drive Integration**: High-performance streaming and PDF previews with robust diagnostic tools.
+- **🗂️ Google Drive Integration**: Type-aware preview — DOCX opens in Docs viewer, PPTX in Slides viewer, XLSX in Sheets viewer, PDF in Drive viewer. No more "Secure View" lock screens.
 
 ### 👤 User & Social Features
 - **Contributor Ecosystem**: Real-time "Top Contributors" shelf highlighting community leaders.
+- **Uploader Profile Pages**: Browse all content from any contributor at `/uploader/:id`.
 - **Request Tracker**: Dedicated dashboard section to track the status of your content requests in real-time.
 - **PWA Experience**: Fully installable as a mobile or desktop app with **Offline Notifications**.
-- **Cross-Device Sync**: Notifications read status and user preferences sync instantly between mobile and desktop using a **Fault-Tolerant AuthContext Sync** pattern.
-- **Announcements**: Dynamic banner system with **High-Fidelity Detail Routes** (`/announcements/:id`) on both Client and Admin applications.
-- **Universal Dark Mode**: Intelligent self-healing theme engineering that ensures 100% visibility for critical alerts across light and dark modes.
-- **🔗 Smart Social Sharing**: Dynamic per-route Open Graph meta tags via `react-helmet-async` — home page shares the full og-banner (1200×630), inner/content pages share the G logo for clean, branded link previews on WhatsApp, Telegram, and Twitter.
+- **Cross-Device Sync**: Notifications read status and user preferences sync instantly between mobile and desktop.
+- **Announcements**: Dynamic banner system with high-fidelity detail routes on both Client and Admin applications.
+- **Universal Dark Mode**: Intelligent self-healing theme engineering for 100% visibility across light and dark modes.
+- **🔗 Smart Social Sharing**: Dynamic per-route Open Graph meta tags — home page shares the full og-banner (1200×630), inner pages share the branded logo for clean WhatsApp/Telegram/Twitter previews.
 
 ### 🛡️ Hardened Security & Stability
 - **Multi-Tier Rate Limiting**: Specialized shields for Global API (100req/15m), Authentication (10req/15m), and AI Services (20req/15m).
-- **Database Watchdog**: Real-time Mongoose connection monitoring with auto-recovery and promise-based locking to prevent startup race conditions.
+- **Database Watchdog**: Real-time Mongoose connection monitoring with auto-recovery.
 - **Surgical AI Scrub**: Programmatic filtering of technical jargon, JSON leaks, and internal IDs from AI responses.
 - **JWT & Cookie Security**: Secure persistent sessions with cross-origin protection.
 
@@ -45,13 +50,13 @@ Built with a focus on modern aesthetics (Glassmorphism), speed, and offline capa
 
 ## 🛠️ Technology Stack
 
-| **Ecosystem** | React (Vite), Framer Motion, Bootstrap 5, Lucide Icons, React Hot Toast |
+| **Ecosystem** | React (Vite), Framer Motion, Bootstrap 5, Bootstrap Icons, React Hot Toast |
 | **Backend** | Node.js, Express, MongoDB, Google Drive API v3 |
-| **AI Brain** | Groq SDK (Llama 3.3 - 70b model) |
-| **Social Gear** | Firebase Cloud Messaging (FCM), Cross-Device State Sync, `react-helmet-async` (Dynamic OG Tags) |
-| **Storage** | Google Drive API(Files), Cloudinary (Media/Profiles) |
+| **AI Brain** | Groq SDK (`meta-llama/llama-4-scout-17b-16e-instruct`) |
+| **Social Gear** | Firebase Cloud Messaging (FCM), `react-helmet-async` (Dynamic OG Tags) |
+| **Storage** | Google Drive API (Files), Cloudinary (Media/Profiles) |
 | **Security** | AI interaction logging, JWT, BcryptJS, Express Rate Limit |
-| **DevOps** | Vite-Plugin-PWA, Sharp (OG Banner), Dotenv, CORS, **HMR-Optimized Context Architecture** |
+| **DevOps** | Vite-Plugin-PWA, Sharp (OG Banner), Dotenv, CORS, HMR-Optimized Context Architecture |
 
 ---
 
@@ -70,7 +75,7 @@ Built with a focus on modern aesthetics (Glassmorphism), speed, and offline capa
    ```bash
    git clone https://github.com/Jainish-2901/gyanstack.git
    cd gyanstack-mern
-   npm install # Install base dependencies
+   npm install
    ```
 
 2. **Backend Config**
@@ -132,5 +137,4 @@ Built with a focus on modern aesthetics (Glassmorphism), speed, and offline capa
 
 *Built with ❤️ for the student community by Jainish.*
 
-*Last Updated: April 15, 2026 (Dynamic OG Social Sharing & Premium OG Banner with Real Branding)*
-
+*Last Updated: April 16, 2026 — GyanStack AI "Study Buddy" Upgrade: Llama 4 Scout model, exact/fuzzy search, notes generator, practice questions, uploader lookup, real request submission, type-aware Google Drive previews.*

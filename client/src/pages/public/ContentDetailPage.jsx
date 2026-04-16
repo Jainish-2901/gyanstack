@@ -65,41 +65,63 @@ const getDownloadUrl = (item) => {
 };
 
 
-const DrivePreview = ({ previewUrl, item }) => {
-  const [blocked, setBlocked] = React.useState(false);
+const getDriveEmbedInfo = (item) => {
+  const id = item.googleDriveId;
+  const mime = (item.type || '').toLowerCase();
+
+  if (mime.includes('wordprocessingml') || mime.includes('msword') || mime.endsWith('docx') || mime.endsWith('doc')) {
+    return { url: `https://docs.google.com/document/d/${id}/preview`, embeddable: true };
+  }
+  if (mime.includes('spreadsheetml') || mime.includes('excel') || mime.endsWith('xlsx') || mime.endsWith('xls')) {
+    return { url: `https://docs.google.com/spreadsheets/d/${id}/preview`, embeddable: true };
+  }
+  if (mime.includes('presentationml') || mime.includes('powerpoint') || mime.endsWith('pptx') || mime.endsWith('ppt')) {
+    return { url: `https://docs.google.com/presentation/d/${id}/preview`, embeddable: true };
+  }
+  if (mime.includes('pdf')) {
+    return { url: `https://drive.google.com/file/d/${id}/preview`, embeddable: true };
+  }
+  if (mime.includes('image') || mime.includes('video')) {
+    return { url: item.url, embeddable: false };
+  }
+  return { url: `https://drive.google.com/file/d/${id}/preview`, embeddable: true };
+};
+
+const DrivePreview = ({ embedInfo, item }) => {
   const [loaded, setLoaded] = React.useState(false);
-  const viewUrl = item.url;
+  const [failed, setFailed] = React.useState(false);
   const downloadUrl = `https://drive.google.com/uc?export=download&id=${item.googleDriveId}`;
 
   React.useEffect(() => {
+    if (!embedInfo.embeddable) return;
     const timer = setTimeout(() => {
-      if (!loaded) setBlocked(true);
-    }, 6000);
+      if (!loaded) setFailed(true);
+    }, 10000);
     return () => clearTimeout(timer);
-  }, [loaded]);
+  }, [loaded, embedInfo.embeddable]);
 
-  if (blocked) {
+  const openButtons = (
+    <div className="d-flex justify-content-center gap-3 flex-wrap mt-4">
+      <a href={item.url} target="_blank" rel="noopener noreferrer" className="btn btn-primary rounded-pill px-4 py-2 shadow-sm">
+        <i className="bi bi-box-arrow-up-right me-2"></i>View on Google Drive
+      </a>
+      <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className="btn btn-outline-primary rounded-pill px-4 py-2">
+        <i className="bi bi-cloud-arrow-down-fill me-2"></i>Download
+      </a>
+    </div>
+  );
+
+  if (failed) {
     return (
-      <div className="text-center p-4 p-md-5 rounded-4 border-0 shadow-sm animate-pulse" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(10px)' }}>
-        <div className="mb-4">
-          <div className="bg-primary bg-opacity-10 rounded-circle d-inline-flex p-4 mb-3">
-            <i className="bi bi-shield-lock-fill display-5 text-primary"></i>
-          </div>
-          <h4 className="fw-bold text-dark">Google Drive Secure View</h4>
-          <p className="text-muted mx-auto" style={{ maxWidth: '400px' }}>
-            To protect your privacy, Google restricts embedding this file type. No worries! You can view it directly on Google Drive.
-          </p>
+      <div className="text-center p-4 p-md-5 rounded-4" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(10px)' }}>
+        <div className="bg-warning bg-opacity-10 rounded-circle d-inline-flex p-4 mb-3">
+          <i className="bi bi-file-earmark-text display-5 text-warning"></i>
         </div>
-        <div className="d-flex justify-content-center gap-3 flex-wrap mt-4">
-          <a href={item.url} target="_blank" rel="noopener noreferrer" className="btn btn-primary rounded-pill px-4 py-2 shadow-sm">
-            <i className="bi bi-box-arrow-up-right me-2"></i>View on Google Drive
-          </a>
-          {item.googleDriveId && (
-            <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className="btn btn-outline-primary rounded-pill px-4 py-2">
-              <i className="bi bi-cloud-arrow-down-fill me-2"></i>Download
-            </a>
-          )}
-        </div>
+        <h4 className="fw-bold mb-2">Preview Not Available</h4>
+        <p className="text-muted mx-auto mb-0" style={{ maxWidth: '400px' }}>
+          This file type can't be previewed here. Open it directly on Google Drive.
+        </p>
+        {openButtons}
       </div>
     );
   }
@@ -107,20 +129,20 @@ const DrivePreview = ({ previewUrl, item }) => {
   return (
     <div className="shadow-sm rounded-4 overflow-hidden border-0">
       {!loaded && (
-        <div className="d-flex flex-column align-items-center justify-content-center bg-light" style={{ height: '400px' }}>
+        <div className="d-flex flex-column align-items-center justify-content-center" style={{ height: '420px', background: 'var(--surface-color)' }}>
           <div className="spinner-grow text-primary mb-3" role="status" style={{ width: '3rem', height: '3rem' }}></div>
-          <h6 className="fw-bold text-muted">Establishing Secure Connection...</h6>
-          <p className="small text-muted opacity-75">Connecting to Google Cloud Services</p>
+          <h6 className="fw-bold text-muted">Loading Preview...</h6>
+          <p className="small text-muted opacity-75">Connecting to Google Drive</p>
         </div>
       )}
-      <div className="ratio ratio-4x3" style={{ minHeight: '400px', maxHeight: '80vh', display: loaded ? 'block' : 'none', borderRadius: '1rem' }}>
+      <div className="ratio ratio-4x3" style={{ minHeight: '420px', maxHeight: '80vh', display: loaded ? 'block' : 'none' }}>
         <iframe
-          src={previewUrl}
+          src={embedInfo.url}
           title={item.title}
           allow="autoplay; encrypted-media"
           allowFullScreen
           onLoad={() => setLoaded(true)}
-          style={{ border: 'none' }}
+          style={{ border: 'none', width: '100%', height: '100%' }}
         ></iframe>
       </div>
     </div>
@@ -132,8 +154,8 @@ const DetailPreview = ({ item }) => {
   const resourceType = item.fileResourceType || 'raw';
 
   if (item.googleDriveId) {
-    const previewUrl = `https://drive.google.com/file/d/${item.googleDriveId}/preview`;
-    return <DrivePreview previewUrl={previewUrl} item={item} />;
+    const embedInfo = getDriveEmbedInfo(item);
+    return <DrivePreview embedInfo={embedInfo} item={item} />;
   }
 
   if (fileType === 'note' || item.textNote) {
@@ -499,7 +521,7 @@ export default function ContentDetailPage() {
                   <h3 className="fw-bold mb-0">Recommended for You</h3>
                 </div>
                 <Link
-                  to={`/browse?categoryId=${item.categoryId}`}
+                  to={`/browse?category=${item.categoryId?._id || item.categoryId}`}
                   className="btn btn-primary btn-sm rounded-pill px-3 py-2 shadow-sm"
                 >
                   View More <i className="bi bi-arrow-right ms-1"></i>

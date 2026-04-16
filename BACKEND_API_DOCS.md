@@ -1,30 +1,28 @@
 # GyanStack Backend API Documentation
 
-Welcome to the documentation for the GyanStack Backend API. This document provides a detailed overview of the system architecture, its request processing pipeline (including the new Aggregator Pattern), and a complete list of endpoints.
+Welcome to the documentation for the GyanStack Backend API. This document covers the system architecture, request processing pipeline, and a complete endpoint reference.
 
 ---
 
 ## 🏗️ System Architecture
 
-The GyanStack Backend is a **Node.js/Express** application designed for the **MERN** stack. It is hosted on **Vercel** and connects to a **MongoDB Atlas** database via **Mongoose**.
+The GyanStack Backend is a **Node.js/Express** application designed for the **MERN** stack. It connects to a **MongoDB Atlas** database via **Mongoose**.
 
 ### Key Technologies:
 - **Runtime**: Node.js
 - **Framework**: Express.js
 - **Database**: MongoDB (Mongoose ODM)
 - **Deployment**: Vercel (Serverless Functions)
-- **Aggregator**: Custom parallel aggregator for multi-source data.
-- **Cloud Media**: Google Drive (Primary files), Cloudinary (Visual assets).
+- **Aggregator**: Custom parallel aggregator for multi-source data
+- **Cloud Media**: Google Drive (Primary files), Cloudinary (Visual assets)
 - **Authentication**: JWT (JSON Web Tokens)
 - **Rate Limiting**: `express-rate-limit`
 - **Email/Notifications**: NodeMailer, FCM (Firebase Cloud Messaging), Cross-Device Sync
-- **AI Engine**: Groq SDK (Llama 3.3 Large Language Model)
+- **AI Engine**: Groq SDK (`meta-llama/llama-4-scout-17b-16e-instruct`)
 
 ---
 
 ## 🌊 Request Processing Pipeline
-
-Every request follows a structured flow to ensure security and performance.
 
 ### 1. Ingress & Traffic Management
 - **Vercel Routing**: Gatekeeper for all incoming traffic.
@@ -40,23 +38,29 @@ Every request follows a structured flow to ensure security and performance.
 - **JWT Verification**: Validates the Bearer token.
 - **Role Guards**: `adminMiddleware` and `superAdminMiddleware` enforce access control.
 
-### 4. 🧠 Aggregator Pattern (NEW: April 2026)
-For content detail requests, the backend utilizes a **Content Aggregator** that orchestrates parallel calls to:
+### 4. 🧠 Aggregator Pattern
+For content detail requests, the backend uses a **Content Aggregator** that orchestrates parallel calls to:
 - **MongoDB**: Primary metadata & relationship tracking.
-- **Google Drive**: Real-time file system metadata (Actual size, Created date, Parent folder ID).
-- **Cloudinary**: Rich media intelligence (Color palettes, OCR text detection).
+- **Google Drive**: Real-time file metadata (size, created date, parent folder ID).
+- **Cloudinary**: Rich media intelligence (color palettes, OCR text detection).
 
-*This pattern ensures a "Live" view of the resource that automatically updates if the file changes on Drive/Cloudinary.*
+### 5. 🤖 AI Controller — Multi-Layer Intent Pipeline (April 2026)
+The AI controller processes messages through a cascading intent system **before** calling Groq:
 
-### 5. Controller Logic & Response
-- **Error Handling**: Global standardized error responses with stack traces in development.
+| Priority | Intent | Action |
+|---|---|---|
+| 1 | Exact title match | Navigate directly (no Groq call) |
+| 2 | Find/search keywords | Fuzzy match (Dice coefficient) → top 5 suggestions |
+| 3 | Uploader lookup | Search populated `uploadedBy` index → profile link |
+| 4 | Content request | Save `Request` doc to DB, return tracking link |
+| 5 | Notes/summary | Call Groq with content context → structured notes |
+| 6 | Practice questions | Call Groq with content context → MCQ/short answer |
+| 7 | General chat | Full Groq call with knowledge base |
 
 ### 6. 🔄 Cross-Device State Synchronization
-To maintain a consistent experience across user devices, the backend implements a **Sync Bridge**:
 - **Field**: `lastSeenAnnId` (stored in the User model).
 - **Trigger**: Opening the notification bell on any device calls `PUT /mark-all-read`.
-- **Action**: The backend stores the ID of the latest announcement seen by the user.
-- **Propagation**: On next login or profile refresh, the frontend receives this ID, instantly zeroing out the notification badge even on a brand-new device.
+- **Propagation**: On next login, the frontend receives this ID, zeroing out the badge on all devices.
 
 ---
 
@@ -75,8 +79,15 @@ To maintain a consistent experience across user devices, the backend implements 
 ### 🤖 AI Study Assistant (`/api/ai`)
 | Method | Endpoint | Description | Access |
 | :--- | :--- | :--- | :--- |
-| POST | `/chat` | Send message to AI. Context-aware. | Public |
-| GET | `/history/:sessionId`| Retrieve study conversation history | Auth |
+| POST | `/chat` | Send message to Study Buddy AI. Multi-intent pipeline. | Public |
+| GET | `/history/:sessionId` | Retrieve study conversation history | Auth |
+
+**AI Chat Features** (via `/api/ai/chat`):
+- `find [title]` — Exact or fuzzy search across all content titles
+- `make notes on [topic]` — AI generates structured study notes
+- `practice questions for [topic]` — AI generates MCQ/short-answer questions
+- `who uploaded [content]` — Returns uploader info and profile link
+- `request [topic]` — Saves a content request to MongoDB
 
 ### 📁 Content & Categories (`/api/content`, `/api/categories`)
 | Method | Endpoint | Description | Access |
@@ -85,8 +96,8 @@ To maintain a consistent experience across user devices, the backend implements 
 | POST | `/api/content` | Batch upload content (Max 20/req). | Admin |
 | GET | `/api/content/:id` | **Get Details**. Returns Enriched Aggregated Data. | Public |
 | PUT | `/api/content/:id` | Update content / Replace file. | Admin |
-| DELETE| `/api/content/:id` | Delete content & cleanup Drive folder. | Admin |
-| DELETE| `/api/content/bulk` | Bulk Delete materials. | Admin |
+| DELETE | `/api/content/:id` | Delete content & cleanup Drive folder. | Admin |
+| DELETE | `/api/content/bulk` | Bulk Delete materials. | Admin |
 
 #### 🔍 Sorting Parameters (for `GET /api/content`)
 - `sortBy`: `date` (Default), `views`, `likes`, `saves`, `downloads`, `title`.
@@ -97,9 +108,19 @@ Returned in `externalMetadata`:
 - **googleDrive**: `size`, `createdTime`, `mimeType`, `webViewLink`.
 - **cloudinary**: `colors` (palette), `ocr` (detected text).
 
+#### 🗂️ Google Drive Type-Aware Preview
+The frontend uses `getDriveEmbedInfo()` to select the correct embed URL per MIME type:
+
+| MIME Type | Embed URL Used |
+|---|---|
+| `wordprocessingml` (DOCX) | `docs.google.com/document/d/{id}/preview` |
+| `spreadsheetml` (XLSX) | `docs.google.com/spreadsheets/d/{id}/preview` |
+| `presentationml` (PPTX) | `docs.google.com/presentation/d/{id}/preview` |
+| `pdf` | `drive.google.com/file/d/{id}/preview` |
+
 #### 📁 Categories Data (for `GET /api/categories/nested`)
 Returns a recursive structure where each category includes:
-- `itemCount`: The total number of materials directly linked to this category.
+- `itemCount`: Total number of materials directly linked to this category.
 - `children`: Array of sub-categories (recursive).
 
 ### 📢 Announcements (`/api/announcements`)
@@ -109,7 +130,13 @@ Returns a recursive structure where each category includes:
 | PUT | `/mark-all-read` | Sync `lastSeenAnnId` (Requires `latestId`). Returns fresh profile. | Auth |
 | POST | `/:id/track-open` | Increment interaction `openCount`. | Public |
 | POST | `/` | Submit a new announcement request. | Admin |
-| DELETE| `/:id` | Remove an announcement. | SuperAdmin |
+| DELETE | `/:id` | Remove an announcement. | SuperAdmin |
+
+### 📬 Content Requests (`/api/requests`)
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| POST | `/` | Submit a content request | Auth |
+| GET | `/my` | Get current user's requests with status | Auth |
 
 ---
 
@@ -118,9 +145,10 @@ Returns a recursive structure where each category includes:
 2. **Environment Isolation**: Production secrets managed via Vercel env vars.
 3. **Strict CORS**: Only trusted domains can communicate with the API.
 4. **Data Sanitization**: Mongoose schemas and logic to prevent injection.
+5. **AI Scrub**: Programmatic removal of leaked JSON, IDs, and raw paths from AI output.
 
 ---
 
 *Built with ❤️ for the student community by Jainish.*
 
-*Last Updated: April 15, 2026 (State Sync & Analytics Architecture Milestone)*
+*Last Updated: April 16, 2026 — AI Study Buddy multi-intent pipeline, Llama 4 Scout model, type-aware Google Drive previews, real content request submission.*
