@@ -309,6 +309,7 @@ exports.updateUserProfile = async (req, res) => {
     return res.status(400).json({ errors: errors.array() });
   }
   const { username, phone, removeProfileImage } = req.body;
+  const normalizedPhone = (phone && phone.trim()) ? phone.trim() : null;
   try {
     const user = await User.findById(req.user.id);
     if (!user) {
@@ -320,10 +321,13 @@ exports.updateUserProfile = async (req, res) => {
       if (usernameExists) return res.status(400).json({ message: 'Username is already taken' });
       user.username = username;
     }
-    if (phone !== user.phone) {
-      const phoneExists = await User.findOne({ phone, _id: { $ne: user._id } });
-      if (phoneExists) return res.status(400).json({ message: 'Phone number is already taken' });
-      user.phone = phone;
+    const currentPhone = user.phone || null;
+    if (normalizedPhone !== currentPhone) {
+      if (normalizedPhone) {
+        const phoneExists = await User.findOne({ phone: normalizedPhone, _id: { $ne: user._id } });
+        if (phoneExists) return res.status(400).json({ message: 'Phone number is already taken' });
+      }
+      user.phone = normalizedPhone;
     }
 
     if (removeProfileImage === 'true' && user.profileImage) {
