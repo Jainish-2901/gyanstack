@@ -28,11 +28,17 @@ const RequestCardMobile = ({ req, handleUpdateStatus, handleDelete }) => (
             <div className="d-flex justify-content-between align-items-center">
                 <small className="text-muted" style={{ fontSize: '0.65rem' }}>{new Date(req.createdAt).toLocaleDateString()}</small>
                 <div className="d-flex gap-2">
-                    <button onClick={() => handleUpdateStatus(req._id, req.status === 'pending' ? 'fulfilled' : 'pending')} className="btn btn-sm btn-primary rounded-pill px-3 py-1 extra-small" style={{ fontSize: '0.7rem' }}>
-                        {req.status === 'pending' ? 'Fulfill' : 'Reopen'}
+                    <button onClick={() => handleUpdateStatus(req._id, req.status === 'pending' ? 'fulfilled' : 'pending')} className="btn btn-sm btn-primary rounded-pill px-3 py-1 extra-small" style={{ fontSize: '0.7rem' }} disabled={isStatusPending || isDeletePending}>
+                        {isStatusPending
+                          ? <span className="spinner-border spinner-border-sm" role="status" />
+                          : req.status === 'pending' ? 'Fulfill' : 'Reopen'
+                        }
                     </button>
-                    <button onClick={() => handleDelete(req._id)} className="btn btn-sm btn-outline-danger rounded-pill px-2 py-1 extra-small">
-                        <i className="bi bi-trash"></i>
+                    <button onClick={() => handleDelete(req._id)} className="btn btn-sm btn-outline-danger rounded-pill px-2 py-1 extra-small" disabled={isStatusPending || isDeletePending}>
+                        {isDeletePending
+                          ? <span className="spinner-border spinner-border-sm text-danger" role="status" />
+                          : <i className="bi bi-trash"></i>
+                        }
                     </button>
                 </div>
             </div>
@@ -52,6 +58,9 @@ export default function ViewContentRequests() {
     if (!window.confirm("Are you sure you want to PERMANENTLY delete this request?")) return;
     mutateDelete.mutate(id);
   };
+
+  const isStatusPending = mutateStatus.isPending;
+  const isDeletePending = mutateDelete.isPending;
 
   if (loading) return <LoadingScreen text="Fetching user requests..." />;
 
@@ -135,15 +144,23 @@ export default function ViewContentRequests() {
                           <button 
                             onClick={() => handleUpdateStatus(req._id, req.status === 'pending' ? 'fulfilled' : 'pending')}
                             className={`btn btn-sm rounded-pill px-3 py-1 ${req.status === 'pending' ? 'btn-primary' : 'btn-outline-warning'}`}
+                            disabled={isStatusPending || isDeletePending}
                           >
-                            {req.status === 'pending' ? 'Mark Fulfilled' : 'Reopen'}
+                            {isStatusPending
+                              ? <span className="spinner-border spinner-border-sm" role="status" />
+                              : req.status === 'pending' ? 'Mark Fulfilled' : 'Reopen'
+                            }
                           </button>
                           <button 
                             onClick={() => handleDelete(req._id)}
                             className="btn btn-sm btn-outline-danger rounded-pill px-2 py-1"
                             title="Delete Request"
+                            disabled={isStatusPending || isDeletePending}
                           >
-                            <i className="bi bi-trash"></i>
+                            {isDeletePending
+                              ? <span className="spinner-border spinner-border-sm text-danger" role="status" />
+                              : <i className="bi bi-trash"></i>
+                            }
                           </button>
                         </div>
                       </td>

@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
+import { Toaster } from 'react-hot-toast';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminLayout from './components/AdminLayout';
 import LoadingScreen from './components/LoadingScreen';
@@ -27,6 +28,15 @@ export default function App() {
   return (
     <div className="App" style={{ minHeight: '100vh' }}>
       <OfflineNotice />
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3500,
+          style: { fontSize: '0.875rem', borderRadius: '10px', padding: '10px 16px' },
+          success: { iconTheme: { primary: '#10b981', secondary: '#fff' } },
+          error: { iconTheme: { primary: '#ef4444', secondary: '#fff' } },
+        }}
+      />
 
       <Suspense fallback={<LoadingScreen text="Loading admin panel..." />}>
         <AnimatePresence mode="wait">
