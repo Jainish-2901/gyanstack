@@ -52,7 +52,7 @@ export const useRelatedContent = (categoryId, excludeId) => {
   });
 };
 
-export const useContentMutation = () => {
+export const useContentMutation = (currentUserId) => {
   const queryClient = useQueryClient();
 
   const toggleLike = useMutation({
@@ -63,7 +63,19 @@ export const useContentMutation = () => {
     onSuccess: (data, id) => {
       queryClient.setQueryData(['content', id], (old) => {
         if (!old) return old;
-        return { ...old, likesCount: data.likesCount, likedBy: data.likedBy || old.likedBy };
+        const prevLikedBy = old.likedBy || [];
+        let updatedLikedBy;
+        if (data.isLiked) {
+          updatedLikedBy = currentUserId && !prevLikedBy.includes(currentUserId)
+            ? [...prevLikedBy, currentUserId]
+            : prevLikedBy;
+        } else {
+          updatedLikedBy = prevLikedBy.filter(uid => {
+            const uidStr = uid?._id ? uid._id.toString() : uid?.toString();
+            return uidStr !== currentUserId;
+          });
+        }
+        return { ...old, likesCount: data.likesCount, likedBy: updatedLikedBy };
       });
     },
   });
@@ -76,7 +88,19 @@ export const useContentMutation = () => {
     onSuccess: (data, id) => {
       queryClient.setQueryData(['content', id], (old) => {
         if (!old) return old;
-        return { ...old, savesCount: data.savesCount, savedBy: data.savedBy || old.savedBy };
+        const prevSavedBy = old.savedBy || [];
+        let updatedSavedBy;
+        if (data.isSaved) {
+          updatedSavedBy = currentUserId && !prevSavedBy.includes(currentUserId)
+            ? [...prevSavedBy, currentUserId]
+            : prevSavedBy;
+        } else {
+          updatedSavedBy = prevSavedBy.filter(uid => {
+            const uidStr = uid?._id ? uid._id.toString() : uid?.toString();
+            return uidStr !== currentUserId;
+          });
+        }
+        return { ...old, savesCount: data.savesCount, savedBy: updatedSavedBy };
       });
     },
   });

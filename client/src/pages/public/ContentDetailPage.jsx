@@ -262,7 +262,7 @@ export default function ContentDetailPage() {
 
   const { data: item, isLoading: contentLoading } = useContentDetail(id);
   const { data: relatedItems = [] } = useRelatedContent(item?.categoryId, id);
-  const { toggleLike, toggleSave, incrementDownload } = useContentMutation();
+  const { toggleLike, toggleSave, incrementDownload } = useContentMutation(user?.id);
 
   const lastCountedId = useRef(null);
 
@@ -456,7 +456,7 @@ export default function ContentDetailPage() {
                       disabled={toggleSave.isPending}
                     >
                       <i className={`bi ${item.savedBy?.includes(user?.id) ? 'bi-bookmark-fill' : 'bi-bookmark'} fs-5 me-2`}></i>
-                      {item.savedBy?.includes(user?.id) ? 'Saved' : 'Save'}
+                      {item.savedBy?.includes(user?.id) ? 'Saved This' : 'Save This'}
                     </button>
                   </div>
 
