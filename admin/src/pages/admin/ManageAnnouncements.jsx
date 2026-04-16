@@ -24,21 +24,21 @@ const AnnouncementCardMobile = ({ ann, handleAnnouncementStatus, handleEditClick
 
         <div className="row g-2 mb-3">
           <div className="col-4">
-            <div className="bg-primary bg-opacity-5 rounded-3 p-2 text-center border border-primary border-opacity-10">
-              <small className="d-block text-muted x-small">SENT</small>
-              <span className="fw-bold text-primary small">{ann.sentCount || 0}</span>
+            <div className="rounded-3 p-2 text-center" style={{ background: 'var(--glass-bg, rgba(0,0,0,0.04))', border: '1px solid var(--glass-border, rgba(0,0,0,0.08))' }}>
+              <small className="d-block text-muted" style={{ fontSize: '0.6rem', letterSpacing: '0.05em' }}>SENT</small>
+              <span className="fw-bold" style={{ fontSize: '0.9rem', color: 'var(--text-primary, #1f2937)' }}>{ann.sentCount || 0}</span>
             </div>
           </div>
           <div className="col-4">
-            <div className="bg-success bg-opacity-5 rounded-3 p-2 text-center border border-success border-opacity-10">
-              <small className="d-block text-muted x-small">OPEN</small>
-              <span className="fw-bold text-success small">{ann.openCount || 0}</span>
+            <div className="rounded-3 p-2 text-center" style={{ background: 'var(--glass-bg, rgba(0,0,0,0.04))', border: '1px solid var(--glass-border, rgba(0,0,0,0.08))' }}>
+              <small className="d-block text-muted" style={{ fontSize: '0.6rem', letterSpacing: '0.05em' }}>OPEN</small>
+              <span className="fw-bold" style={{ fontSize: '0.9rem', color: 'var(--text-primary, #1f2937)' }}>{ann.openCount || 0}</span>
             </div>
           </div>
           <div className="col-4">
-            <div className="bg-dark bg-opacity-5 rounded-3 p-2 text-center border border-secondary border-opacity-10">
-              <small className="d-block text-muted x-small">CTR</small>
-              <span className="fw-bold small" style={{ color: 'var(--text-primary)' }}>{ctr}%</span>
+            <div className="rounded-3 p-2 text-center" style={{ background: 'var(--glass-bg, rgba(0,0,0,0.04))', border: '1px solid var(--glass-border, rgba(0,0,0,0.08))' }}>
+              <small className="d-block text-muted" style={{ fontSize: '0.6rem', letterSpacing: '0.05em' }}>CTR</small>
+              <span className="fw-bold" style={{ fontSize: '0.9rem', color: 'var(--text-primary, #1f2937)' }}>{ctr}%</span>
             </div>
           </div>
         </div>
@@ -150,6 +150,18 @@ export default function ManageAnnouncements() {
   // Filtered Logic
   const filteredAnnouncements = announcements.filter(ann => filter === 'all' || ann.status === filter);
 
+  // ── Counts ────────────────────────────────────────────────────────────
+  const approvedCount = announcements.filter(a => a.status === 'approved').length;
+  const pendingCount  = announcements.filter(a => a.status === 'pending').length;
+  const rejectedCount = announcements.filter(a => a.status === 'rejected').length;
+
+  const TAB_CONFIG = [
+    { key: 'all',      label: 'All',      count: announcements.length, color: '#6366f1' },
+    { key: 'approved', label: 'Approved', count: approvedCount,        color: '#10b981' },
+    { key: 'pending',  label: 'Pending',  count: pendingCount,         color: '#f59e0b' },
+    { key: 'rejected', label: 'Rejected', count: rejectedCount,        color: '#ef4444' },
+  ];
+
   if (loading) return <LoadingScreen text="Calibrating Announcement Hub..." />;
 
   return (
@@ -233,13 +245,14 @@ export default function ManageAnnouncements() {
 
       <div className="mx-3">
         <div className="d-flex justify-content-between align-items-center mb-3">
-          <h6 className="fw-bold mb-0" style={{ color: 'var(--text-primary)' }}><i className="bi bi-journal-text text-primary me-2"></i>History & Status</h6>
+          <h6 className="fw-bold mb-0" style={{ color: 'var(--text-primary)' }}><i className="bi bi-journal-text text-primary me-2"></i>History &amp; Status</h6>
           <div className="btn-group btn-group-sm rounded-pill shadow-sm overflow-hidden border">
             {['all', 'approved', 'pending', 'rejected'].map(s => (
               <button key={s} className={`btn btn-sm px-3 text-capitalize ${filter === s ? 'btn-primary' : 'btn-white'}`} onClick={() => setFilter(s)}>{s}</button>
             ))}
           </div>
         </div>
+
 
         <div className="glass-card border-0 overflow-hidden">
           <div className="table-responsive d-none d-lg-block">

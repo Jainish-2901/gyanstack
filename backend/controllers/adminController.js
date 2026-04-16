@@ -116,13 +116,10 @@ exports.deleteUser = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Protection: Khud ko delete na kar paayein
     if (user._id.toString() === req.user.id) {
-      return res.status(400).json({ message: 'You cannot delete yourself!' });
+      return res.status(400).json({ message: 'You cannot deactivate yourself!' });
     }
 
-    // SOFT DELETE: Hum user ko delete nahi karenge, sirf flag set karenge
-    // Taaki unka content aur profile data database mein rahe (as per user request)
     user.isDeleted = true;
     await user.save({ validateBeforeSave: false });
 
@@ -131,4 +128,20 @@ exports.deleteUser = async (req, res) => {
     console.error(err.message);
     res.status(500).send('Server error (deleteUser)');
   }
-};
+};
+
+exports.reactivateUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    user.isDeleted = false;
+    await user.save({ validateBeforeSave: false });
+
+    res.json({ message: 'User reactivated successfully.' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error (reactivateUser)');
+  }
+};
+

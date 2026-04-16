@@ -3,9 +3,11 @@ const router = express.Router();
 const { 
   getAllUsers, 
   updateUserRole,
-  getDashboardStats, // --- NAYA IMPORT ---
-  deleteUser // --- NAYA IMPORT ---
+  getDashboardStats,
+  deleteUser,
+  reactivateUser
 } = require('../controllers/adminController'); 
+
 const authMiddleware = require('../middleware/authMiddleware');
 
 const { adminMiddleware, superAdminMiddleware } = require('../middleware/adminMiddleware');
@@ -23,8 +25,12 @@ router.get('/users', authMiddleware, superAdminMiddleware, getAllUsers);
 // Route 2: Update User Role (SuperAdmin Only)
 router.put('/users/:id/role', authMiddleware, superAdminMiddleware, updateUserRole);
 
-// Route 3: Delete User (SuperAdmin Only)
+// Route 3: Deactivate User - Soft delete (SuperAdmin Only)
 router.delete('/users/:id', authMiddleware, superAdminMiddleware, deleteUser);
+
+// Route 4: Reactivate User (SuperAdmin Only)
+router.patch('/users/:id/reactivate', authMiddleware, superAdminMiddleware, reactivateUser);
+
 
 // (Yahaan se sabhi Announcement routes HATA diye gaye hain)
 

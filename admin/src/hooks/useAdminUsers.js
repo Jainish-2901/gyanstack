@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 
 export const useAllUsers = () => {
   return useQuery({
@@ -19,8 +20,12 @@ export const useAdminUserMutation = () => {
       const { data } = await api.put(`/admin/users/${userId}/role`, { role });
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_, { role }) => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      toast.success(`✅ Role updated to "${role}" successfully.`);
+    },
+    onError: (err) => {
+      toast.error(`❌ ${err.response?.data?.message || 'Failed to update role.'}`);
     },
   });
 
@@ -31,8 +36,26 @@ export const useAdminUserMutation = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      toast.success('🔒 User deactivated. Their content is preserved.');
+    },
+    onError: (err) => {
+      toast.error(`❌ ${err.response?.data?.message || 'Failed to deactivate user.'}`);
     },
   });
 
-  return { changeRole, deactivateUser };
+  const reactivateUser = useMutation({
+    mutationFn: async (userId) => {
+      const { data } = await api.patch(`/admin/users/${userId}/reactivate`);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      toast.success('✅ User account reactivated successfully.');
+    },
+    onError: (err) => {
+      toast.error(`❌ ${err.response?.data?.message || 'Failed to reactivate user.'}`);
+    },
+  });
+
+  return { changeRole, deactivateUser, reactivateUser };
 };

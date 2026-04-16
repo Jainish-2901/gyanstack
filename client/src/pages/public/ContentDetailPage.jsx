@@ -416,8 +416,19 @@ export default function ContentDetailPage() {
                       </div>
                       <div>
                         <div className="text-muted small">Drive Status</div>
-                        <div className="fw-bold small">
-                          {formatBytes(item.externalMetadata.googleDrive.size)} • {item.externalMetadata.googleDrive.mimeType?.split('/')[1]?.toUpperCase() || 'File'}
+                        <div className="fw-bold small" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                          {formatBytes(item.externalMetadata.googleDrive.size)} • {(() => {
+                            const m = (item.externalMetadata.googleDrive.mimeType || '').toLowerCase();
+                            if (m.includes('pdf'))                                       return 'PDF';
+                            if (m.includes('word') || m.includes('document'))           return 'DOCX';
+                            if (m.includes('presentation') || m.includes('powerpoint')) return 'PPTX';
+                            if (m.includes('sheet') || m.includes('excel'))             return 'XLSX';
+                            if (m.includes('image'))                                    return 'Image';
+                            if (m.includes('zip') || m.includes('rar'))                 return 'ZIP';
+                            if (m.includes('plain') || m.includes('text'))              return 'TXT';
+                            const sub = m.split('/')[1] || 'File';
+                            return sub.length > 10 ? 'File' : sub.toUpperCase();
+                          })()}
                         </div>
                         <div className="extra-small text-muted">Created: {new Date(item.externalMetadata.googleDrive.createdTime).toLocaleDateString()}</div>
                       </div>
