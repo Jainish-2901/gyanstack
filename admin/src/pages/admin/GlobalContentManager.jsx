@@ -14,9 +14,9 @@ const getTypeInfo = (type = '') => {
     if (t === 'note' || t === 'text/plain') return { label: 'Note', icon: 'bi-card-text', color: '#6366f1' };
     if (t === 'link' || t.startsWith('http')) return { label: 'Link', icon: 'bi-link-45deg', color: '#06b6d4' };
     if (t.includes('pdf')) return { label: 'PDF', icon: 'bi-file-earmark-pdf', color: '#ef4444' };
-    if (t.includes('word') || t.includes('document')) return { label: 'DOCX', icon: 'bi-file-earmark-word', color: '#3b82f6' };
-    if (t.includes('presentation') || t.includes('powerpoint')) return { label: 'PPTX', icon: 'bi-file-earmark-slides', color: '#f97316' };
-    if (t.includes('sheet') || t.includes('excel')) return { label: 'XLSX', icon: 'bi-file-earmark-excel', color: '#10b981' };
+    if (t.includes('wordprocessingml') || t.includes('msword')) return { label: 'DOCX', icon: 'bi-file-earmark-word', color: '#3b82f6' };
+    if (t.includes('presentationml') || t.includes('powerpoint')) return { label: 'PPTX', icon: 'bi-file-earmark-slides', color: '#f97316' };
+    if (t.includes('spreadsheetml') || t.includes('excel')) return { label: 'XLSX', icon: 'bi-file-earmark-excel', color: '#10b981' };
     if (t.includes('image') || t.includes('png') || t.includes('jpg')) return { label: 'Image', icon: 'bi-file-earmark-image', color: '#8b5cf6' };
     if (t.includes('zip') || t.includes('rar')) return { label: 'ZIP', icon: 'bi-file-earmark-zip', color: '#64748b' };
     return { label: (type.split('/').pop() || 'File').toUpperCase().slice(0, 6), icon: 'bi-file-earmark', color: '#94a3b8' };

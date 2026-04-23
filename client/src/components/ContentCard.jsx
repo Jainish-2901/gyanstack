@@ -30,9 +30,9 @@ const getIcon = (type) => {
   if (type.includes('pdf')) return 'bi-file-earmark-pdf-fill text-danger';
   if (type.includes('video')) return 'bi-file-earmark-play-fill text-info';
   if (type.includes('image')) return 'bi-file-earmark-image-fill text-success';
-  if (type.includes('doc') || type.includes('word')) return 'bi-file-earmark-word-fill text-primary';
-  if (type.includes('ppt') || type.includes('presentation')) return 'bi-file-earmark-slides-fill text-warning';
-  if (type.includes('xls') || type.includes('excel')) return 'bi-file-earmark-excel-fill text-success';
+  if (type.includes('wordprocessingml') || type.includes('msword')) return 'bi-file-earmark-word-fill text-primary';
+  if (type.includes('presentationml') || type.includes('powerpoint')) return 'bi-file-earmark-slides-fill text-warning';
+  if (type.includes('spreadsheetml') || type.includes('excel')) return 'bi-file-earmark-excel-fill text-success';
   if (type.includes('zip') || type.includes('archive')) return 'bi-file-earmark-zip-fill text-secondary';
   return 'bi-file-earmark-fill text-secondary';
 };

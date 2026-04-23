@@ -24,6 +24,9 @@ const getSmallIcon = (type) => {
   if (type?.includes('pdf')) return 'bi-file-earmark-pdf text-danger';
   if (type?.includes('video')) return 'bi-play-circle text-info';
   if (type?.includes('image')) return 'bi-image text-success';
+  if (type?.includes('wordprocessingml') || type?.includes('msword')) return 'bi-file-earmark-word text-primary';
+  if (type?.includes('presentationml') || type?.includes('powerpoint')) return 'bi-file-earmark-slides text-warning';
+  if (type?.includes('spreadsheetml') || type?.includes('excel')) return 'bi-file-earmark-excel text-success';
   if (type === 'link') return 'bi-link-45deg text-primary';
   if (type === 'note') return 'bi-sticky text-warning';
   return 'bi-file-earmark text-secondary';
