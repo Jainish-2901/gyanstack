@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { pageVariants, fadeInUp } from '../../utils/animations';
 
-const LAST_UPDATED = 'April 16, 2026';
+const LAST_UPDATED = 'April 23, 2026';
 const APP_NAME = 'GyanStack';
 const APP_URL = 'https://gyanstack.vercel.app';
 const CONTACT_EMAIL = 'jainishdabgar2901@gmail.com';
@@ -125,7 +125,18 @@ export default function TermsOfService() {
                 <p className="small text-muted italic">Misuse of the AI Study Buddy may lead to immediate account suspension.</p>
               </Section>
 
-              <Section icon="bi-shield-shaded" title="4. Prohibited Activities">
+              <Section icon="bi-megaphone" title="4. Announcements & Push Notifications">
+                <p>GyanStack includes a platform announcement system that keeps students informed of academic updates, new content, and important alerts. You acknowledge and agree to the following:</p>
+                <ul className="list-unstyled mb-3 small">
+                  <li className="mb-2 d-flex align-items-start gap-2"><i className="bi bi-check2-circle text-success mt-1"></i><span><strong>Opt-In Notifications:</strong> Push notifications are only delivered if you explicitly grant browser/device permission. You may revoke this permission at any time in your browser settings.</span></li>
+                  <li className="mb-2 d-flex align-items-start gap-2"><i className="bi bi-check2-circle text-success mt-1"></i><span><strong>Role-Based Publishing:</strong> Admins may draft announcement requests; only Superadmins may approve and broadcast them to all subscribers. Admins may only edit or delete their own <em>pending</em> drafts.</span></li>
+                  <li className="mb-2 d-flex align-items-start gap-2"><i className="bi bi-check2-circle text-success mt-1"></i><span><strong>Redirect Links:</strong> Approved announcements may include a custom redirect URL. Tapping a notification will navigate you to that link (or the announcement detail page if no redirect is set).</span></li>
+                  <li className="mb-2 d-flex align-items-start gap-2"><i className="bi bi-check2-circle text-success mt-1"></i><span><strong>Engagement Tracking:</strong> The platform records open counts and delivery counts per announcement for internal quality monitoring. This data is never shared with third parties.</span></li>
+                  <li className="mb-0 d-flex align-items-start gap-2"><i className="bi bi-check2-circle text-success mt-1"></i><span><strong>Notification Sound:</strong> A custom audio ping (<code>notification_ping.mp3</code>) plays when a push notification arrives. You can silence this via your OS notification settings.</span></li>
+                </ul>
+              </Section>
+
+              <Section icon="bi-shield-shaded" title="5. Prohibited Activities">
                 <p>You may NOT use {APP_NAME} to:</p>
                 <div className="row g-2">
                   {[
@@ -145,7 +156,7 @@ export default function TermsOfService() {
                 </div>
               </Section>
 
-              <Section icon="bi-cloud-arrow-up" title="5. Intellectual Property">
+              <Section icon="bi-cloud-arrow-up" title="6. Intellectual Property">
                 <p>
                   Most study materials on {APP_NAME} are shared for educational use under fair-use principles. 
                   Original GyanStack assets (code, logo, layout) are our exclusive property.
@@ -157,7 +168,7 @@ export default function TermsOfService() {
                 </div>
               </Section>
 
-              <Section icon="bi-universal-access" title="6. Disclaimer of Warranties">
+              <Section icon="bi-universal-access" title="7. Disclaimer of Warranties">
                 <p className="mb-0">
                   The platform is provided "As Is". While we strive for 100% accuracy, {APP_NAME} 
                   does not warrant that study materials are error-free. Users are advised to cross-verify 
@@ -165,7 +176,7 @@ export default function TermsOfService() {
                 </p>
               </Section>
 
-              <Section icon="bi-hammer" title="7. Governing Law">
+              <Section icon="bi-hammer" title="8. Governing Law">
                 <p className="mb-0">
                   These terms are governed by the laws of <strong>India</strong>. Any legal proceedings 
                   arising from your use of {APP_NAME} will be handled exclusively in the courts of 
@@ -173,7 +184,7 @@ export default function TermsOfService() {
                 </p>
               </Section>
 
-              <Section icon="bi-chat-heart" title="8. Questions?">
+              <Section icon="bi-chat-heart" title="9. Questions?">
                 <p className="mb-4">
                   If you have any questions regarding these terms, our support team is happy to help you.
                 </p>

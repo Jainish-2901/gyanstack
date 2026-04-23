@@ -59,8 +59,8 @@ The AI controller processes messages through a cascading intent system **before*
 
 ### 6. 🔄 Cross-Device State Synchronization
 - **Field**: `lastSeenAnnId` (stored in the User model).
-- **Trigger**: Opening the notification bell on any device calls `PUT /mark-all-read`.
-- **Propagation**: On next login, the frontend receives this ID, zeroing out the badge on all devices.
+- **Trigger**: Opening the Announcements page on any device calls `PUT /announcements/mark-all-read`.
+- **Propagation**: On next login/session, the frontend receives this ID and zeros out the unread badge on all devices.
 
 ---
 
@@ -74,7 +74,7 @@ The AI controller processes messages through a cascading intent system **before*
 | POST | `/google-login` | Google OAuth login | Public |
 | GET | `/me` | Get current user profile | Auth |
 | PUT | `/update-profile` | Update profile (incl. avatar, FCM Token) | Auth |
-| PUT | `/sync-notification` | Update `lastReadAnnId` for sync | Auth |
+| PUT | `/sync-notification` | Update `lastSeenAnnId` for sync | Auth |
 
 ### 🤖 AI Study Assistant (`/api/ai`)
 | Method | Endpoint | Description | Access |
@@ -126,11 +126,27 @@ Returns a recursive structure where each category includes:
 ### 📢 Announcements (`/api/announcements`)
 | Method | Endpoint | Description | Access |
 | :--- | :--- | :--- | :--- |
-| GET | `/` | Get approved announcements (supports `limit`, `days`). | Public |
-| PUT | `/mark-all-read` | Sync `lastSeenAnnId` (Requires `latestId`). Returns fresh profile. | Auth |
-| POST | `/:id/track-open` | Increment interaction `openCount`. | Public |
-| POST | `/` | Submit a new announcement request. | Admin |
-| DELETE | `/:id` | Remove an announcement. | SuperAdmin |
+| GET | `/` | Get approved announcements. Supports `?limit=N` and `?days=N` filters. | Public |
+| GET | `/all` | Get **all** announcements (any status), for moderation view. | Admin |
+| GET | `/my-requests` | Get announcements submitted by the current admin user. | Admin |
+| POST | `/subscribe` | Register an FCM token for push delivery. Body: `{ fcmToken }`. | Auth |
+| POST | `/request` | Submit a new announcement draft. SuperAdmins auto-approve & broadcast. Body: `{ title, content, redirectLink? }`. | Admin |
+| PUT | `/mark-all-read` | Sync `lastSeenAnnId` to mark all read cross-device. Body: `{ latestId }`. Returns updated user profile. | Auth |
+| PUT | `/:id` | Edit an announcement. SuperAdmins: any status. Admins: own `pending` drafts only. | Admin |
+| PUT | `/:id/status` | Approve or reject a draft. Triggers FCM broadcast on `approved`. Body: `{ status }`. | SuperAdmin |
+| POST | `/:id/track-open` | Increment `openCount` for engagement analytics. | Public |
+| DELETE | `/:id` | Delete an announcement. SuperAdmins: any. Admins: own submissions only. | Admin |
+
+#### 📊 Announcement Model Fields
+| Field | Type | Description |
+|---|---|---|
+| `title` | String | Announcement headline |
+| `content` | String | Full announcement body |
+| `redirectLink` | String | Optional custom URL — push tap navigates here instead of the detail page |
+| `status` | Enum | `pending` \| `approved` \| `rejected` |
+| `requestedBy` | ObjectId | Ref to User who submitted the announcement |
+| `sentCount` | Number | Number of FCM push notifications successfully delivered |
+| `openCount` | Number | Number of times the detail page was opened (tracked via `POST /:id/track-open`) |
 
 ### 📬 Content Requests (`/api/requests`)
 | Method | Endpoint | Description | Access |
@@ -151,4 +167,5 @@ Returns a recursive structure where each category includes:
 
 *Built with ❤️ for the student community by Jainish.*
 
-*Last Updated: April 16, 2026 — AI Study Buddy multi-intent pipeline, Llama 4 Scout model, type-aware Google Drive previews, real content request submission.*
+
+*April 23, 2026 — Announcement System Overhaul: new routes (`/subscribe`, `/request`, `/my-requests`, `/:id/status`, `/:id/track-open`), `redirectLink` & `sentCount` & `openCount` model fields, role-based edit/delete (superadmin vs. admin), `lastSeenAnnId` cross-device sync fix.*

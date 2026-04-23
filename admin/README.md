@@ -20,9 +20,19 @@ The GyanStack Admin Panel is the central governance hub for managing academic re
 
 ### 👑 Governance & Security
 - **Role-Based Access (RBAC)**: Fine-grained permissions for Admins, Moderators, and Super-Admins.
-- **Announcement Pipeline**: Broadcast critical updates via Firebase Cloud Messaging (FCM).
 - **Professional UI Transitions**: Integrated **Framer Motion** for high-fidelity page entries.
 - **Manual Verification**: Review and approve community-submitted resources before they go live.
+
+### 📣 Announcement System (Overhauled — April 2026)
+- **Draft & Request**: Admins compose announcements (`title`, `content`, optional `redirectLink`) and submit them as `pending` drafts.
+- **Approve / Reject Pipeline**: SuperAdmins review all pending drafts and approve or reject via `PUT /:id/status`. Approval triggers an immediate FCM push broadcast to all subscribers.
+- **Instant Broadcast**: SuperAdmins bypass the approval step — their announcements are auto-approved and broadcast in one action.
+- **📊 Engagement Analytics**: `ManageAnnouncements` displays `sentCount` (push receipts) and `openCount` (detail-page opens) per announcement.
+- **🔗 Redirect Links**: Each announcement supports a `redirectLink` field — push taps navigate directly to any internal route or external URL.
+- **🔔 Custom Notification Sound**: `notification_ping.mp3` plays on push delivery across the platform.
+- **Role-Based Edit / Delete**: SuperAdmins edit or delete any announcement at any status. Admins may only edit their own `pending` drafts and delete their own submissions.
+- **My Announcements View**: Admins have a dedicated `MyAnnouncements` page listing their own requests and approval status.
+- **Announcement Detail Page**: Full-detail view (`/announcements/:id`) with redirect link support and formatted content display.
 
 ## 🛠️ Tech Stack
 - **Framework**: React 19 (Vite)
@@ -52,3 +62,5 @@ npm run dev
 *Built with ❤️ for the student community by Jainish.*
 
 *Last Updated: April 16, 2026 — Content Request Management panel added; AI Study Buddy real request DB integration.*
+
+*April 23, 2026 — Announcement System Overhaul: role-based draft/approve/reject pipeline, sentCount & openCount analytics, redirectLink per broadcast, custom notification_ping.mp3, My Announcements view, Announcement Detail page, mobile-first card layout upgrade across all admin pages.*

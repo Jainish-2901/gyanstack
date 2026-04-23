@@ -34,9 +34,14 @@ Built with a focus on modern aesthetics (Glassmorphism), speed, and offline capa
 - **Contributor Ecosystem**: Real-time "Top Contributors" shelf highlighting community leaders.
 - **Uploader Profile Pages**: Browse all content from any contributor at `/uploader/:id`.
 - **Request Tracker**: Dedicated dashboard section to track the status of your content requests in real-time.
-- **PWA Experience**: Fully installable as a mobile or desktop app with **Offline Notifications**.
+- **PWA Experience**: Fully installable as a mobile or desktop app with **Notifications**.
 - **Cross-Device Sync**: Notifications read status and user preferences sync instantly between mobile and desktop.
-- **Announcements**: Dynamic banner system with high-fidelity detail routes on both Client and Admin applications.
+- **📣 Announcement System**: Full-lifecycle announcement management — admins draft requests, superadmins approve/reject, system auto-broadcasts FCM push to all subscribers on approval.
+- **📊 Announcement Analytics**: Each announcement tracks `sentCount` (push receipts) and `openCount` (detail page opens) for engagement insights in the Admin dashboard.
+- **🔗 Smart Redirect Links**: Announcements support a custom `redirectLink` — push notification and "Read More" tap navigates directly to any URL (internal route or external link) instead of the generic announcements list.
+- **🔔 Custom Notification Sound**: Platform-branded `notification_ping.mp3` plays on every incoming push notification (both Firebase SW and in-app).
+- **✅ Mark-All-Read Sync**: Opening the Announcements page automatically marks all notifications as read server-side via `lastSeenAnnId`, with cross-device sync.
+- **🛡️ Role-Based Announcement Control**: Superadmins can edit/delete any announcement at any status; Admins can only edit their own `pending` requests and delete their own submissions.
 - **Universal Dark Mode**: Intelligent self-healing theme engineering for 100% visibility across light and dark modes.
 - **🔗 Smart Social Sharing**: Dynamic per-route Open Graph meta tags — home page shares the full og-banner (1200×630), inner pages share the branded logo for clean WhatsApp/Telegram/Twitter previews.
 
@@ -137,4 +142,5 @@ Built with a focus on modern aesthetics (Glassmorphism), speed, and offline capa
 
 *Built with ❤️ for the student community by Jainish.*
 
-*Last Updated: April 16, 2026 — GyanStack AI "Study Buddy" Upgrade: Llama 4 Scout model, exact/fuzzy search, notes generator, practice questions, uploader lookup, real request submission, type-aware Google Drive previews.*
+
+*April 23, 2026 — Announcement System Overhaul: role-based CRUD (superadmin/admin), sentCount & openCount analytics, custom redirectLink per announcement, notification_ping.mp3 custom sound, mark-all-read cross-device sync, Firebase SW enhancements, and full Admin UI upgrade for announcement management.*

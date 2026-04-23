@@ -12,7 +12,9 @@ The client frontend is optimized for seamless content discovery and a "premium" 
 - **Dynamic Sorting**: Browse results can be sorted by "Recently Added", "Most Visited", "Likes", etc.
 - **Resource Intelligence**: The detail view shows enriched metadata — real-time file sizes from Google Drive and visual profiles (color palettes) from Cloudinary.
 - **Personalized Library**: Integrated "Like" and "Save" systems letting users build their own curated study list.
-- **Announcement Detail View**: Dedicated routes (`/announcements/:id`) for full-screen update reading with independent state tracking.
+- **Announcement Detail View**: Dedicated routes (`/announcements/:id`) for full-screen update reading. Opens are tracked server-side via `POST /:id/track-open` (`openCount`).
+- **Mark-All-Read Sync**: Visiting `/announcements` auto-calls `PUT /mark-all-read`, persisting `lastSeenAnnId` in the user profile for cross-device badge sync.
+- **Push Notifications**: Custom `notification_ping.mp3` plays on incoming FCM notifications. Tap navigates to the announcement's `redirectLink` (or detail page fallback).
 - **Uploader Profiles**: Each content card links to the contributor's profile at `/uploader/:id` showing all their uploaded resources.
 
 ### 🤖 GyanStack AI — Study Buddy
@@ -44,10 +46,12 @@ A high-efficiency workspace for uploaders and content moderators.
 - **Batch Uploading**: Upload up to 10 files simultaneously with automated Google Drive placement and MERN database syncing.
 - **Recursive Content Control**: Manage materials within nested semesters and subjects, with the backend automatically creating corresponding Google Drive folders.
 - **Live Syncing**: Updates to content titles or categories are automatically synced to the physical files on Google Drive.
+- **Announcement Drafting**: Submit new announcements via `POST /request`. Includes optional `redirectLink` field. SuperAdmins auto-approve and broadcast immediately.
 
 ### Technical Benefits:
 - **Optimized Media Pipeline**: Automatic image compression (Sharp) and video transcoding (FFmpeg) during upload.
 - **Analytics at a Glance**: Real-time tracking of most downloaded and viewed materials.
+- **Mobile-First Card Layout**: Content management uses responsive card-based layout on mobile, table on desktop, with bulk-select and type-badge filtering.
 
 ---
 
@@ -57,7 +61,10 @@ The command center for system-wide control and community oversight.
 ### Key Workflows:
 - **User Governance**: Promotion and demotion of users to/from Admin/Uploader status.
 - **Global Content Manager**: A unified view to bulk-reassign or bulk-delete content across the platform.
-- **Announcement Pipeline**: A specialized workflow for creating, approving, and broadcasting push notifications via Firebase Cloud Messaging (FCM).
+- **Announcement Pipeline**: Full lifecycle — Admins submit drafts (`POST /request`), SuperAdmins approve/reject (`PUT /:id/status`), system auto-broadcasts FCM push on approval. Each announcement supports a `redirectLink` so the notification tap can navigate to any URL.
+- **Announcement Analytics**: The `ManageAnnouncements` page displays `sentCount` (push receipts) and `openCount` (detail page opens) per announcement for engagement insights.
+- **Role-Based Edit/Delete**: SuperAdmins can edit or delete any announcement at any status. Admins can only edit their own `pending` drafts and delete their own submissions.
+- **My Announcements View**: Admins see a personal `MyAnnouncements` page listing only their own submitted requests and their approval status.
 
 ---
 
@@ -99,3 +106,5 @@ The `og-banner.png` (1200×630) is generated via **Sharp** (Node.js image compos
 *Built with ❤️ for the student community by Jainish.*
 
 *Last Updated: April 16, 2026 — GyanStack AI Study Buddy capabilities, type-aware Google Drive previews, uploader profiles.*
+
+*April 23, 2026 — Announcement system overhaul: role-based CRUD pipeline, sentCount/openCount analytics, redirectLink per announcement, custom notification_ping.mp3 sound, mark-all-read cross-device sync, mobile-first Admin UI upgrade.*

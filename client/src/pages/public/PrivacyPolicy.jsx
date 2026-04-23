@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { pageVariants, fadeInUp } from '../../utils/animations';
 
-const LAST_UPDATED = 'April 16, 2026';
+const LAST_UPDATED = 'April 23, 2026';
 const APP_NAME = 'GyanStack';
 const APP_URL = 'https://gyanstack.vercel.app';
 const CONTACT_EMAIL = 'jainishdabgar2901@gmail.com';
@@ -138,7 +138,7 @@ export default function PrivacyPolicy() {
                     <div className="p-2 rounded-2 bg-light"><i className="bi bi-eye-fill text-primary"></i></div>
                     <div>
                       <p className="fw-bold text-dark mb-1">e) Announcement Interactions</p>
-                      <p className="small mb-0">We track when system updates are opened to measure the effectiveness of our platform communications and ensure students receive critical alerts.</p>
+                      <p className="small mb-0">We track when system announcements are opened (<strong className="text-dark">openCount</strong>) and how many push notifications were successfully delivered (<strong className="text-dark">sentCount</strong>) to measure the effectiveness of our platform communications. If an announcement includes a <strong className="text-dark">redirectLink</strong>, your tap navigates directly to that destination. We also persist your <strong className="text-dark">lastSeenAnnId</strong> to enable cross-device mark-all-read sync.</p>
                     </div>
                   </div>
                 </div>
@@ -161,8 +161,9 @@ export default function PrivacyPolicy() {
                 <ul className="list-unstyled">
                   <li className="mb-2"><i className="bi bi-check2-circle text-success me-2"></i>Personalized "Saved" library across devices</li>
                   <li className="mb-2"><i className="bi bi-check2-circle text-success me-2"></i>Real-time academic support via AI Study Buddy (notes, questions, search)</li>
-                  <li className="mb-2"><i className="bi bi-check2-circle text-success me-2"></i>Cross-device notification read-state sync</li>
+                  <li className="mb-2"><i className="bi bi-check2-circle text-success me-2"></i>Cross-device notification read-state sync via <strong className="text-dark">lastSeenAnnId</strong></li>
                   <li className="mb-2"><i className="bi bi-check2-circle text-success me-2"></i>Content request submission and fulfilment tracking</li>
+                  <li className="mb-2"><i className="bi bi-check2-circle text-success me-2"></i>Announcement engagement analytics (sentCount &amp; openCount) for platform health</li>
                   <li className="mb-2"><i className="bi bi-check2-circle text-success me-2"></i>Quality monitoring of academic resources</li>
                 </ul>
               </Section>

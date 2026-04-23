@@ -18,7 +18,9 @@ The AI assistant is the centrepiece of the student experience:
 - **Glassmorphism Design**: High-fidelity UI featuring translucent panels and blurred backgrounds.
 - **Fluid Transitions**: Smooth page entries and scroll-triggered reveals powered by **Framer Motion**.
 - **Smart Notifications**: `react-hot-toast` with Fault-Tolerant Cross-Device Sync.
-- **Announcement Detail**: Dedicated routes (`/announcements/:id`) for full-screen update reading.
+- **📣 Announcement Detail**: Dedicated routes (`/announcements/:id`) for full-screen update reading. Opens are tracked server-side (`openCount`) on every visit.
+- **✅ Mark-All-Read Sync**: The Announcements list page automatically calls `PUT /mark-all-read`, persisting `lastSeenAnnId` in your profile so the notification badge resets on every device.
+- **🔔 Push Notification Sound**: Custom `notification_ping.mp3` plays on incoming FCM alerts. Tapping navigates directly to the announcement's `redirectLink` or the detail page.
 - **Back-To-Top**: A floating glassmorphic button for instant home-view access.
 - **🔗 Smart Social Sharing**: `react-helmet-async` dynamically sets `og:image` and `og:title` per route.
 
@@ -69,3 +71,5 @@ npm run dev
 *Built with ❤️ for the student community by Jainish.*
 
 *Last Updated: April 16, 2026 — GyanStack AI Study Buddy (notes, questions, search, uploader lookup, real requests), Llama 4 Scout model, type-aware Google Drive previews.*
+
+*April 23, 2026 — Announcement system: openCount tracking, mark-all-read cross-device sync, custom push notification sound (notification_ping.mp3), redirectLink-aware notification taps.*

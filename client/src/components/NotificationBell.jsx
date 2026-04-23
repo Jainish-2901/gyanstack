@@ -5,10 +5,6 @@ import { messaging, firebaseConfig } from '../services/firebase';
 import { getToken, onMessage } from 'firebase/messaging';
 import { useAuth } from '../context/AuthContext';
 
-// ─── Audio Engine ────────────────────────────────────────────────────────────
-// We use AudioContext + decoded buffer instead of new Audio().
-// AudioContext can resume/play after a single user interaction anywhere in the
-// page, whereas HTMLAudioElement.play() requires the *exact* click that called it.
 let audioCtx = null;
 let soundBuffer = null;
 let audioUnlocked = false;
@@ -48,17 +44,13 @@ const playPing = async () => {
   }
 };
 
-// Unlock audio on any user interaction — this is the key trick.
-// Once unlocked, AudioContext can play sounds programmatically.
 if (typeof window !== 'undefined') {
   const unlock = () => { unlockAudio(); };
   window.addEventListener('click',      unlock, { once: false, passive: true });
   window.addEventListener('touchstart', unlock, { once: false, passive: true });
   window.addEventListener('keydown',    unlock, { once: false, passive: true });
-  // Pre-load the audio file immediately
   initAudio();
 }
-// ─────────────────────────────────────────────────────────────────────────────
 
 const NotificationBell = () => {
   const { user, setUser } = useAuth();
@@ -67,29 +59,33 @@ const NotificationBell = () => {
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
 
+  const fcmSetupDone = useRef(false);
+
+  const userId = user?._id;
+  const lastSeenAnnId = user?.lastSeenAnnId;
+
   const fetchAnnouncements = useCallback(async () => {
-    if (!user) return;
+    if (!userId) return;
     setLoading(true);
     try {
       const { data } = await api.get('/announcements?status=approved&limit=5');
-
       const items = data.announcements.map((ann) => ({
         ...ann,
-        isRead: user.lastSeenAnnId ? (ann._id <= user.lastSeenAnnId) : false,
+        isRead: lastSeenAnnId ? (ann._id <= lastSeenAnnId) : false,
       }));
-
       setAnnouncements(items);
-      const unread = items.filter(i => !user.lastSeenAnnId || i._id > user.lastSeenAnnId).length;
+      const unread = items.filter(i => !lastSeenAnnId || i._id > lastSeenAnnId).length;
       setUnreadCount(unread);
     } catch (err) {
       console.error("Failed to fetch announcements:", err);
       setUnreadCount(0);
     }
     setLoading(false);
-  }, [user]);
+  }, [userId, lastSeenAnnId]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!userId || fcmSetupDone.current) return;
+    fcmSetupDone.current = true;
 
     const setupFCM = async () => {
       try {
@@ -119,6 +115,10 @@ const NotificationBell = () => {
     };
 
     setupFCM();
+  }, [userId]); 
+
+  useEffect(() => {
+    if (!userId) return;
 
     const unsubscribe = onMessage(messaging, (payload) => {
       playPing();
@@ -127,7 +127,6 @@ const NotificationBell = () => {
         const body  = payload.notification?.body  || payload.data?.body  || 'New update!';
         new Notification(`📢 ${title}`, { body, icon: '/logo.png' });
       }
-
       fetchAnnouncements();
     });
 
@@ -143,9 +142,7 @@ const NotificationBell = () => {
       unsubscribe();
       navigator.serviceWorker?.removeEventListener('message', handleSWMessage);
     };
-  }, [user, fetchAnnouncements]);
-
-
+  }, [userId, fetchAnnouncements]);
 
   useEffect(() => {
     fetchAnnouncements();
