@@ -15,127 +15,122 @@ export default function AnnouncementDetailPage() {
     const fetchDetail = async () => {
       setLoading(true);
       try {
-        const { data } = await api.get(`/announcements?status=approved`);
+        const { data } = await api.get(`/announcements/all`);
         const found = data.announcements.find(a => a._id === id);
-
-        if (found) {
-          setAnnouncement(found);
-        } else {
-          setError('Update not found.');
-        }
+        if (found) setAnnouncement(found);
+        else setError('Announcement not found.');
       } catch (err) {
-        console.error("Error fetching announcement detail:", err);
         setError('Failed to load update details.');
       }
       setLoading(false);
     };
-
     fetchDetail();
   }, [id]);
 
   if (loading) return <LoadingScreen text="Fetching update details..." />;
 
-  const containerVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5, ease: "easeOut" }
-    }
-  };
-
   return (
-    <div className="container-fluid p-4">
+    <div className="container-fluid px-2 py-3 bg-light min-vh-100">
       <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="row justify-content-center"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="row justify-content-center mx-0"
       >
-        <div className="col-xl-9 col-lg-10">
-          {/* Back Navigation */}
-          <div className="mb-4 text-start">
-            <button
-              onClick={() => navigate(-1)}
-              className="btn btn-white btn-sm rounded-pill px-3 shadow-sm text-primary fw-bold d-flex align-items-center gap-2"
-            >
-              <i className="bi bi-arrow-left"></i> Back to Dashboard
-            </button>
-          </div>
+        {/* col-12 for full width on mobile, col-md-8 for tablet/desktop */}
+        <div className="col-12 col-md-8 col-lg-7 px-0">
+          <div className="main-card border-0 rounded-4 shadow-lg overflow-hidden bg-white mx-auto">
 
-          {error ? (
-            <div className="glass-panel p-5 text-center rounded-4 border-0 shadow-sm bg-white">
-              <i className="bi bi-exclamation-triangle text-warning display-4 mb-3 d-block"></i>
-              <h4 className="fw-bold text-dark">{error}</h4>
-              <Link to="/announcements" className="btn btn-primary mt-3 rounded-pill px-4">
-                View All Updates
+            {/* Top Header Section */}
+            <div className="header-section p-4 text-start"
+              style={{ background: 'linear-gradient(180deg, #e6f7f4 0%, #ffffff 100%)' }}>
+
+              <div className="d-flex align-items-center gap-3 mb-3">
+                <div className="icon-box bg-success rounded-circle d-flex align-items-center justify-content-center shadow-sm"
+                  style={{ width: '42px', height: '42px', background: '#10b981' }}>
+                  <i className="bi bi-megaphone-fill text-white fs-5"></i>
+                </div>
+                <span className="badge rounded-pill px-3 py-1 fw-bold"
+                  style={{ background: '#10b981', color: '#fff', fontSize: '0.65rem' }}>
+                  System Update
+                </span>
+              </div>
+
+              <h3 className="fw-bold text-dark mb-2" style={{ fontSize: '1.4rem', lineHeight: '1.3' }}>
+                🚀 {announcement?.title}
+              </h3>
+
+              <div className="d-flex flex-wrap align-items-center gap-3 text-muted x-small fw-medium">
+                <span className="d-flex align-items-center gap-1">
+                  <i className="bi bi-calendar-event"></i>
+                  {new Date(announcement?.createdAt).toLocaleDateString()}
+                </span>
+                <span className="d-flex align-items-center gap-1">
+                  <i className="bi bi-person-circle"></i>
+                  {announcement?.requestedBy?.username || 'Jainish Dabgar'}
+                </span>
+              </div>
+            </div>
+
+            {/* Body Content - CRITICAL FIX FOR OVERFLOW */}
+            <div className="body-section p-4 bg-white text-start">
+              <div className="announcement-content text-secondary"
+                style={{
+                  fontSize: '0.95rem',
+                  lineHeight: '1.7',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',     // Links wrap honge
+                  overflowWrap: 'anywhere'     // Screen se bahar nahi jayenge
+                }}>
+                {announcement?.content}
+              </div>
+
+              {/* Action Button */}
+              {announcement?.redirectLink && (
+                <div className="mt-4">
+                  <a href={announcement.redirectLink} target="_blank" rel="noopener noreferrer"
+                    className="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm d-flex d-md-inline-flex align-items-center justify-content-center gap-2 w-100 w-md-auto">
+                    <i className="bi bi-link-45deg fs-5"></i> View Resource
+                  </a>
+                </div>
+              )}
+            </div>
+
+            {/* Footer Section */}
+            <div className="footer-section px-4 py-3 bg-light bg-opacity-50 border-top d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+              <Link to="/announcements" className="text-decoration-none fw-bold d-flex align-items-center gap-2"
+                style={{ color: '#10b981', fontSize: '0.85rem' }}>
+                <i className="bi bi-briefcase-fill"></i> View other updates
               </Link>
-            </div>
-          ) : announcement && (
-            <div className="glass-panel border-0 rounded-4 shadow-lg overflow-hidden bg-white">
-              {/* Header Section */}
-              <div className="p-4 p-md-5 bg-primary bg-opacity-10 border-bottom border-primary border-opacity-10 text-start">
-                <div className="d-flex align-items-center gap-3 mb-3">
-                  <div className="bg-primary rounded-circle shadow-sm d-flex align-items-center justify-content-center" style={{ width: '60px', height: '60px' }}>
-                    <i className="bi bi-megaphone-fill text-white fs-3"></i>
-                  </div>
-                  <span className="badge bg-primary rounded-pill px-3 py-2 fw-bold small">System Update Detail</span>
-                </div>
-                <h2 className="display-6 fw-bold text-dark mb-2">{announcement.title}</h2>
-                <div className="d-flex align-items-center gap-4 text-muted small">
-                  <span>
-                    <i className="bi bi-calendar3 me-2"></i>
-                    {new Date(announcement.createdAt).toLocaleDateString('en-US', {
-                      month: 'long',
-                      day: 'numeric',
-                      year: 'numeric'
-                    })}
-                  </span>
-                  <span>
-                    <i className="bi bi-person-badge me-2"></i>
-                    Admin View
-                  </span>
-                </div>
-              </div>
-
-              {/* Content Section */}
-              <div className="p-4 p-md-5 text-start bg-white">
-                <div
-                  className="announcement-body text-secondary"
-                  style={{
-                    whiteSpace: 'pre-wrap',
-                    lineHeight: '1.8',
-                    fontSize: '1.1rem'
-                  }}
-                >
-                  {announcement.content}
-                </div>
-              </div>
-
-              {/* Footer Section */}
-              <div className="p-4 bg-light bg-opacity-50 border-top d-flex justify-content-between align-items-center">
-                <Link to="/announcements" className="text-decoration-none small fw-bold text-primary">
-                  <i className="bi bi-collection-fill me-2"></i> Announcement Management
-                </Link>
-                <div className="text-muted extra-small">
-                  GyanStack Admin Registry
-                </div>
+              <div className="text-muted xx-small fw-medium text-center">
+                © GyanStack Official Announcement
               </div>
             </div>
-          )}
+          </div>
         </div>
       </motion.div>
 
       <style>{`
-        .extra-small { font-size: 0.75rem; }
-        .glass-panel { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
+        .rounded-4 { border-radius: 1.5rem !important; }
+        .x-small { font-size: 0.75rem; }
+        .xx-small { font-size: 0.65rem; }
         
-        /* Dark Mode Integration */
-        .dark .glass-panel { background: rgba(30, 30, 30, 0.95); border-color: rgba(255,255,255,0.08) !important; }
-        .dark .text-dark { color: #f8fafc !important; }
-        .dark .text-secondary { color: #94a3b8 !important; }
-        .dark .bg-white { background-color: #1e1e1e !important; }
-        .dark .btn-white { background-color: #1e1e1e !important; color: #3b82f6 !important; border-color: #333 !important; }
+        /* Responsive Link Styling inside Content */
+        .announcement-content a {
+            color: #10b981;
+            word-break: break-all;
+        }
+
+        @media (max-width: 576px) {
+            .main-card {
+                margin-bottom: 2rem;
+            }
+            .header-section {
+                padding: 1.5rem !important;
+            }
+            .body-section {
+                padding: 1.5rem !important;
+            }
+        }
       `}</style>
     </div>
   );

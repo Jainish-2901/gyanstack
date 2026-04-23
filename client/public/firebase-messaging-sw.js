@@ -1,6 +1,9 @@
 importScripts('https://www.gstatic.com/firebasejs/9.1.1/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.1.1/firebase-messaging-compat.js');
 
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (event) => event.waitUntil(clients.claim()));
+
 const urlParams = new URLSearchParams(self.location.search);
 
 firebase.initializeApp({
@@ -15,30 +18,58 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-/**
- * Sends a message to all active client windows.
- * The NotificationBell component listens for PLAY_NOTIFICATION_SOUND
- * and plays the custom ping audio via AudioContext (which is allowed
- * after the user has previously interacted with the page).
- */
 const notifyClients = async (type) => {
     const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     clients.forEach(client => client.postMessage({ type }));
 };
 
 messaging.onBackgroundMessage((payload) => {
-    // Signal all active tabs to play the sound
     notifyClients('PLAY_NOTIFICATION_SOUND');
 
-    const notificationTitle = payload.notification?.title || payload.data?.title || 'GyanStack';
+    if (payload.notification) {
+        console.log("FCM: Browser will handle display for this notification.");
+        return;
+    }
+
+    const notificationTitle = payload.data?.title || 'GyanStack';
     const notificationOptions = {
-        body: payload.notification?.body || payload.data?.body || 'You have a new update.',
+        body: payload.data?.body || 'New update available.',
         icon: '/logo.png',
         badge: '/pwa-192x192-v2.png',
-        data: payload.data,
-        // Note: 'sound' property in showNotification() was removed from browsers.
-        // Custom sounds must be played via postMessage → client AudioContext.
+        data: { url: payload.data?.url || '/announcements' },
+        tag: 'gyanstack-announcement'
     };
 
     return self.registration.showNotification(notificationTitle, notificationOptions);
-});
+});
+
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+
+    let targetUrl = event.notification.data?.url || '/announcements';
+
+    if (targetUrl.startsWith('/')) {
+        targetUrl = new URL(targetUrl, self.location.origin).href;
+    }
+
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+            for (let client of windowClients) {
+                if (client.url === targetUrl && 'focus' in client) {
+                    return client.focus();
+                }
+            }
+
+            for (let client of windowClients) {
+                if (client.url.includes(self.location.origin) && 'navigate' in client) {
+                    client.focus();
+                    return client.navigate(targetUrl);
+                }
+            }
+
+            if (clients.openWindow) {
+                return clients.openWindow(targetUrl);
+            }
+        })
+    );
+});

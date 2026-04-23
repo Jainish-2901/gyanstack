@@ -10,84 +10,109 @@ import api from '../../services/api';
 
 const SITE_URL = import.meta.env.VITE_SITE_URL || 'http://localhost:5173';
 
-const ContentCardMobile = ({ item, categoryMap, handleEditClick, handleDelete, isSelected, onToggleSelect }) => (
-  <div className={`glass-card mb-2 overflow-hidden transition-all w-100 ${isSelected ? 'border-primary' : ''}`} style={{
-    boxShadow: isSelected ? '0 4px 6px -1px rgba(99, 102, 241, 0.1)' : 'none',
-    border: '1px solid',
-    borderColor: isSelected ? 'var(--primary)' : 'var(--glass-border)'
-  }}>
-    <div className="card-body p-3">
-      <div className="mb-3">
-        <div className="fw-bold fs-6" style={{
-            color: 'var(--text-primary)',
-            lineHeight: '1.3',
-            wordBreak: 'break-word',
-            overflowWrap: 'break-word',
-            display: 'block',
-            fontFamily: 'var(--font-display)'
-          }}>
-          {item.title}
-        </div>
-      </div>
+// ── Humanize file type ────────────────────────────────────────────
+const getTypeInfo = (type = '') => {
+  const t = type.toLowerCase();
+  if (t === 'note' || t === 'text/plain') return { label: 'Note', icon: 'bi-card-text', color: '#6366f1' };
+  if (t === 'link' || t.startsWith('http')) return { label: 'Link', icon: 'bi-link-45deg', color: '#06b6d4' };
+  if (t.includes('pdf')) return { label: 'PDF', icon: 'bi-file-earmark-pdf', color: '#ef4444' };
+  if (t.includes('word') || t.includes('document')) return { label: 'DOCX', icon: 'bi-file-earmark-word', color: '#3b82f6' };
+  if (t.includes('presentation') || t.includes('powerpoint')) return { label: 'PPTX', icon: 'bi-file-earmark-slides', color: '#f97316' };
+  if (t.includes('sheet') || t.includes('excel')) return { label: 'XLSX', icon: 'bi-file-earmark-excel', color: '#10b981' };
+  if (t.includes('image') || t.includes('png') || t.includes('jpg')) return { label: 'Image', icon: 'bi-file-earmark-image', color: '#8b5cf6' };
+  if (t.includes('zip') || t.includes('rar')) return { label: 'ZIP', icon: 'bi-file-earmark-zip', color: '#64748b' };
+  return { label: (type.split('/').pop() || 'File').toUpperCase().slice(0, 6), icon: 'bi-file-earmark', color: '#94a3b8' };
+};
 
-      <div className="d-flex gap-3">
-        <div className="d-flex align-items-start pt-1">
-          <input
-            type="checkbox"
-            className="form-check-input flex-shrink-0 m-0 cursor-pointer"
-            style={{ width: '20px', height: '20px', borderRadius: '4px' }}
-            checked={isSelected}
-            onChange={() => onToggleSelect(item._id)}
-          />
-        </div>
+const ContentCardMobile = ({ item, categoryMap, handleEditClick, handleDelete, isSelected, onToggleSelect, SITE_URL }) => {
+  if (!item) return null;
 
-        <div className="flex-grow-1 min-w-0">
-          <div className="mb-3" style={{ fontSize: '0.85rem', color: '#64748b' }}>
-            <span className="badge bg-light text-dark fw-normal border-0 p-0 me-2">{item.type}</span>
-            <div className="mt-1 d-flex align-items-center gap-1">
-              <i className="bi bi-folder2 text-primary"></i>
-              <span className="fw-medium text-break" style={{ wordBreak: 'break-word' }}>
-                {categoryMap[item.categoryId] || 'Uncategorized'}
-              </span>
-            </div>
+  const { label, icon, color } = getTypeInfo(item.type);
+
+  return (
+    <div
+      className={`glass-card mb-3 rounded-4 overflow-hidden transition-all w-100 text-start`}
+      style={{
+        boxShadow: isSelected ? `0 8px 20px ${color}15` : '0 2px 10px rgba(0,0,0,0.04)',
+        border: '1px solid',
+        borderColor: isSelected ? color : 'var(--glass-border)',
+        borderLeft: `5px solid ${color}`,
+        background: 'var(--surface-elevated, #fff)'
+      }}
+    >
+      <div className="card-body p-3">
+        {/* Top Header: Checkbox + Humanized Badge + Category */}
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <div className="d-flex align-items-center gap-2">
+            <input
+              type="checkbox"
+              className="form-check-input m-0 cursor-pointer shadow-none"
+              style={{ width: '20px', height: '20px', borderRadius: '6px', accentColor: color }}
+              checked={isSelected}
+              onChange={() => onToggleSelect(item._id)}
+            />
+            <span
+              className="badge rounded-pill d-flex align-items-center gap-1 fw-bold"
+              style={{ background: color + '12', color: color, border: `1px solid ${color}25`, fontSize: '0.65rem', padding: '4px 10px' }}
+            >
+              <i className={`bi ${icon}`}></i> {label}
+            </span>
           </div>
+          <span className="text-muted extra-small px-2 py-1 bg-light rounded-pill border" style={{ fontSize: '0.6rem' }}>
+            {categoryMap[item.categoryId] || 'General'}
+          </span>
+        </div>
 
-          <div className="d-flex align-items-center gap-3 text-muted mb-3" style={{ fontSize: '0.8rem' }}>
-            <span><i className="bi bi-eye me-1"></i>{item.viewsCount}</span>
-            <span><i className="bi bi-heart me-1"></i>{item.likesCount}</span>
+        {/* Title & Icon Section */}
+        <div className="d-flex align-items-start gap-2 mb-3">
+          <div
+            className="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+            style={{ width: '32px', height: '32px', background: color + '10', color: color }}
+          >
+            <i className={`bi ${icon} fs-5`}></i>
           </div>
+          <div className="fw-bold fs-6 mt-1" style={{ color: 'var(--text-primary)', lineHeight: '1.4', fontFamily: 'var(--font-display)' }}>
+            {item.title}
+          </div>
+        </div>
 
+        {/* Engagement Stats */}
+        <div className="d-flex align-items-center gap-3 text-muted mb-3 ps-1" style={{ fontSize: '0.75rem' }}>
+          <span title="Views"><i className="bi bi-eye me-1"></i>{item.viewsCount || 0}</span>
+          <span title="Likes"><i className="bi bi-heart me-1"></i>{item.likesCount || 0}</span>
+          <span title="Date" className="ms-auto"><i className="bi bi-calendar3 me-1"></i>{new Date(item.createdAt).toLocaleDateString()}</span>
+        </div>
+
+        {/* Bottom Actions: Organized Row */}
+        <div className="d-flex gap-2 pt-3 border-top border-opacity-10">
           <a
             href={`${SITE_URL}/content/${item._id}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn btn-sm btn-outline-info border-0 p-0 rounded-circle d-flex align-items-center justify-content-center"
-            title="View Details"
-            style={{ width: '36px', height: '36px' }}
+            className="btn btn-sm btn-outline-info flex-grow-1 rounded-pill fw-bold shadow-none"
+            style={{ fontSize: '0.75rem' }}
           >
-            <i className="bi bi-eye" style={{ fontSize: '1rem' }}></i>
+            <i className="bi bi-eye me-1"></i> View
           </a>
           <button
-            className="btn btn-sm btn-outline-warning border-0 p-0 rounded-circle d-flex align-items-center justify-content-center"
+            className="btn btn-sm btn-outline-warning flex-grow-1 rounded-pill fw-bold shadow-none"
+            style={{ fontSize: '0.75rem' }}
             onClick={() => handleEditClick(item)}
-            title="Edit"
-            style={{ width: '36px', height: '36px' }}
           >
-            <i className="bi bi-pencil-square" style={{ fontSize: '1rem' }}></i>
+            <i className="bi bi-pencil-square me-1"></i> Edit
           </button>
           <button
-            className="btn btn-sm btn-outline-danger border-0 p-0 rounded-circle d-flex align-items-center justify-content-center"
+            className="btn btn-sm btn-outline-danger rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 shadow-none"
+            style={{ width: '34px', height: '34px' }}
             onClick={() => handleDelete(item._id)}
-            title="Delete"
-            style={{ width: '36px', height: '36px' }}
           >
-            <i className="bi bi-trash3" style={{ fontSize: '1rem' }}></i>
+            <i className="bi bi-trash3"></i>
           </button>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default function AdminPanel() {
   const { user } = useAuth();
@@ -98,7 +123,7 @@ export default function AdminPanel() {
 
   const [title, setTitle] = useState('');
   const [type, setType] = useState('note');
-  const [files, setFiles] = useState(null); 
+  const [files, setFiles] = useState(null);
   const [link, setLink] = useState('');
   const [note, setNote] = useState('');
   const [tags, setTags] = useState('');
@@ -107,12 +132,12 @@ export default function AdminPanel() {
   const [categoryId, setCategoryId] = useState('');
   const [categoryName, setCategoryName] = useState('None Selected');
 
-  const [uploadMode, setUploadMode] = useState('single'); 
-  const [externalMimeType, setExternalMimeType] = useState('application/pdf'); 
+  const [uploadMode, setUploadMode] = useState('single');
+  const [externalMimeType, setExternalMimeType] = useState('application/pdf');
 
   const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0); 
-  const [statusPhase, setStatusPhase] = useState(''); 
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [statusPhase, setStatusPhase] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -150,7 +175,7 @@ export default function AdminPanel() {
     formData.append('categoryId', categoryId);
     formData.append('tags', tags);
     formData.append('uploadMode', uploadMode);
-    
+
     if (type === 'file' && uploadMode === 'external') {
       formData.append('externalMimeType', externalMimeType);
     }
@@ -192,7 +217,7 @@ export default function AdminPanel() {
       setCategoryId(''); setCategoryName('None Selected');
       setExternalMimeType('application/pdf');
       setUploadProgress(0);
-      refreshContent(); 
+      refreshContent();
     } catch (err) {
       console.error("Upload Error Details:", err);
       const msg = err.response?.data?.message || err.message || 'Upload failed. Check server.';
@@ -206,9 +231,9 @@ export default function AdminPanel() {
   const handleDelete = (id) => {
     if (!window.confirm('Are you sure you want to delete this content?')) return;
     deleteContent.mutate(id, {
-        onSuccess: () => {
-            setSelectedIds(prev => prev.filter(itemId => itemId !== id));
-        }
+      onSuccess: () => {
+        setSelectedIds(prev => prev.filter(itemId => itemId !== id));
+      }
     });
   };
 
@@ -218,13 +243,13 @@ export default function AdminPanel() {
     if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} items?`)) return;
 
     bulkDeleteContent.mutate(selectedIds, {
-        onSuccess: () => {
-            setSelectedIds([]);
-            setSuccess(`${selectedIds.length} items deleted successfully.`);
-        },
-        onError: (err) => {
-            setError(err.response?.data?.message || 'Bulk delete failed.');
-        }
+      onSuccess: () => {
+        setSelectedIds([]);
+        setSuccess(`${selectedIds.length} items deleted successfully.`);
+      },
+      onError: (err) => {
+        setError(err.response?.data?.message || 'Bulk delete failed.');
+      }
     });
   };
 
@@ -265,9 +290,9 @@ export default function AdminPanel() {
     <>
       <div className="container-fluid fade-in px-3 px-md-4 overflow-x-hidden" style={{ overflowX: 'hidden' }}>
         <div className="d-flex align-items-center mb-4">
-            <h4 className="fw-bold mb-0" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>
-                <i className="bi bi-folder-check text-primary me-2"></i>Content Manager
-            </h4>
+          <h4 className="fw-bold mb-0" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>
+            <i className="bi bi-folder-check text-primary me-2"></i>Content Manager
+          </h4>
         </div>
 
         {error && <div className="alert alert-danger border-0 shadow-sm" onClick={() => setError('')}>{error}</div>}
@@ -339,7 +364,7 @@ export default function AdminPanel() {
             <div className="glass-card shadow-sm border-0 mb-4 overflow-hidden">
               <div className="card-body p-4 p-sm-4">
                 <h5 className="fw-bold mb-4" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>
-                    <i className="bi bi-cloud-upload text-primary me-2"></i>Upload New Content
+                  <i className="bi bi-cloud-upload text-primary me-2"></i>Upload New Content
                 </h5>
 
                 {/* Content Type Selector */}
@@ -609,7 +634,7 @@ export default function AdminPanel() {
           <div className="col-lg-4 col-md-12" style={{ minWidth: 0 }}>
             <div className="card border-0 rounded-3 mb-4">
               <CategoryManager
-                isSelectOnly={false} 
+                isSelectOnly={false}
               />
             </div>
           </div>
@@ -703,84 +728,79 @@ export default function AdminPanel() {
                 {loadingContent ? (
                   <LoadingScreen text="Loading your content..." />
                 ) : myContent.length === 0 ? (
-                  <p className='p-3'>You have not uploaded any content yet.</p>
+                  <div className="p-5 text-center text-muted">
+                    <i className="bi bi-cloud-slash display-4 opacity-25"></i>
+                    <p className="mt-2">You have not uploaded any content yet.</p>
+                  </div>
                 ) : (
                   <>
                     {/* DESKTOP VIEW: Table */}
                     <div className="table-responsive d-none d-lg-block">
-                      <table className="table table-striped table-hover align-middle">
-                        <thead>
-                          <tr>
-                            <th style={{ width: '40px' }}>
+                      <table className="table table-hover align-middle mb-0">
+                        <thead className="bg-light">
+                          <tr className="small text-uppercase text-muted">
+                            <th style={{ width: '50px' }} className="ps-4">
                               <input
                                 type="checkbox"
-                                className="form-check-input"
+                                className="form-check-input border-2 border-primary"
                                 checked={filteredContent.length > 0 && selectedIds.length === filteredContent.length}
                                 onChange={toggleSelectAll}
                               />
                             </th>
-                            <th>Title</th>
+                            <th>Title & Details</th>
                             <th>Type</th>
                             <th>Category</th>
-                            <th>Actions</th>
+                            <th className="pe-4 text-end">Actions</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {filteredContent.map(item => (
-                            <tr key={item._id} className={selectedIds.includes(item._id) ? 'table-primary' : ''}>
-                              <td>
-                                <input
-                                  type="checkbox"
-                                  className="form-check-input"
-                                  checked={selectedIds.includes(item._id)}
-                                  onChange={() => toggleSelect(item._id)}
-                                />
-                              </td>
-                              <td style={{ maxWidth: '300px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                                <div style={{
-                                  fontWeight: '500',
-                                  whiteSpace: 'normal'
-                                }}>
-                                  {item.title}
-                                </div>
-                              </td>
-                              <td><span className="badge bg-secondary">{item.type}</span></td>
-
-                              <td>
-                                <span className="fw-medium" style={{ color: 'var(--text-primary)' }}>
-                                  {categoryMap[item.categoryId] || 'Uncategorized'}
-                                </span>
-                              </td>
-
-                              <td>
-                                <div className="d-flex gap-2">
-                                  <a
-                                    href={`${SITE_URL}/content/${item._id}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="btn btn-sm btn-outline-info border-0 px-2"
-                                    title="View Live"
+                          {filteredContent.map(item => {
+                            const { label, icon, color } = getTypeInfo(item.type);
+                            return (
+                              <tr key={item._id} className={selectedIds.includes(item._id) ? 'table-primary bg-opacity-10' : ''}>
+                                <td className="ps-4">
+                                  <input
+                                    type="checkbox"
+                                    className="form-check-input"
+                                    checked={selectedIds.includes(item._id)}
+                                    onChange={() => toggleSelect(item._id)}
+                                    style={{ accentColor: color }}
+                                  />
+                                </td>
+                                <td style={{ maxWidth: '300px' }}>
+                                  <div className="d-flex align-items-center">
+                                    <div
+                                      className="rounded-circle d-flex align-items-center justify-content-center me-3"
+                                      style={{ width: '36px', height: '36px', background: color + '15', color: color }}
+                                    >
+                                      <i className={`bi ${icon} fs-5`}></i>
+                                    </div>
+                                    <div className="fw-bold text-dark text-truncate">{item.title}</div>
+                                  </div>
+                                </td>
+                                <td>
+                                  <span
+                                    className="badge rounded-pill fw-bold"
+                                    style={{ background: color + '12', color: color, border: `1px solid ${color}25`, fontSize: '0.7rem' }}
                                   >
-                                    <i className="bi bi-eye fs-5"></i>
-                                  </a>
-                                  <button
-                                    className="btn btn-sm btn-outline-warning border-0 px-2"
-                                    onClick={() => handleEditClick(item)}
-                                    title="Edit"
-                                  >
-                                    <i className="bi bi-pencil-square fs-5"></i>
-                                  </button>
-                                  <button
-                                    className="btn btn-sm btn-outline-danger border-0 px-2"
-                                    onClick={() => handleDelete(item._id)}
-                                    title="Delete"
-                                  >
-                                    <i className="bi bi-trash3 fs-5"></i>
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
+                                    {label}
+                                  </span>
+                                </td>
+                                <td>
+                                  <span className="text-muted small fw-medium">
+                                    {categoryMap[item.categoryId] || 'Uncategorized'}
+                                  </span>
+                                </td>
+                                <td className="pe-4 text-end">
+                                  <div className="d-flex gap-1 justify-content-end">
+                                    <a href={`${SITE_URL}/content/${item._id}`} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline-info rounded-circle border-0 shadow-none"><i className="bi bi-eye"></i></a>
+                                    <button onClick={() => handleEditClick(item)} className="btn btn-sm btn-outline-warning rounded-circle border-0 shadow-none"><i className="bi bi-pencil-square"></i></button>
+                                    <button onClick={() => handleDelete(item._id)} className="btn btn-sm btn-outline-danger rounded-circle border-0 shadow-none"><i className="bi bi-trash3"></i></button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>
@@ -799,6 +819,7 @@ export default function AdminPanel() {
                             handleDelete={handleDelete}
                             isSelected={selectedIds.includes(item._id)}
                             onToggleSelect={toggleSelect}
+                            typeInfo={getTypeInfo(item.type)} // Passing typeInfo to card
                           />
                         ))
                       )}

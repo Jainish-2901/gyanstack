@@ -5,9 +5,8 @@ const subscriptionSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
-        unique: true // Ek user ke liye ek hi subscription token
+        unique: true 
     },
-    // Yeh woh token hai jo Firebase se aata hai aur notification bhejne ke liye zaroori hai
     fcmToken: { 
         type: String,
         required: true,

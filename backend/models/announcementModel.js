@@ -12,7 +12,11 @@ const announcementSchema = new mongoose.Schema({
   requestedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: false, // Changed to false for external messages
+    required: false,
+  },
+  redirectLink: {
+    type: String,
+    default: ""
   },
   status: {
     type: String,

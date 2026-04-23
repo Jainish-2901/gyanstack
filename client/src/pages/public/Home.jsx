@@ -35,10 +35,10 @@ const BRANCH_COLORS = ['#f59e0b', '#6366f1', '#10b981', '#ec4899'];
 const HomeTreeNode = ({ cat, depth = 0 }) => {
   const hasChildren = Boolean(cat.children && cat.children.length > 0);
 
-  
+
   const [open, setOpen] = React.useState(false);
-  
-  
+
+
   const { data: items, isLoading: loading, refetch } = useCategoryContent(cat._id, false);
   const [hasRefetched, setHasRefetched] = React.useState(false);
 
@@ -317,7 +317,7 @@ const ContributorSection = ({ uploaders }) => {
 
 export default function Home() {
   const { user } = useAuth();
-  
+
   // Use TanStack Query hooks
   const { data: statsData, isLoading: statsLoading } = useStats();
   const { data: uploaders, isLoading: uploadersLoading } = useTopUploaders();
@@ -342,7 +342,7 @@ export default function Home() {
           <div className="position-absolute top-0 start-0 w-100 h-100 bg-black bg-opacity-10 d-dark-none"></div>
           <div className="container position-relative py-5" style={{ maxWidth: '900px', zIndex: 2 }}>
             <div className="badge border border-primary border-opacity-25 text-primary px-3 py-2 rounded-pill mb-4 animate-float glass-panel fw-bold shadow-sm" style={{ backgroundColor: 'var(--brand-50)' }}>
-               🚀 The Ultimate College Resource Hub
+              🚀 The Ultimate College Resource Hub
             </div>
             <h1 className="hero-title gradient-text mb-4">
               Master Your Semesters <br className="d-none d-md-block" /> with GyanStack
@@ -371,7 +371,7 @@ export default function Home() {
           <h2 className="display-6 fw-bold" style={{ color: 'var(--text-primary)' }}>
             Why Students Choose GyanStack
           </h2>
-          <p className="text-muted">High-quality resources tailored for BCA & MCA excellence.</p>
+          <p className="text-muted">"Curated study materials and real-time updates specifically for Gujarat University students."</p>
         </div>
 
         {/* Type 1: Core Platform Excellence */}

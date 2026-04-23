@@ -10,16 +10,16 @@ const SITE_URL = import.meta.env.VITE_SITE_URL || 'http://localhost:5173';
 
 // ── Humanize file type ────────────────────────────────────────────
 const getTypeInfo = (type = '') => {
-  const t = type.toLowerCase();
-  if (t === 'note' || t === 'text/plain')                           return { label: 'Note',  icon: 'bi-card-text',          color: '#6366f1' };
-  if (t === 'link' || t.startsWith('http'))                        return { label: 'Link',  icon: 'bi-link-45deg',         color: '#06b6d4' };
-  if (t.includes('pdf'))                                           return { label: 'PDF',   icon: 'bi-file-earmark-pdf',   color: '#ef4444' };
-  if (t.includes('word') || t.includes('document'))                return { label: 'DOCX',  icon: 'bi-file-earmark-word',  color: '#3b82f6' };
-  if (t.includes('presentation') || t.includes('powerpoint'))     return { label: 'PPTX',  icon: 'bi-file-earmark-slides',color: '#f97316' };
-  if (t.includes('sheet') || t.includes('excel'))                  return { label: 'XLSX',  icon: 'bi-file-earmark-excel', color: '#10b981' };
-  if (t.includes('image') || t.includes('png') || t.includes('jpg')) return { label: 'Image', icon: 'bi-file-earmark-image', color: '#8b5cf6' };
-  if (t.includes('zip') || t.includes('rar'))                      return { label: 'ZIP',   icon: 'bi-file-earmark-zip',   color: '#64748b' };
-  return { label: (type.split('/').pop() || 'File').toUpperCase().slice(0, 6), icon: 'bi-file-earmark', color: '#94a3b8' };
+    const t = type.toLowerCase();
+    if (t === 'note' || t === 'text/plain') return { label: 'Note', icon: 'bi-card-text', color: '#6366f1' };
+    if (t === 'link' || t.startsWith('http')) return { label: 'Link', icon: 'bi-link-45deg', color: '#06b6d4' };
+    if (t.includes('pdf')) return { label: 'PDF', icon: 'bi-file-earmark-pdf', color: '#ef4444' };
+    if (t.includes('word') || t.includes('document')) return { label: 'DOCX', icon: 'bi-file-earmark-word', color: '#3b82f6' };
+    if (t.includes('presentation') || t.includes('powerpoint')) return { label: 'PPTX', icon: 'bi-file-earmark-slides', color: '#f97316' };
+    if (t.includes('sheet') || t.includes('excel')) return { label: 'XLSX', icon: 'bi-file-earmark-excel', color: '#10b981' };
+    if (t.includes('image') || t.includes('png') || t.includes('jpg')) return { label: 'Image', icon: 'bi-file-earmark-image', color: '#8b5cf6' };
+    if (t.includes('zip') || t.includes('rar')) return { label: 'ZIP', icon: 'bi-file-earmark-zip', color: '#64748b' };
+    return { label: (type.split('/').pop() || 'File').toUpperCase().slice(0, 6), icon: 'bi-file-earmark', color: '#94a3b8' };
 };
 
 const ContentCardMobile = memo(({ item, categoryMap, isSelected, onToggle, onEdit, onDelete, SITE_URL }) => {
@@ -65,10 +65,10 @@ const ContentCardMobile = memo(({ item, categoryMap, isSelected, onToggle, onEdi
                 {/* Stats Row */}
                 <div className="d-flex gap-2 mb-3">
                     {[
-                        { icon: 'bi-eye',        val: item.viewsCount     || 0, label: 'Views' },
-                        { icon: 'bi-heart',      val: item.likesCount     || 0, label: 'Likes' },
-                        { icon: 'bi-bookmark',   val: item.savesCount     || 0, label: 'Saves' },
-                        { icon: 'bi-download',   val: item.downloadsCount || 0, label: 'DLs'   },
+                        { icon: 'bi-eye', val: item.viewsCount || 0, label: 'Views' },
+                        { icon: 'bi-heart', val: item.likesCount || 0, label: 'Likes' },
+                        { icon: 'bi-bookmark', val: item.savesCount || 0, label: 'Saves' },
+                        { icon: 'bi-download', val: item.downloadsCount || 0, label: 'DLs' },
                     ].map(s => (
                         <div key={s.label} className="flex-fill rounded-3 text-center py-1"
                             style={{ background: 'var(--glass-bg, rgba(0,0,0,0.03))', border: '1px solid var(--glass-border, rgba(0,0,0,0.07))' }}>
@@ -102,35 +102,69 @@ const ContentCardMobile = memo(({ item, categoryMap, isSelected, onToggle, onEdi
 const GlobalContentRow = memo(({ item, categoryMap, isSelected, onToggle, onEdit, onDelete, SITE_URL }) => {
     if (!item) return null;
     const uploader = item.uploadedBy || {};
+
+    const { label, icon, color } = getTypeInfo(item.type);
+
     return (
         <tr className={`align-middle ${isSelected ? 'table-primary bg-opacity-10' : ''}`}>
             <td className="ps-4">
-                <input type="checkbox" className="form-check-input border-2 border-primary shadow-sm" checked={!!isSelected} onChange={() => onToggle(item._id)} style={{ cursor: 'pointer', width: '1.2rem', height: '1.2rem' }} />
+                <input
+                    type="checkbox"
+                    className="form-check-input border-2 border-primary shadow-sm"
+                    checked={!!isSelected}
+                    onChange={() => onToggle(item._id)}
+                    style={{ cursor: 'pointer', width: '1.2rem', height: '1.2rem', accentColor: color }}
+                />
             </td>
             <td style={{ maxWidth: '260px' }}>
-                <div className="d-flex align-items-start">
-                    <div className="bg-light rounded-circle p-2 me-3 text-primary d-none d-sm-flex align-items-center justify-content-center flex-shrink-0 mt-1" style={{ width: '36px', height: '36px' }}>
-                        <i className={`bi ${item.type === 'note' ? 'bi-card-text' : item.type === 'link' ? 'bi-link-45deg' : 'bi-file-earmark-pdf'}`}></i>
+                <div className="d-flex align-items-center">
+                    {/* Updated dynamic Icon with matching color */}
+                    <div
+                        className="rounded-circle d-none d-sm-flex align-items-center justify-content-center flex-shrink-0 me-3 shadow-sm"
+                        style={{ width: '38px', height: '38px', background: color + '12', color: color, border: `1px solid ${color}20` }}
+                    >
+                        <i className={`bi ${icon} fs-5`}></i>
                     </div>
                     <div style={{ minWidth: 0 }}>
-                        <div className="fw-bold" style={{ wordBreak: 'break-word', whiteSpace: 'normal', lineHeight: '1.3', color: 'var(--text-primary)' }}>{item.title}</div>
-                        <div className="small text-muted" style={{ wordBreak: 'break-all' }}>
-                            {uploader.username || 'Unknown'} {uploader.isDeleted && <span className="badge bg-danger bg-opacity-10 text-danger ms-1" style={{ fontSize: '0.65rem' }}>Inactive</span>}
+                        <div className="fw-bold" style={{ wordBreak: 'break-word', whiteSpace: 'normal', lineHeight: '1.3', color: 'var(--text-primary)' }}>
+                            {item.title}
+                        </div>
+                        <div className="small text-muted" style={{ wordBreak: 'break-all', fontSize: '0.75rem' }}>
+                            {uploader.username || 'System'}
+                            {uploader.isDeleted && <span className="badge bg-danger bg-opacity-10 text-danger ms-1" style={{ fontSize: '0.6rem' }}>Inactive</span>}
                         </div>
                     </div>
                 </div>
             </td>
-            <td style={{ maxWidth: '80px' }}>
-                <span className="badge bg-light text-dark border" style={{ wordBreak: 'break-word', whiteSpace: 'normal', maxWidth: '75px', display: 'inline-block' }}>{item.type}</span>
+            <td>
+                {/* Updated Type Column with Humanized Badges */}
+                <span
+                    className="badge rounded-pill d-inline-flex align-items-center gap-1 fw-bold"
+                    style={{ background: color + '15', color: color, border: `1px solid ${color}30`, padding: '0.35rem 0.75rem', fontSize: '0.7rem' }}
+                >
+                    <i className={`bi ${icon}`} /> {label}
+                </span>
             </td>
             <td style={{ maxWidth: '120px' }}>
-                <span className="text-muted small d-block" style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{categoryMap[item.categoryId] || 'Uncategorized'}</span>
+                <span className="text-muted small d-block fw-medium" style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>
+                    {categoryMap[item.categoryId] || 'Uncategorized'}
+                </span>
             </td>
             <td className="pe-4 text-end">
                 <div className="d-flex gap-2 justify-content-end align-items-center">
-                    <a href={`${SITE_URL}/content/${item._id}`} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline-info rounded-circle p-0 d-flex align-items-center justify-content-center" style={{ width: '32px', height: '32px', flexShrink: 0 }}><i className="bi bi-eye"></i></a>
-                    <button className="btn btn-sm btn-outline-warning rounded-circle p-0 d-flex align-items-center justify-content-center" style={{ width: '32px', height: '32px', flexShrink: 0 }} onClick={() => onEdit(item)}><i className="bi bi-pencil-square"></i></button>
-                    <button className="btn btn-sm btn-outline-danger rounded-circle p-0 d-flex align-items-center justify-content-center" style={{ width: '32px', height: '32px', flexShrink: 0 }} onClick={() => onDelete(item._id)}><i className="bi bi-trash3"></i></button>
+                    <a href={`${SITE_URL}/content/${item._id}`} target="_blank" rel="noopener noreferrer"
+                        className="btn btn-sm btn-outline-info rounded-circle p-0 d-flex align-items-center justify-content-center"
+                        style={{ width: '34px', height: '34px' }} title="View">
+                        <i className="bi bi-eye"></i>
+                    </a>
+                    <button className="btn btn-sm btn-outline-warning rounded-circle p-0 d-flex align-items-center justify-content-center"
+                        style={{ width: '34px', height: '34px' }} onClick={() => onEdit(item)} title="Edit">
+                        <i className="bi bi-pencil-square"></i>
+                    </button>
+                    <button className="btn btn-sm btn-outline-danger rounded-circle p-0 d-flex align-items-center justify-content-center"
+                        style={{ width: '34px', height: '34px' }} onClick={() => onDelete(item._id)} title="Delete">
+                        <i className="bi bi-trash3"></i>
+                    </button>
                 </div>
             </td>
         </tr>
@@ -195,11 +229,11 @@ export default function GlobalContentManager() {
     const { data: content = [], isLoading: loading, refetch: refreshData } = useManageAllContent();
     const { data: categoryMap = {} } = useCategoryMap();
     const { data: users = [] } = useAllUsers();
-    
+
     const admins = useMemo(() => users.filter(u => u && u.role !== 'student'), [users]);
-    
+
     const { deleteContent, bulkDeleteContent } = useAdminContentMutation();
-    
+
     const [selectedIds, setSelectedIds] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterUploader, setFilterUploader] = useState('all');
@@ -237,7 +271,7 @@ export default function GlobalContentManager() {
     const handleBulkDelete = () => {
         if (!selectedIds.length) return;
         if (!window.confirm(`Permanently erase ${selectedIds.length} resources from the platform?`)) return;
-        
+
         bulkDeleteContent.mutate(selectedIds, {
             onSuccess: () => {
                 setAlert({ type: 'success', msg: `${selectedIds.length} resources cleared successfully.` });
@@ -251,9 +285,9 @@ export default function GlobalContentManager() {
 
     // ── Stats counts (reflects active filter) ───────────────────────────
     const totalCount = filtered.length;
-    const noteCount  = filtered.filter(c => getTypeInfo(c.type).label === 'Note').length;
-    const fileCount  = filtered.filter(c => !['Note','Link'].includes(getTypeInfo(c.type).label)).length;
-    const linkCount  = filtered.filter(c => getTypeInfo(c.type).label === 'Link').length;
+    const noteCount = filtered.filter(c => getTypeInfo(c.type).label === 'Note').length;
+    const fileCount = filtered.filter(c => !['Note', 'Link'].includes(getTypeInfo(c.type).label)).length;
+    const linkCount = filtered.filter(c => getTypeInfo(c.type).label === 'Link').length;
 
     return (
         <div className="container-fluid px-3 px-md-4 py-4">
@@ -273,10 +307,10 @@ export default function GlobalContentManager() {
             {content.length > 0 && (
                 <div className="d-flex gap-2 mb-3 flex-wrap">
                     {[
-                        { label: 'Total',  value: totalCount, color: '#6366f1', bg: 'rgba(99,102,241,0.08)',  border: 'rgba(99,102,241,0.18)' },
-                        { label: 'Files',  value: fileCount,  color: '#ef4444', bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.18)'  },
-                        { label: 'Notes',  value: noteCount,  color: '#8b5cf6', bg: 'rgba(139,92,246,0.08)',  border: 'rgba(139,92,246,0.18)' },
-                        { label: 'Links',  value: linkCount,  color: '#06b6d4', bg: 'rgba(6,182,212,0.08)',   border: 'rgba(6,182,212,0.18)'  },
+                        { label: 'Total', value: totalCount, color: '#6366f1', bg: 'rgba(99,102,241,0.08)', border: 'rgba(99,102,241,0.18)' },
+                        { label: 'Files', value: fileCount, color: '#ef4444', bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.18)' },
+                        { label: 'Notes', value: noteCount, color: '#8b5cf6', bg: 'rgba(139,92,246,0.08)', border: 'rgba(139,92,246,0.18)' },
+                        { label: 'Links', value: linkCount, color: '#06b6d4', bg: 'rgba(6,182,212,0.08)', border: 'rgba(6,182,212,0.18)' },
                     ].map(s => (
                         <div key={s.label} className="rounded-3 px-3 py-2 flex-fill text-center"
                             style={{ background: s.bg, border: `1px solid ${s.border}`, minWidth: '60px' }}>
@@ -365,7 +399,7 @@ export default function GlobalContentManager() {
 
             {/* Modals */}
             <HandoverModal show={showHandover} onClose={() => setShowHandover(false)} selectedIds={selectedIds} admins={admins} onSuccess={(m) => { setAlert({ type: 'success', msg: m }); setSelectedIds([]); }} onError={(e) => setAlert({ type: 'danger', msg: e })} />
-            
+
             {isEditing && (
                 <EditContentModal
                     item={currentItem}

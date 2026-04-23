@@ -4,7 +4,7 @@ const {
     requestAnnouncement,
     getAllAnnouncements,
     getMyAnnouncements,
-    getAnnouncements, 
+    getAnnouncements,
     updateAnnouncementStatus,
     deleteAnnouncement,
     updateAnnouncement
@@ -15,7 +15,9 @@ const { adminMiddleware, superAdminMiddleware } = require('../middleware/adminMi
 router.post('/subscribe', authMiddleware, require('../controllers/announcementController').subscribeUser);
 
 // GET /api/announcements?limit=5&status=approved
-router.get('/', getAnnouncements); 
+router.get('/', getAnnouncements);
+
+router.get('/all', authMiddleware, adminMiddleware, getAllAnnouncements);
 
 // Track Notification Open (Public)
 router.post('/:id/track-open', require('../controllers/announcementController').trackAnnouncementOpen);

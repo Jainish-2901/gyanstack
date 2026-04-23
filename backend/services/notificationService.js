@@ -1,31 +1,67 @@
 const admin = require('firebase-admin');
 const User = require('../models/userModel');
-
-// Initialize with your service account JSON
-// Pre-caution: Use env variables for sensitive keys or path to JSON
 const serviceAccount = require("../config/serviceAccountKey.json");
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
 });
 
-exports.sendNotificationToAll = async (title, body) => {
+exports.sendNotificationToAll = async (title, body, announcementId, redirectLink) => {
     try {
         const users = await User.find({ fcmToken: { $ne: '' } }).select('fcmToken');
         const tokens = users.map(u => u.fcmToken);
 
-        if (tokens.length === 0) return;
+        if (tokens.length === 0) return 0;
+
+        const baseUrl = "https://gyanstack.vercel.app";
+        const targetLink = redirectLink
+            ? (redirectLink.startsWith('http') ? redirectLink : `${baseUrl}${redirectLink}`)
+            : `${baseUrl}/announcements/${announcementId}`;
 
         const message = {
-            notification: { title, body },
-            tokens: tokens, // Multicast sends to many at once
+            notification: {
+                title: title,
+                body: body
+            },
+            data: {
+                announcementId: announcementId || '',
+                link: targetLink,
+                sound: 'notification_ping.mp3'
+            },
+            android: {
+                priority: 'high',
+                notification: {
+                    title: title,
+                    body: body,
+                    icon: 'stock_ticker_update',
+                    color: '#10b981',
+                    sound: 'notification_ping'
+                }
+            },
+            webpush: {
+                notification: {
+                    title: title,
+                    body: body,
+                    icon: `${baseUrl}/logo.png`,
+                    image: `${baseUrl}/og-banner.png`,
+                    badge: `${baseUrl}/logo.png`,
+                    click_action: targetLink,
+                    silent: false
+                },
+                fcm_options: {
+                    link: targetLink,
+                }
+            },
+            tokens: tokens,
         };
 
         const response = await admin.messaging().sendEachForMulticast(message);
 
-        // 3. Cleanup: If a token is "Not Registered", it means the user uninstalled the PWA
-        // You can add logic here to remove dead tokens from your DB
+        console.log(`Successfully dispatched to ${response.successCount} devices.`);
+        return response.successCount;
+
     } catch (error) {
         console.error("Firebase Admin Error:", error);
+        return 0;
     }
 };

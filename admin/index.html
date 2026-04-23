@@ -3,63 +3,60 @@
 
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/png" href="https://gyanstack.vercel.app/maskable-icon-v2.png" />
+  <link rel="icon" type="image/png" href="/logo.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GyanStack: Admin Portal</title>
+  <title>GyanStack: Admin Portal | Dashboard</title>
+
   <meta name="theme-color" content="#10b981" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="GS Admin" />
-  <link rel="apple-touch-icon" href="/pwa-192x192-v2.png" />
+  <link rel="apple-touch-icon" href="/logo.png" />
 
-  <!-- ---------------------------------------------------- -->
-  <!-- --- SEO & SOCIAL SHARING METATAGS (CRITICAL) --- -->
-  <!-- ---------------------------------------------------- -->
-
-  <!-- Standard SEO Tags -->
   <meta name="description"
-    content="The ultimate MERN stack resource hub for BCA/MCA students. Access batch uploads, save content, track downloads, and utilize real-time analytics." />
-  <meta name="keywords" content="BCA, MCA, Notes, PYQs, MERN, College, Education, Study Material, GyanStack" />
+    content="Secure MERN stack management dashboard for GyanStack. Control academic resources, track analytics, and manage BCA/MCA study materials." />
+  <meta name="keywords"
+    content="GyanStack Admin, BCA MCA Management, MERN Stack Dashboard, College Resource Hub Admin" />
+  <meta itemprop="image" content="https://gyanstack.vercel.app/og-banner.png" />
 
-  <!-- Open Graph (Facebook, LinkedIn, WhatsApp) -->
-  <meta property="og:title" content="GyanStack: Admin Portal" />
+  <meta property="og:title" content="GyanStack: Admin Portal | Secure Management" />
   <meta property="og:description"
-    content="The ultimate MERN stack resource hub for BCA/MCA students. Access batch uploads, save content, track downloads, and utilize real-time analytics." />
+    content="Internal dashboard for Gujarat University's resource hub. Access batch uploads, real-time engagement pulse, and global library controls." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://gyanstack-admin.vercel.app/" />
-  <meta property="og:image" content="https://gyanstack.vercel.app/logo.png" />
-  <meta property="og:image:width" content="500" />
-  <meta property="og:image:height" content="500" />
+  <meta property="og:image" content="https://gyanstack.vercel.app/og-banner.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
 
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="GyanStack: Admin Portal" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="GyanStack: Admin Portal | Management Dashboard" />
   <meta name="twitter:description"
-    content="The ultimate MERN stack resource hub for BCA/MCA students. Access batch uploads, save content, track downloads, and utilize real-time analytics." />
-  <meta name="twitter:image" content="https://gyanstack.vercel.app/logo.png" />
+    content="Secure MERN stack dashboard for managing NEP 2020 materials and student engagement." />
+  <meta name="twitter:image" content="https://gyanstack.vercel.app/og-banner.png" />
   <link rel="canonical" href="https://gyanstack-admin.vercel.app/" />
 
-  <!-- Google Font (Inter) -->
+  <script>
+    (function () {
+      try {
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-bs-theme', theme);
+        if (theme === 'dark') document.documentElement.classList.add('dark');
+      } catch (e) { }
+    })();
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-  <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
-  <!-- THEME BLOCKING SCRIPT (Prevents White Flash) -->
-  <script>
-    (function () {
-      const savedTheme = localStorage.getItem('theme') || 'light';
-      document.documentElement.setAttribute('data-bs-theme', savedTheme);
-    })();
-  </script>
 </head>
 
 <body>
   <div id="root"></div>
+
   <script type="module" src="/src/main.jsx"></script>
-  <!-- Bootstrap JS (Needed for Header Dropdowns and Collapse) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
