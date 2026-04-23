@@ -67,38 +67,91 @@ const getDownloadUrl = (item) => {
 
 const getDriveEmbedInfo = (item) => {
   const id = item.googleDriveId;
-  const mime = (item.type || '').toLowerCase();
+  const mime = (
+    item.externalMetadata?.googleDrive?.mimeType ||
+    item.type ||
+    ''
+  ).toLowerCase();
 
-  if (mime.includes('wordprocessingml') || mime.includes('msword') || mime.endsWith('docx') || mime.endsWith('doc')) {
+  // Word documents
+  if (
+    mime.includes('wordprocessingml') ||
+    mime.includes('msword') ||
+    mime.endsWith('docx') ||
+    mime.endsWith('doc')
+  ) {
     return { url: `https://docs.google.com/document/d/${id}/preview`, embeddable: true };
   }
-  if (mime.includes('spreadsheetml') || mime.includes('excel') || mime.endsWith('xlsx') || mime.endsWith('xls')) {
+
+  // Spreadsheets
+  if (
+    mime.includes('spreadsheetml') ||
+    mime.includes('excel') ||
+    mime.endsWith('xlsx') ||
+    mime.endsWith('xls')
+  ) {
     return { url: `https://docs.google.com/spreadsheets/d/${id}/preview`, embeddable: true };
   }
-  if (mime.includes('presentationml') || mime.includes('powerpoint') || mime.endsWith('pptx') || mime.endsWith('ppt')) {
+
+  // Presentations
+  if (
+    mime.includes('presentationml') ||
+    mime.includes('powerpoint') ||
+    mime.endsWith('pptx') ||
+    mime.endsWith('ppt')
+  ) {
     return { url: `https://docs.google.com/presentation/d/${id}/preview`, embeddable: true };
   }
+
+  // PDF
   if (mime.includes('pdf')) {
     return { url: `https://drive.google.com/file/d/${id}/preview`, embeddable: true };
   }
-  if (mime.includes('image') || mime.includes('video')) {
-    return { url: item.url, embeddable: false };
+
+  // GIF
+  if (mime.includes('gif')) {
+    return { url: `https://drive.google.com/file/d/${id}/preview`, embeddable: true };
   }
+
+  // Other images
+  if (mime.includes('image')) {
+    return { url: `https://drive.google.com/file/d/${id}/preview`, embeddable: true };
+  }
+
+  // Video on Drive
+  if (mime.includes('video') || mime.includes('avi')) {
+    return { url: `https://drive.google.com/file/d/${id}/preview`, embeddable: true };
+  }
+
+  // Fallback: generic Drive file preview
   return { url: `https://drive.google.com/file/d/${id}/preview`, embeddable: true };
 };
 
 const DrivePreview = ({ embedInfo, item }) => {
   const [loaded, setLoaded] = React.useState(false);
   const [failed, setFailed] = React.useState(false);
+  const [currentUrl, setCurrentUrl] = React.useState(embedInfo.url);
+  const [triedFallback, setTriedFallback] = React.useState(false);
   const downloadUrl = `https://drive.google.com/uc?export=download&id=${item.googleDriveId}`;
+  const genericPreviewUrl = `https://drive.google.com/file/d/${item.googleDriveId}/preview`;
+  const isEditorUrl = currentUrl.includes('docs.google.com');
 
   React.useEffect(() => {
     if (!embedInfo.embeddable) return;
+    setLoaded(false);
+    setFailed(false);
     const timer = setTimeout(() => {
-      if (!loaded) setFailed(true);
-    }, 10000);
+      if (!loaded) {
+        if (isEditorUrl && !triedFallback) {
+          setTriedFallback(true);
+          setCurrentUrl(genericPreviewUrl);
+        } else {
+          setFailed(true);
+        }
+      }
+    }, 12000);
     return () => clearTimeout(timer);
-  }, [loaded, embedInfo.embeddable]);
+  }, [currentUrl]);
 
   const openButtons = (
     <div className="d-flex justify-content-center gap-3 flex-wrap mt-4">
@@ -137,7 +190,7 @@ const DrivePreview = ({ embedInfo, item }) => {
       )}
       <div className="ratio ratio-4x3" style={{ minHeight: '420px', maxHeight: '80vh', display: loaded ? 'block' : 'none' }}>
         <iframe
-          src={embedInfo.url}
+          src={currentUrl}
           title={item.title}
           allow="autoplay; encrypted-media"
           allowFullScreen
@@ -420,9 +473,9 @@ export default function ContentDetailPage() {
                           {formatBytes(item.externalMetadata.googleDrive.size)} • {(() => {
                             const m = (item.externalMetadata.googleDrive.mimeType || '').toLowerCase();
                             if (m.includes('pdf'))                                       return 'PDF';
-                            if (m.includes('word') || m.includes('document'))           return 'DOCX';
-                            if (m.includes('presentation') || m.includes('powerpoint')) return 'PPTX';
-                            if (m.includes('sheet') || m.includes('excel'))             return 'XLSX';
+                            if (m.includes('wordprocessingml') || m.includes('msword'))  return 'DOCX';
+                            if (m.includes('presentationml') || m.includes('powerpoint')) return 'PPTX';
+                            if (m.includes('spreadsheetml') || m.includes('excel'))      return 'XLSX';
                             if (m.includes('image'))                                    return 'Image';
                             if (m.includes('zip') || m.includes('rar'))                 return 'ZIP';
                             if (m.includes('plain') || m.includes('text'))              return 'TXT';

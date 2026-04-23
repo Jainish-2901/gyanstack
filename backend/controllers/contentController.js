@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const cloudinary = require('cloudinary').v2;
 const Content = require('../models/contentModel');
 const Category = require('../models/categoryModel');
-const User = require('../models/userModel'); 
+const User = require('../models/userModel');
 const { uploadToDrive, deleteFromDrive, updateDriveFile, findFolderIdByPath, isDriveFolderEmpty, getDriveFileMetadata } = require('../utils/googleDrive');
 const fs = require('fs');
 const sharp = require('sharp');
@@ -23,7 +23,7 @@ exports.getPublicIdFromUrl = (url) => {
     const parts = url.split('/');
     const folderIndex = parts.findIndex(part => part === 'gyanstack_uploads');
     if (folderIndex === -1) return null;
-    
+
     const publicIdWithExtension = parts.slice(folderIndex).join('/');
     const publicId = publicIdWithExtension.split('.').slice(0, -1).join('.');
     return publicId;
@@ -39,7 +39,7 @@ const getCategoryPath = async (categoryId) => {
 
   // Default to Root Drive Folder ID
   if (!categoryId || categoryId === 'root') {
-      return { names: [], folderId: process.env.GOOGLE_DRIVE_FOLDER_ID };
+    return { names: [], folderId: process.env.GOOGLE_DRIVE_FOLDER_ID };
   }
 
   // VALIDATION: Ensure categoryId is a valid ObjectId
@@ -51,7 +51,7 @@ const getCategoryPath = async (categoryId) => {
   const pathNames = [];
   const hierarchyOfCats = [];
   let currentId = categoryId;
-  
+
   // Build hierarchy from leaf to root
   while (currentId && currentId !== 'root') {
     if (!mongoose.Types.ObjectId.isValid(currentId)) break;
@@ -75,13 +75,13 @@ const getCategoryPath = async (categoryId) => {
   if (leafCategory && hierarchyOfCats.length > 0) {
     try {
       const { ensureFolderPath } = require('../utils/googleDrive');
-      
+
       const folderId = await ensureFolderPath(pathNames);
-      
+
       // Cache this ID
       leafCategory.googleDriveFolderId = folderId;
       await leafCategory.save();
-      
+
       return { names: pathNames, folderId: folderId };
     } catch (err) {
       console.error("Critical Category Path Error:", err.message);
@@ -95,7 +95,7 @@ const getCategoryPath = async (categoryId) => {
 const cleanupEmptyCategoryFolder = async (categoryId) => {
   try {
     if (!categoryId || categoryId === 'root') return;
-    
+
 
     const contentCount = await Content.countDocuments({ categoryId });
     if (contentCount > 0) return;
@@ -104,9 +104,9 @@ const cleanupEmptyCategoryFolder = async (categoryId) => {
     if (childCategories > 0) return;
 
     const { names: folderPath, folderId } = await getCategoryPath(categoryId);
-    
+
     if (!folderId || folderId === process.env.GOOGLE_DRIVE_FOLDER_ID) {
-        return;
+      return;
     }
 
     try {
@@ -124,10 +124,10 @@ const cleanupEmptyCategoryFolder = async (categoryId) => {
 };
 
 exports.uploadContent = async (req, res) => {
-  
+
   try {
     let { title, type, link, textNote, categoryId, tags } = req.body;
-    
+
     // Sanitize title: Handle arrays or repeated strings (e.g., "Title, Title")
     if (title) {
       if (Array.isArray(title)) title = title[0];
@@ -141,13 +141,13 @@ exports.uploadContent = async (req, res) => {
       }
     }
     const tagsArray = tags ? tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
-    
+
     const uploadedItems = [];
     let lastError = null;
-    
+
     if (req.files && req.files.length > 0) {
       const { names: folderPath, folderId: directFolderId } = await getCategoryPath(categoryId);
-      
+
       // Sequential processing is MUCH more stable for server resources (FFmpeg/Sharp)
       // and avoids Google Drive rate limit issues.
       for (const file of req.files) {
@@ -158,12 +158,12 @@ exports.uploadContent = async (req, res) => {
             try {
               const optName = `opt-${Date.now()}-${path.parse(file.originalname).name}.webp`;
               const compressedPath = path.join(path.dirname(file.path), optName);
-              
+
               await sharp(file.path)
                 .resize({ width: 1200, withoutEnlargement: true })
-                .webp({ quality: 80, effort: 6 }) 
+                .webp({ quality: 80, effort: 6 })
                 .toFile(compressedPath);
-              
+
               if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
               currentFilePath = compressedPath;
               file.originalname = optName;
@@ -171,12 +171,12 @@ exports.uploadContent = async (req, res) => {
             } catch (sharpErr) {
               console.warn("Sharp optimization failed:", sharpErr.message);
             }
-          } 
-          else if (file.mimetype.startsWith('video/') && file.size > 15 * 1024 * 1024) { 
+          }
+          else if (file.mimetype.startsWith('video/') && file.size > 15 * 1024 * 1024) {
             try {
               const optName = `opt-${Date.now()}-${path.parse(file.originalname).name}.mp4`;
               const compressedPath = path.join(path.dirname(file.path), optName);
-              
+
               await new Promise((resolve, reject) => {
                 ffmpeg(file.path)
                   .outputOptions(['-vf scale=-1:720', '-vcodec libx264', '-crf 28', '-preset fast'])
@@ -197,61 +197,57 @@ exports.uploadContent = async (req, res) => {
 
           // Upload to Drive
           const driveData = await uploadToDrive({ ...file, path: currentFilePath }, folderPath, directFolderId);
-          
+
           if (driveData.parentFolderId && driveData.parentFolderId !== directFolderId) {
             await Category.findByIdAndUpdate(categoryId, { googleDriveFolderId: driveData.parentFolderId });
           }
-          
+
           const filename = file.originalname;
           const nameWithoutExt = filename.split('.').slice(0, -1).join('.') || filename;
-          
+
           const newContent = new Content({
             title: (req.files.length === 1 && title) ? title : nameWithoutExt,
             type: file.mimetype,
             url: driveData.webViewLink,
             googleDriveId: driveData.id,
-            fileResourceType: 'raw', 
+            fileResourceType: 'raw',
             categoryId,
             tags: tagsArray,
-            uploadedBy: req.user.id, 
+            uploadedBy: req.user.id,
           });
-          
+
           const savedItem = await newContent.save();
           uploadedItems.push(savedItem);
-          
+
           // Cleanup
           if (fs.existsSync(currentFilePath)) fs.unlinkSync(currentFilePath);
-          
+
         } catch (uploadErr) {
           console.error(`ERROR uploading file ${file.originalname}:`, uploadErr);
-          if (fs.existsSync(file.path)) try { fs.unlinkSync(file.path); } catch(e) {}
+          if (fs.existsSync(file.path)) try { fs.unlinkSync(file.path); } catch (e) { }
           lastError = uploadErr.message || 'File upload failed during processing';
         }
       }
-      
+
       if (uploadedItems.length === 0 && lastError) {
         return res.status(400).json({ message: `Upload failed: ${lastError}` });
       }
     } else {
-      // Scenario 2: Single Item (Link, Note, or External File)
       let fileUrl = '';
-      let finalFileType = type; 
-      let fileResourceType = 'auto'; 
+      let finalFileType = type;
+      let fileResourceType = 'auto';
       let driveIdForDB = null;
 
-      if (type === 'link' || type === 'file') { 
-        fileUrl = link; 
+      if (type === 'link' || type === 'file') {
+        fileUrl = link;
         if (type === 'file') {
           fileResourceType = 'raw';
 
-          // PRIORITY 1: Admin explicitly selected the file type in the UI (most reliable)
           const { externalMimeType } = req.body;
           if (externalMimeType && externalMimeType !== 'application/octet-stream') {
             finalFileType = externalMimeType;
           }
 
-          // PRIORITY 2: Extract Google Drive file ID and try API metadata
-          // (Works only if the service account has access or file is in our Drive)
           let driveId = null;
           const filePathMatch = link.match(/\/file\/d\/([A-Za-z0-9_-]{10,})/);
           if (filePathMatch) {
@@ -264,92 +260,85 @@ exports.uploadContent = async (req, res) => {
           if (driveId) {
             driveIdForDB = driveId;
 
-            // Only hit the Drive API if we don't already have a confirmed MIME type
             if (!externalMimeType || externalMimeType === 'application/octet-stream') {
               const meta = await getDriveFileMetadata(driveId);
               if (meta && !meta.trashed) {
                 finalFileType = meta.mimeType;
                 if (!title) title = meta.name ? meta.name.split('.').slice(0, -1).join('.') || meta.name : '';
               } else {
-                // PRIORITY 3: Guess from URL extension (last resort — rarely works for Drive URLs)
                 const extMatch = link.match(/\.([a-z0-9]+)([?#]|$)/i);
                 const ext = extMatch ? extMatch[1].toLowerCase() : '';
                 const mimeMap = {
-                  pdf:  'application/pdf',
-                  doc:  'application/msword',
+                  pdf: 'application/pdf',
+                  doc: 'application/msword',
                   docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                  ppt:  'application/vnd.ms-powerpoint',
+                  ppt: 'application/vnd.ms-powerpoint',
                   pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-                  xls:  'application/vnd.ms-excel',
+                  xls: 'application/vnd.ms-excel',
                   xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                  zip:  'application/zip',
-                  mp4:  'video/mp4',
-                  png:  'image/png',
-                  jpg:  'image/jpeg',
+                  zip: 'application/zip',
+                  mp4: 'video/mp4',
+                  png: 'image/png',
+                  jpg: 'image/jpeg',
                   jpeg: 'image/jpeg',
-                  gif:  'image/gif',
+                  gif: 'image/gif',
                 };
                 finalFileType = mimeMap[ext] || 'application/octet-stream';
                 console.warn(`Drive metadata unavailable. Guessed MIME from extension: ${finalFileType}`);
               }
             }
           } else if (!externalMimeType || externalMimeType === 'application/octet-stream') {
-            // No Drive ID, no admin selection — truly unknown
             finalFileType = 'application/octet-stream';
           }
         }
       } else if (type === 'note') {
-         // textNote field ko blank chodenge agar link/file type ho
       }
-      
+
       const newContent = new Content({
         title: title || (type === 'file' ? "External File" : "Untitled Note/Link"),
         type: finalFileType,
         url: fileUrl,
         googleDriveId: driveIdForDB,
-        fileResourceType: fileResourceType, 
-        textNote: type === 'note' ? textNote : '', 
+        fileResourceType: fileResourceType,
+        textNote: type === 'note' ? textNote : '',
         categoryId,
         tags: tagsArray,
-        uploadedBy: req.user.id, 
+        uploadedBy: req.user.id,
       });
       const saved = await newContent.save();
       uploadedItems.push(saved);
     }
 
     if (uploadedItems.length === 0) {
-        console.error("CRITICAL: No items uploaded. lastError:", lastError);
-        return res.status(400).json({ 
-          success: false,
-          message: lastError ? `Upload Failed: ${lastError}` : 'No valid files received or all files failed.' 
-        });
+      console.error("CRITICAL: No items uploaded. lastError:", lastError);
+      return res.status(400).json({
+        success: false,
+        message: lastError ? `Upload Failed: ${lastError}` : 'No valid files received or all files failed.'
+      });
     }
 
-    // Success reporting
-    const message = uploadedItems.length > 1 
-                    ? `${uploadedItems.length} files processed and uploaded successfully!` 
-                    : `Content uploaded and optimized successfully!`;
-    
-    res.status(201).json({ success: true, message, content: uploadedItems }); 
+    const message = uploadedItems.length > 1
+      ? `${uploadedItems.length} files processed and uploaded successfully!`
+      : `Content uploaded and optimized successfully!`;
+
+    res.status(201).json({ success: true, message, content: uploadedItems });
 
   } catch (err) {
     console.error("FATAL Upload Error:", err);
-    res.status(500).json({ 
-        success: false, 
-        message: 'Upload failed: ' + (err.message || 'Internal Server Error during processing'),
-        error: process.env.NODE_ENV === 'production' ? 'Detailed logs available on server' : err.stack
+    res.status(500).json({
+      success: false,
+      message: 'Upload failed: ' + (err.message || 'Internal Server Error during processing'),
+      error: process.env.NODE_ENV === 'production' ? 'Detailed logs available on server' : err.stack
     });
   }
 };
-
-// ... (Ye function pehle jaisa hi sahi hai, koi change nahi) ...
 exports.getContent = async (req, res) => {
   try {
     const query = {};
-    
-    // Recursive Category Fetch Logic
-    if (req.query.categoryId && req.query.categoryId !== 'root') { 
-      // Helper function to get all sub-category IDs
+
+
+    if (req.query.categoryId && req.query.categoryId !== 'root') {
+
       const getAllChildIds = async (pId) => {
         if (!pId || !mongoose.Types.ObjectId.isValid(pId.toString())) return [];
         let childIds = [pId.toString()];
@@ -362,38 +351,33 @@ exports.getContent = async (req, res) => {
       };
 
       const allCatIds = await getAllChildIds(req.query.categoryId);
-      // Safety: Use unique set to avoid massive arrays if there are cycles (shouldn't be)
-      query.categoryId = { $in: [...new Set(allCatIds)] }; 
+      query.categoryId = { $in: [...new Set(allCatIds)] };
     }
 
     if (req.query.uploadedBy) { query.uploadedBy = req.query.uploadedBy; }
-    
-    // Add logic to search by uploader name if requested
+
     if (req.query.uploader) {
-      const uploaderUser = await User.findOne({ 
-        username: { $regex: req.query.uploader, $options: 'i' } 
+      const uploaderUser = await User.findOne({
+        username: { $regex: req.query.uploader, $options: 'i' }
       });
       if (uploaderUser) {
         query.uploadedBy = uploaderUser._id;
       } else {
-        // If uploader name was specified but not found, NO content should match
-        query.uploadedBy = 'non-existent-id-placeholder'; 
+        query.uploadedBy = 'non-existent-id-placeholder';
       }
     }
 
     if (req.query.search) {
       query.$text = { $search: req.query.search };
     }
-    
-    let sortObj = { createdAt: -1 }; // Default: Recently Added
+
+    let sortObj = { createdAt: -1 };
     const { sortBy, order } = req.query;
     const sortOrder = order === 'asc' ? 1 : -1;
 
     if (req.query.search) {
-      // Priority: Text score for searches
       sortObj = { score: { $meta: "textScore" } };
     } else if (sortBy) {
-      // Use mapping to prevent unauthorized sort fields
       const sortMap = {
         date: 'createdAt',
         views: 'viewsCount',
@@ -402,7 +386,7 @@ exports.getContent = async (req, res) => {
         downloads: 'downloadsCount',
         title: 'title'
       };
-      
+
       const targetField = sortMap[sortBy] || 'createdAt';
       sortObj = { [targetField]: sortOrder };
     }
@@ -412,7 +396,7 @@ exports.getContent = async (req, res) => {
       projectObj = { score: { $meta: "textScore" } };
     }
 
-    const limit = parseInt(req.query.limit) || 20; 
+    const limit = parseInt(req.query.limit) || 20;
     const skip = parseInt(req.query.skip) || 0;
 
     const content = await Content.find(query, projectObj)
@@ -422,10 +406,10 @@ exports.getContent = async (req, res) => {
 
     const total = await Content.countDocuments(query);
 
-    res.json({ 
-      content, 
+    res.json({
+      content,
       hasMore: (skip + content.length) < total,
-      total 
+      total
     });
   } catch (err) {
     console.error("getContent error:", err.message);
@@ -433,18 +417,15 @@ exports.getContent = async (req, res) => {
   }
 };
 
-// skipView=true → only fetch, do NOT increment (used by client when already counted in session)
 exports.getSingleContent = async (req, res) => {
   try {
     const skipView = req.query.skipView === 'true';
 
     let contentDoc;
     if (skipView) {
-      // Just fetch — no view increment
       contentDoc = await Content.findById(req.params.id)
         .populate('uploadedBy', 'username email');
     } else {
-      // First visit: fetch + increment view count atomically
       contentDoc = await Content.findByIdAndUpdate(
         req.params.id,
         { $inc: { viewsCount: 1 } },
@@ -456,7 +437,6 @@ exports.getSingleContent = async (req, res) => {
       return res.status(404).json({ message: 'Content not found' });
     }
 
-    // --- AGGREGATOR PATTERN: Enrich data from external providers ---
     const aggregatedData = await ContentAggregator.aggregate(contentDoc);
 
     res.json(aggregatedData);
@@ -466,7 +446,6 @@ exports.getSingleContent = async (req, res) => {
   }
 };
 
-// ... (Ye function pehle jaisa hi sahi hai, koi change nahi) ...
 exports.likeContent = async (req, res) => {
   try {
     const content = await Content.findById(req.params.id);
@@ -493,7 +472,6 @@ exports.likeContent = async (req, res) => {
   }
 };
 
-// ... (Ye function pehle jaisa hi sahi hai, koi change nahi) ...
 exports.getMyContent = async (req, res) => {
   try {
     const content = await Content.find({ uploadedBy: req.user.id })
@@ -505,31 +483,28 @@ exports.getMyContent = async (req, res) => {
   }
 };
 
-// 6. Content Update Karna (Admin Only) - (CHANGED with Drive Sync)
 exports.updateContent = async (req, res) => {
-    const { title, categoryId, tags, url, textNote, fileType } = req.body;
-    try {
-      let content = await Content.findById(req.params.id);
-      if (!content) {
-        return res.status(404).json({ message: 'Content not found' });
-      }
-      if (content.uploadedBy.toString() !== req.user.id) {
-        return res.status(401).json({ message: 'User not authorized' });
-      }
-      
-      const updateData = {};
-      if (title) updateData.title = title;
-      if (categoryId) updateData.categoryId = categoryId;
-      if (url) updateData.url = url;
-      if (textNote !== undefined) updateData.textNote = textNote;
-      if (typeof tags === 'string') {
-          updateData.tags = tags.split(',').map(tag => tag.trim()).filter(tag => tag);
-      }
-      // Allow admin to correct the MIME type (e.g. fix octet-stream on external Drive links)
-      if (fileType) updateData.type = fileType;
+  const { title, categoryId, tags, url, textNote, fileType } = req.body;
+  try {
+    let content = await Content.findById(req.params.id);
+    if (!content) {
+      return res.status(404).json({ message: 'Content not found' });
+    }
+    if (content.uploadedBy.toString() !== req.user.id) {
+      return res.status(401).json({ message: 'User not authorized' });
+    }
+
+    const updateData = {};
+    if (title) updateData.title = title;
+    if (categoryId) updateData.categoryId = categoryId;
+    if (url) updateData.url = url;
+    if (textNote !== undefined) updateData.textNote = textNote;
+    if (typeof tags === 'string') {
+      updateData.tags = tags.split(',').map(tag => tag.trim()).filter(tag => tag);
+    }
+    if (fileType) updateData.type = fileType;
 
     if (req.file) {
-      // Purana file delete karein
       if (content.googleDriveId) {
         await deleteFromDrive(content.googleDriveId);
       } else if (content.url && content.fileResourceType !== 'auto') {
@@ -538,12 +513,10 @@ exports.updateContent = async (req, res) => {
           await cloudinary.uploader.destroy(publicId, { resource_type: content.fileResourceType || 'raw' });
         }
       }
-      
-      // Naya file upload karein
+
       const { names: folderPath, folderId: directFolderId } = await getCategoryPath(categoryId || content.categoryId);
-      
+
       let currentFilePath = req.file.path;
-      // Image Optimization (WebP)
       if (req.file.mimetype.startsWith('image/') && !req.file.mimetype.includes('svg')) {
         try {
           const optName = `opt-upd-${path.parse(req.file.originalname).name}.webp`;
@@ -552,7 +525,7 @@ exports.updateContent = async (req, res) => {
             .resize({ width: 1200, withoutEnlargement: true })
             .webp({ quality: 75, effort: 6 })
             .toFile(optPath);
-          
+
           if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
           currentFilePath = optPath;
           req.file.originalname = optName;
@@ -561,7 +534,6 @@ exports.updateContent = async (req, res) => {
           console.warn("Update optimization failed:", err.message);
         }
       }
-      // Video Optimization (FFmpeg)
       else if (req.file.mimetype.startsWith('video/') && req.file.size > 10 * 1024 * 1024) {
         try {
           const optName = `opt-upd-${path.parse(req.file.originalname).name}.mp4`;
@@ -584,38 +556,35 @@ exports.updateContent = async (req, res) => {
       }
 
       const driveData = await uploadToDrive({ ...req.file, path: currentFilePath }, folderPath, directFolderId);
-      
-      // Drive file ko naya name dena agar title specified hai (warna original)
+
       if (title && title !== req.file.originalname) {
         await updateDriveFile(driveData.id, title);
       }
 
       updateData.url = driveData.webViewLink;
       updateData.googleDriveId = driveData.id;
-      updateData.type = req.file.mimetype;
+      updateData.type = (fileType && fileType !== 'application/octet-stream')
+        ? fileType
+        : req.file.mimetype;
       updateData.fileResourceType = 'raw';
 
       if (fs.existsSync(currentFilePath)) fs.unlinkSync(currentFilePath);
-    } 
+    }
     else if (content.googleDriveId) {
       let syncName = null;
       let syncPathNames = null;
-      
+
       if (title && title !== content.title) syncName = title;
       if (categoryId && categoryId !== content.categoryId.toString()) {
         const { names } = await getCategoryPath(categoryId);
         syncPathNames = names;
       }
-      
+
       if (syncName || syncPathNames) {
-        // Wrap Drive sync in its own try/catch:
-        // A Drive API failure (network issue, permission error, token expiry) should NOT
-        // abort the DB update and return 500. DB changes save regardless.
         try {
           await updateDriveFile(content.googleDriveId, syncName, syncPathNames);
         } catch (driveErr) {
           console.warn('Drive sync failed (non-fatal):', driveErr.message);
-          // Continue — DB update will still succeed below
         }
       }
     }
@@ -624,11 +593,10 @@ exports.updateContent = async (req, res) => {
 
     content = await Content.findByIdAndUpdate(
       req.params.id,
-      { $set: updateData }, 
-      { new: true } 
+      { $set: updateData },
+      { new: true }
     );
 
-    // Cleanup old category if it changed
     if (categoryId && categoryId !== oldCategoryId.toString()) {
       await cleanupEmptyCategoryFolder(oldCategoryId);
     }
@@ -650,10 +618,9 @@ exports.deleteContent = async (req, res) => {
     if (content.uploadedBy.toString() !== req.user.id) {
       return res.status(401).json({ message: 'User not authorized' });
     }
-    
+
     let driveIdToDelete = content.googleDriveId;
 
-    // Aggressive check for external links that might have missed the ID in DB
     if (!driveIdToDelete && content.url && content.url.includes('drive.google.com')) {
       const match = content.url.match(/[-\w]{25,}/);
       if (match) driveIdToDelete = match[0];
@@ -661,8 +628,7 @@ exports.deleteContent = async (req, res) => {
 
     if (driveIdToDelete) {
       await deleteFromDrive(driveIdToDelete);
-    } 
-    // Fallback for any standard uploads that were on Cloudinary
+    }
     else if (content.url && content.fileResourceType !== 'auto') {
       const publicId = exports.getPublicIdFromUrl(content.url);
       if (publicId) {
@@ -671,10 +637,9 @@ exports.deleteContent = async (req, res) => {
         } catch (e) { console.error("Cloudinary cleanup failed", e.message); }
       }
     }
-    
+
     await Content.findByIdAndDelete(req.params.id);
-    
-    // Cleanup empty folder after deletion
+
     if (content.categoryId) {
       await cleanupEmptyCategoryFolder(content.categoryId);
     }
@@ -686,7 +651,6 @@ exports.deleteContent = async (req, res) => {
   }
 };
 
-// 7.1 Bulk Delete Content (Admin Only)
 exports.bulkDeleteContent = async (req, res) => {
   try {
     const { ids } = req.body;
@@ -695,14 +659,11 @@ exports.bulkDeleteContent = async (req, res) => {
     }
 
     const contents = await Content.find({ _id: { $in: ids } });
-    
-    for (const content of contents) {
-      // SuperAdmin can delete everything. Admin can delete only their own.
-      if (req.user.role !== 'superadmin' && content.uploadedBy.toString() !== req.user.id) {
-          continue;
-      }
 
-      // DELETE LOGIC (Same as single delete)
+    for (const content of contents) {
+      if (req.user.role !== 'superadmin' && content.uploadedBy.toString() !== req.user.id) {
+        continue;
+      }
       let driveIdToDelete = content.googleDriveId;
       if (!driveIdToDelete && content.url && content.url.includes('drive.google.com')) {
         const match = content.url.match(/[-\w]{25,}/);
@@ -721,20 +682,18 @@ exports.bulkDeleteContent = async (req, res) => {
       }
     }
 
-    // Delete from DB: SuperAdmin deletes all selected, Admin only their own
     const deleteQuery = { _id: { $in: ids } };
     if (req.user.role !== 'superadmin') {
-        deleteQuery.uploadedBy = req.user.id;
+      deleteQuery.uploadedBy = req.user.id;
     }
-    
+
     await Content.deleteMany(deleteQuery);
-    
-    // Cleanup folders for all affected categories
+
     const affectedCategoryIds = [...new Set(contents.map(c => c.categoryId))];
     for (const catId of affectedCategoryIds) {
       await cleanupEmptyCategoryFolder(catId);
     }
-    
+
     res.json({ message: `${ids.length} items deleted successfully.` });
   } catch (err) {
     console.error("Bulk Delete Error:", err.message);
@@ -749,20 +708,18 @@ exports.saveContent = async (req, res) => {
       return res.status(404).json({ message: 'Content not found' });
     }
 
-    // 'savedBy' array me check karein
     const userIndex = content.savedBy.findIndex(userId => userId.equals(req.user.id));
 
     if (userIndex > -1) {
       content.savedBy.splice(userIndex, 1);
-      content.savesCount = Math.max(0, content.savesCount - 1); // Niche -1 na jaaye
+      content.savesCount = Math.max(0, content.savesCount - 1);
     } else {
       content.savedBy.push(req.user.id);
       content.savesCount += 1;
     }
 
     await content.save();
-    
-    // Naya count aur status return karein
+
     res.json({ savesCount: content.savesCount, isSaved: userIndex === -1 });
 
   } catch (err) {
@@ -773,10 +730,9 @@ exports.saveContent = async (req, res) => {
 
 exports.getSavedContent = async (req, res) => {
   try {
-    // Aisa content dhoondein jiske 'savedBy' array me current user ki ID ho
-    const savedContent = await Content.find({ 
-      savedBy: req.user.id 
-    }).sort({ createdAt: -1 }); // Naye save kiye hue upar
+    const savedContent = await Content.find({
+      savedBy: req.user.id
+    }).sort({ createdAt: -1 });
 
     res.json({ content: savedContent });
 
@@ -788,19 +744,16 @@ exports.getSavedContent = async (req, res) => {
 
 exports.trackDownload = async (req, res) => {
   try {
-    // Sirf $inc (increment) operation ka istemaal karein
-    // Ye 'getSingleContent' se tez hai kyunki ye poora document fetch nahi karta
     const content = await Content.findByIdAndUpdate(
       req.params.id,
-      { $inc: { downloadsCount: 1 } }, // downloadsCount ko 1 se badhayein
-      { new: true } // Taaki hum naya count (optional) return kar sakein
+      { $inc: { downloadsCount: 1 } },
+      { new: true }
     );
 
     if (!content) {
       return res.status(404).json({ message: 'Content not found' });
     }
 
-    // Naya count return karein (taaki future me analytics me use kar sakein)
     res.json({ downloadsCount: content.downloadsCount });
 
   } catch (err) {
@@ -823,15 +776,14 @@ exports.reassignContent = async (req, res) => {
       return res.status(404).json({ message: 'New uploader user not found.' });
     }
 
-    // Update 'uploadedBy' for all provided IDs
     const result = await Content.updateMany(
       { _id: { $in: contentIds } },
       { $set: { uploadedBy: newUploaderId } }
     );
 
-    res.json({ 
+    res.json({
       message: `Successfully reassigned ${result.modifiedCount} items to ${newUploader.username}.`,
-      modifiedCount: result.modifiedCount 
+      modifiedCount: result.modifiedCount
     });
 
   } catch (err) {
@@ -840,7 +792,6 @@ exports.reassignContent = async (req, res) => {
   }
 };
 
-// 12. Global Content Management (SuperAdmin specifically section)
 exports.getGlobalContentManagement = async (req, res) => {
   try {
     const { search, categoryId, uploadedBy } = req.query;
@@ -865,4 +816,4 @@ exports.getGlobalContentManagement = async (req, res) => {
     console.error("Global Management Error:", err.message);
     res.status(500).json({ message: 'Server error fetching global content.' });
   }
-};
+};

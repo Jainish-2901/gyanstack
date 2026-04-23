@@ -168,7 +168,12 @@ const deleteFromDrive = async (fileId) => {
         await drive.files.delete({ fileId });
         return true;
     } catch (error) {
-        console.error('Google Drive Delete Error:', error);
+        const status = error.status || error.code || error.response?.status;
+        if (status === 404) {
+            console.warn(`Drive: File ${fileId} not found on delete (already removed). Skipping.`);
+            return true;
+        }
+        console.error('Google Drive Delete Error:', error.message || error);
         return false;
     }
 };
